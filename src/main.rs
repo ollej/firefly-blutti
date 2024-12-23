@@ -32,7 +32,7 @@ impl Default for Blutti {
     fn default() -> Self {
         Self {
             position: Point {
-                x: 120,
+                x: 120 - Self::SIZE / 2,
                 y: 160 - Self::SIZE,
             },
             jump_timer: 0,
@@ -42,11 +42,16 @@ impl Default for Blutti {
 }
 
 impl Blutti {
-    const SIZE: i32 = 5;
-    const SPEED: i32 = 1;
+    const SIZE: i32 = 8;
+    const SPEED: i32 = 2;
     const JUMP_TIME: i32 = 8;
-    const JUMP_SPEED: i32 = 1;
-    const GRAVITY: i32 = 1;
+    const JUMP_SPEED: i32 = 2;
+    const GRAVITY: i32 = 2;
+    const MIN: Point = Point::MIN;
+    const MAX: Point = Point {
+        x: Point::MAX.x - Self::SIZE,
+        y: Point::MAX.y - Self::SIZE,
+    };
 
     fn draw(&self) {
         draw_circle(
@@ -62,13 +67,13 @@ impl Blutti {
 
     fn move_left(&mut self) {
         if self.standing() {
-            self.movement -= Self::SPEED;
+            self.movement = -Self::SPEED;
         }
     }
 
     fn move_right(&mut self) {
         if self.standing() {
-            self.movement += Self::SPEED;
+            self.movement = Self::SPEED;
         }
     }
 
@@ -97,6 +102,8 @@ impl Blutti {
             };
             self.movement = 0;
         }
+        self.position.x = self.position.x.clamp(Self::MIN.x, Self::MAX.x);
+        self.position.y = self.position.y.clamp(Self::MIN.y, Self::MAX.y);
     }
 
     fn standing(&self) -> bool {
