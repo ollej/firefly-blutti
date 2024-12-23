@@ -24,6 +24,7 @@ extern "C" fn boot() {
 
 struct Blutti {
     position: Point,
+    jump_timer: i32,
 }
 
 impl Default for Blutti {
@@ -33,6 +34,7 @@ impl Default for Blutti {
                 x: 120,
                 y: 160 - Self::SIZE,
             },
+            jump_timer: 0,
         }
     }
 }
@@ -40,6 +42,9 @@ impl Default for Blutti {
 impl Blutti {
     const SIZE: i32 = 5;
     const SPEED: i32 = 1;
+    const JUMP_TIME: i32 = 8;
+    const JUMP_SPEED: i32 = 1;
+    const GRAVITY: i32 = 1;
 
     fn draw(&self) {
         draw_circle(
@@ -66,11 +71,39 @@ impl Blutti {
             y: self.position.y,
         }
     }
+
+    fn start_jump(&mut self) {
+        if self.jump_timer == 0 && self.standing() {
+            self.jump_timer = Self::JUMP_TIME;
+        }
+    }
+
+    fn move_jump(&mut self) {
+        if self.jump_timer > 0 {
+            self.position = Point {
+                x: self.position.x,
+                y: self.position.y - Self::JUMP_SPEED,
+            };
+            self.jump_timer -= 1;
+        }
+    }
+
+    fn gravity(&mut self) {
+        if self.jump_timer == 0 && !self.standing() {
+            self.position = Point {
+                x: self.position.x,
+                y: self.position.y + Self::GRAVITY,
+            }
+        }
+    }
+
+    fn standing(&self) -> bool {
+        self.position.y == (Point::MAX.y - Self::SIZE)
+    }
 }
 
 #[no_mangle]
 extern "C" fn update() {
-    //let buttons = read_buttons(Peer::COMBINED);
     let state = get_state();
     let pad = read_pad(Peer::COMBINED);
     if let Some(pad) = pad {
@@ -82,6 +115,12 @@ extern "C" fn update() {
             state.blutti.move_right();
         }
     }
+    let buttons = read_buttons(Peer::COMBINED);
+    if buttons.s {
+        state.blutti.start_jump();
+    }
+    state.blutti.move_jump();
+    state.blutti.gravity();
 }
 
 #[no_mangle]
