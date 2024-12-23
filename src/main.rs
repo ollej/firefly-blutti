@@ -25,6 +25,7 @@ extern "C" fn boot() {
 struct Blutti {
     position: Point,
     jump_timer: i32,
+    movement: i32,
 }
 
 impl Default for Blutti {
@@ -35,6 +36,7 @@ impl Default for Blutti {
                 y: 160 - Self::SIZE,
             },
             jump_timer: 0,
+            movement: 0,
         }
     }
 }
@@ -59,16 +61,14 @@ impl Blutti {
     }
 
     fn move_left(&mut self) {
-        self.position = Point {
-            x: self.position.x - Self::SPEED,
-            y: self.position.y,
+        if self.standing() {
+            self.movement -= Self::SPEED;
         }
     }
 
     fn move_right(&mut self) {
-        self.position = Point {
-            x: self.position.x + Self::SPEED,
-            y: self.position.y,
+        if self.standing() {
+            self.movement += Self::SPEED;
         }
     }
 
@@ -78,22 +78,24 @@ impl Blutti {
         }
     }
 
-    fn move_jump(&mut self) {
+    fn movement(&mut self) {
         if self.jump_timer > 0 {
             self.position = Point {
-                x: self.position.x,
+                x: self.position.x + self.movement,
                 y: self.position.y - Self::JUMP_SPEED,
             };
             self.jump_timer -= 1;
-        }
-    }
-
-    fn gravity(&mut self) {
-        if self.jump_timer == 0 && !self.standing() {
+        } else if self.jump_timer == 0 && !self.standing() {
             self.position = Point {
-                x: self.position.x,
+                x: self.position.x + self.movement,
                 y: self.position.y + Self::GRAVITY,
             }
+        } else if self.movement != 0 && self.standing() {
+            self.position = Point {
+                x: self.position.x + self.movement,
+                y: self.position.y,
+            };
+            self.movement = 0;
         }
     }
 
@@ -119,8 +121,7 @@ extern "C" fn update() {
     if buttons.s {
         state.blutti.start_jump();
     }
-    state.blutti.move_jump();
-    state.blutti.gravity();
+    state.blutti.movement();
 }
 
 #[no_mangle]
