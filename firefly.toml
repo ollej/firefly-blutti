@@ -4,4 +4,5 @@ author_name = "Olle Wreede"
 app_name = "Firefly Blutti"
 
 [files]
-blutti = { path = "assets/blutti-8x8.png" }
+blutti_left = { path = "assets/blutti-left-8x8.png" }
+blutti_right = { path = "assets/blutti-right-8x8.png" }

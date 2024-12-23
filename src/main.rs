@@ -8,21 +8,17 @@ static mut STATE: OnceCell<State> = OnceCell::new();
 
 struct State {
     blutti: Blutti,
-    sprite_blutti: FileBuf,
+    sprite_blutti_left: FileBuf,
+    sprite_blutti_right: FileBuf,
 }
 
 fn get_state() -> &'static mut State {
     unsafe { STATE.get_mut() }.unwrap()
 }
 
-#[no_mangle]
-extern "C" fn boot() {
-    let sprite_blutti = load_file_buf("blutti").unwrap();
-    let state = State {
-        blutti: Blutti::default(),
-        sprite_blutti: sprite_blutti,
-    };
-    unsafe { STATE.set(state) }.ok().unwrap();
+enum Direction {
+    Left,
+    Right,
 }
 
 struct Blutti {
@@ -30,6 +26,7 @@ struct Blutti {
     jump_timer: i32,
     dash_timer: i32,
     movement: i32,
+    direction: Direction,
 }
 
 impl Default for Blutti {
@@ -42,6 +39,7 @@ impl Default for Blutti {
             jump_timer: 0,
             dash_timer: 0,
             movement: 0,
+            direction: Direction::Left,
         }
     }
 }
@@ -63,17 +61,22 @@ impl Blutti {
 
     fn draw(&self) {
         let state = get_state();
-        let blutti = state.sprite_blutti.as_image();
+        let blutti = match self.direction {
+            Direction::Left => state.sprite_blutti_left.as_image(),
+            Direction::Right => state.sprite_blutti_right.as_image(),
+        };
         draw_image(&blutti, self.position);
     }
 
     fn move_left(&mut self) {
+        self.direction = Direction::Left;
         if self.standing() {
             self.movement = -Self::SPEED;
         }
     }
 
     fn move_right(&mut self) {
+        self.direction = Direction::Right;
         if self.standing() {
             self.movement = Self::SPEED;
         }
@@ -137,6 +140,16 @@ impl Blutti {
     fn standing(&self) -> bool {
         self.position.y == (Point::MAX.y - Self::SIZE)
     }
+}
+
+#[no_mangle]
+extern "C" fn boot() {
+    let state = State {
+        blutti: Blutti::default(),
+        sprite_blutti_left: load_file_buf("blutti_left").unwrap(),
+        sprite_blutti_right: load_file_buf("blutti_right").unwrap(),
+    };
+    unsafe { STATE.set(state) }.ok().unwrap();
 }
 
 #[no_mangle]
