@@ -8,6 +8,7 @@ static mut STATE: OnceCell<State> = OnceCell::new();
 
 struct State {
     blutti: Blutti,
+    sprite_blutti: FileBuf,
 }
 
 fn get_state() -> &'static mut State {
@@ -16,8 +17,10 @@ fn get_state() -> &'static mut State {
 
 #[no_mangle]
 extern "C" fn boot() {
+    let sprite_blutti = load_file_buf("blutti").unwrap();
     let state = State {
         blutti: Blutti::default(),
+        sprite_blutti: sprite_blutti,
     };
     unsafe { STATE.set(state) }.ok().unwrap();
 }
@@ -59,15 +62,9 @@ impl Blutti {
     };
 
     fn draw(&self) {
-        draw_circle(
-            self.position,
-            Self::SIZE,
-            Style {
-                fill_color: Color::Red,
-                stroke_color: Color::Orange,
-                stroke_width: 1,
-            },
-        );
+        let state = get_state();
+        let blutti = state.sprite_blutti.as_image();
+        draw_image(&blutti, self.position);
     }
 
     fn move_left(&mut self) {

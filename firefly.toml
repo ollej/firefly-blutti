@@ -2,3 +2,6 @@ author_id = "olle"
 app_id = "firefly-blutti"
 author_name = "Olle Wreede"
 app_name = "Firefly Blutti"
+
+[files]
+blutti = { path = "assets/blutti-8x8.png" }
