@@ -4,6 +4,34 @@
 use core::cell::OnceCell;
 use firefly_rust::*;
 
+const TILE_WIDTH: u8 = 8;
+const TILE_HEIGHT: u8 = 8;
+const SPRITES_H: u8 = 8;
+const SPRITES_V: u8 = 8;
+const TILES_H: u8 = 30;
+const TILES_V: u8 = 20;
+const LEVEL: [u8; 600] = [
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3,
+    3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+];
+
 static mut STATE: OnceCell<State> = OnceCell::new();
 
 struct State {
@@ -33,7 +61,7 @@ impl Default for Blutti {
         Self {
             position: Point {
                 x: 120 - Self::SIZE / 2,
-                y: 160 - Self::SIZE,
+                y: 160 - Self::SIZE - 8,
             },
             jump_timer: 0,
             dash_timer: 0,
@@ -62,14 +90,14 @@ impl Blutti {
         let state = get_state();
         let blutti = match self.direction {
             Direction::Left => state.spritesheet.as_image().sub(
-                Point { x: 0, y: 0 },
+                Point { x: 8, y: 0 },
                 Size {
                     width: 8,
                     height: 8,
                 },
             ),
             Direction::Right => state.spritesheet.as_image().sub(
-                Point { x: 8, y: 0 },
+                Point { x: 16, y: 0 },
                 Size {
                     width: 8,
                     height: 8,
@@ -149,7 +177,39 @@ impl Blutti {
     }
 
     fn standing(&self) -> bool {
-        self.position.y == (Point::MAX.y - Self::SIZE)
+        let tile_pos = get_tile_index(self.position);
+        let pos = LEVEL[tile_pos as usize];
+        pos != 0
+    }
+}
+
+fn get_tile_index(point: Point) -> usize {
+    let tile_x = point.x / TILE_WIDTH as i32;
+    let tile_y = point.y / TILE_WIDTH as i32 + 1;
+    (tile_y * TILES_H as i32 + tile_x) as usize
+}
+
+fn render_level() {
+    let state = get_state();
+    let sheet = state.spritesheet.as_image();
+    for (i, tile) in LEVEL.iter().enumerate() {
+        let tile_sprite = sheet.sub(
+            Point {
+                x: ((tile % SPRITES_H) * TILE_WIDTH) as i32,
+                y: ((tile / SPRITES_H) * TILE_HEIGHT) as i32,
+            }, // FIXME: calc row
+            Size {
+                width: 8,
+                height: 8,
+            },
+        );
+        draw_sub_image(
+            &tile_sprite,
+            Point {
+                x: ((i as u16 % TILES_H as u16) * TILE_WIDTH as u16) as i32,
+                y: ((i as u16 / TILES_H as u16) * TILE_HEIGHT as u16) as i32,
+            },
+        );
     }
 }
 
@@ -189,5 +249,6 @@ extern "C" fn update() {
 extern "C" fn render() {
     let state = get_state();
     clear_screen(Color::White);
+    render_level();
     state.blutti.draw();
 }
