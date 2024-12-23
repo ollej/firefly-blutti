@@ -1,0 +1,13 @@
+[package]
+name = "firefly-blutti"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+firefly-rust = "0.7.1"
+
+# https://github.com/johnthagen/min-sized-rust
+[profile.release]
+strip = true    # Automatically strip symbols from the binary.
+opt-level = "z" # Optimize for size.
+lto = true      # Enable link-time optimization
