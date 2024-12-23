@@ -8,8 +8,7 @@ static mut STATE: OnceCell<State> = OnceCell::new();
 
 struct State {
     blutti: Blutti,
-    sprite_blutti_left: FileBuf,
-    sprite_blutti_right: FileBuf,
+    spritesheet: FileBuf,
 }
 
 fn get_state() -> &'static mut State {
@@ -62,10 +61,22 @@ impl Blutti {
     fn draw(&self) {
         let state = get_state();
         let blutti = match self.direction {
-            Direction::Left => state.sprite_blutti_left.as_image(),
-            Direction::Right => state.sprite_blutti_right.as_image(),
+            Direction::Left => state.spritesheet.as_image().sub(
+                Point { x: 0, y: 0 },
+                Size {
+                    width: 8,
+                    height: 8,
+                },
+            ),
+            Direction::Right => state.spritesheet.as_image().sub(
+                Point { x: 8, y: 0 },
+                Size {
+                    width: 8,
+                    height: 8,
+                },
+            ),
         };
-        draw_image(&blutti, self.position);
+        draw_sub_image(&blutti, self.position);
     }
 
     fn move_left(&mut self) {
@@ -146,8 +157,7 @@ impl Blutti {
 extern "C" fn boot() {
     let state = State {
         blutti: Blutti::default(),
-        sprite_blutti_left: load_file_buf("blutti_left").unwrap(),
-        sprite_blutti_right: load_file_buf("blutti_right").unwrap(),
+        spritesheet: load_file_buf("spritesheet").unwrap(),
     };
     unsafe { STATE.set(state) }.ok().unwrap();
 }
