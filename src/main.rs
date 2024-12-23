@@ -25,6 +25,7 @@ extern "C" fn boot() {
 struct Blutti {
     position: Point,
     jump_timer: i32,
+    dash_timer: i32,
     movement: i32,
 }
 
@@ -36,6 +37,7 @@ impl Default for Blutti {
                 y: 160 - Self::SIZE,
             },
             jump_timer: 0,
+            dash_timer: 0,
             movement: 0,
         }
     }
@@ -46,6 +48,9 @@ impl Blutti {
     const SPEED: i32 = 2;
     const JUMP_TIME: i32 = 8;
     const JUMP_SPEED: i32 = 2;
+    const DASH_TIME: i32 = 8;
+    const DASH_WAIT_TIME: i32 = 32;
+    const DASH_SPEED: i32 = 1;
     const GRAVITY: i32 = 2;
     const MIN: Point = Point::MIN;
     const MAX: Point = Point {
@@ -83,25 +88,51 @@ impl Blutti {
         }
     }
 
+    fn start_dash(&mut self) {
+        if self.dash_timer == 0 {
+            self.dash_timer = Self::DASH_TIME;
+        }
+    }
+
     fn movement(&mut self) {
         if self.jump_timer > 0 {
             self.position = Point {
-                x: self.position.x + self.movement,
+                x: self.position.x,
                 y: self.position.y - Self::JUMP_SPEED,
             };
             self.jump_timer -= 1;
-        } else if self.jump_timer == 0 && !self.standing() {
+        }
+        if self.dash_timer > 0 {
             self.position = Point {
-                x: self.position.x + self.movement,
-                y: self.position.y + Self::GRAVITY,
-            }
-        } else if self.movement != 0 && self.standing() {
-            self.position = Point {
-                x: self.position.x + self.movement,
+                x: self.position.x + Self::DASH_SPEED * self.movement,
                 y: self.position.y,
             };
-            self.movement = 0;
+            if self.dash_timer == 1 {
+                self.dash_timer = -Self::DASH_WAIT_TIME;
+            } else {
+                self.dash_timer -= 1;
+            }
         }
+        if self.dash_timer < 0 {
+            self.dash_timer += 1;
+        }
+        if self.standing() {
+            if self.movement != 0 {
+                self.position = Point {
+                    x: self.position.x + self.movement,
+                    y: self.position.y,
+                };
+                self.movement = 0;
+            }
+        } else {
+            if self.jump_timer == 0 && self.dash_timer <= 0 {
+                self.position = Point {
+                    x: self.position.x,
+                    y: self.position.y + Self::GRAVITY,
+                }
+            }
+        }
+
         self.position.x = self.position.x.clamp(Self::MIN.x, Self::MAX.x);
         self.position.y = self.position.y.clamp(Self::MIN.y, Self::MAX.y);
     }
@@ -127,6 +158,9 @@ extern "C" fn update() {
     let buttons = read_buttons(Peer::COMBINED);
     if buttons.s {
         state.blutti.start_jump();
+    }
+    if buttons.w {
+        state.blutti.start_dash();
     }
     state.blutti.movement();
 }
