@@ -13,6 +13,7 @@ name = "firefly-blutti"
 version = "0.1.0"
 dependencies = [
  "firefly-rust",
+ "fixedstr",
 ]
 
 [[package]]
@@ -23,6 +24,12 @@ checksum = "e6792911db81e64840387ae5c6e1d3f49651e5177ec11e8d244dcd4f3f8096ff"
 dependencies = [
  "talc",
 ]
+
+[[package]]
+name = "fixedstr"
+version = "0.5.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "60aba7afd9b1b9e1950c2b7e8bcac3cc44a273c62a02717dedca2d0a1aee694d"
 
 [[package]]
 name = "lock_api"
