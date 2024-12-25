@@ -44,6 +44,7 @@ struct State {
     tiles: [TileCollider; 64],
     collected: [bool; 600],
     font: FileBuf,
+    fx: audio::Node<audio::Gain>,
 }
 
 fn get_state() -> &'static mut State {
@@ -245,7 +246,14 @@ impl Blutti {
         if !state.collected[tile_pos] {
             self.points += 1;
             state.collected[tile_pos] = true;
+            self.play_sound("sound_coin");
         }
+    }
+
+    fn play_sound(&self, sound: &str) {
+        let state = get_state();
+        state.fx.clear();
+        state.fx.add_file(sound);
     }
 
     fn current_tile(&self) -> TileCollider {
@@ -369,12 +377,14 @@ extern "C" fn boot() {
     tiles[8] = TileCollider::Full;
     tiles[9] = TileCollider::Climbable;
     tiles[10] = TileCollider::Collectable;
+    let fx = audio::OUT.add_gain(0.5);
     let state = State {
         blutti: Blutti::default(),
         spritesheet: load_file_buf("spritesheet").unwrap(),
         tiles,
         collected: [false; 600],
         font: load_file_buf("font").unwrap(),
+        fx,
     };
     unsafe { STATE.set(state) }.ok().unwrap();
 }
