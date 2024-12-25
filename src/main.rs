@@ -19,7 +19,7 @@ const LEVEL: [u8; 600] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 10, 0, 0, 10, 0, 10, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 9, 3, 3, 3, 3, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
@@ -31,7 +31,7 @@ const LEVEL: [u8; 600] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 10, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 4, 3, 3, 3, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
     3, 3, 3, 3, 8, 8, 8, 8, 8, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 ];
@@ -42,6 +42,7 @@ struct State {
     blutti: Blutti,
     spritesheet: FileBuf,
     tiles: [TileCollider; 64],
+    collected: [bool; 600],
 }
 
 fn get_state() -> &'static mut State {
@@ -61,6 +62,7 @@ enum TileCollider {
     Full,
     Top,
     Climbable,
+    Collectable,
     None,
 }
 
@@ -70,6 +72,7 @@ struct Blutti {
     dash_timer: i32,
     movement: i32,
     direction: Direction,
+    points: i32,
 }
 
 impl Default for Blutti {
@@ -82,6 +85,7 @@ impl Default for Blutti {
             jump_timer: 0,
             dash_timer: 0,
             movement: 0,
+            points: 0,
             direction: Direction::Left,
         }
     }
@@ -227,13 +231,32 @@ impl Blutti {
         }
     }
 
+    fn handle_effects(&mut self) {
+        match self.current_tile() {
+            TileCollider::Collectable => self.collect_item(),
+            _ => (),
+        }
+    }
+
+    fn collect_item(&mut self) {
+        self.points += 1;
+        let state = get_state();
+        let tile_pos = get_tile_index(self.position);
+        state.collected[tile_pos] = true;
+    }
+
+    fn current_tile(&self) -> TileCollider {
+        self.tile_at_point(self.position)
+    }
+
     fn is_tile_empty(&self, point: Point) -> bool {
-        self.tile_at_point(point) == TileCollider::None
+        let tile = self.tile_at_point(point);
+        tile == TileCollider::None || tile == TileCollider::Collectable
     }
 
     fn is_tile_free(&self, point: Point) -> bool {
         match self.tile_at_point(point) {
-            TileCollider::None | TileCollider::Climbable => true,
+            TileCollider::None | TileCollider::Climbable | TileCollider::Collectable => true,
             TileCollider::Full | TileCollider::Top => false,
         }
     }
@@ -301,6 +324,10 @@ fn render_level() {
     let state = get_state();
     let sheet = state.spritesheet.as_image();
     for (i, tile) in LEVEL.iter().enumerate() {
+        let mut tile = tile;
+        if state.collected[i] {
+            tile = &0u8;
+        }
         let tile_sprite = sheet.sub(
             Point {
                 x: ((tile % SPRITES_H) * TILE_WIDTH) as i32,
@@ -331,10 +358,12 @@ extern "C" fn boot() {
     tiles[7] = TileCollider::Full;
     tiles[8] = TileCollider::Full;
     tiles[9] = TileCollider::Climbable;
+    tiles[10] = TileCollider::Collectable;
     let state = State {
         blutti: Blutti::default(),
         spritesheet: load_file_buf("spritesheet").unwrap(),
         tiles,
+        collected: [false; 600],
     };
     unsafe { STATE.set(state) }.ok().unwrap();
 }
@@ -366,6 +395,7 @@ extern "C" fn update() {
         state.blutti.start_dash();
     }
     state.blutti.movement();
+    state.blutti.handle_effects();
 }
 
 #[no_mangle]
