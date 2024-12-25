@@ -5,3 +5,4 @@ app_name = "Firefly Blutti"
 
 [files]
 spritesheet = { path = "assets/spritesheet.png" }
+font = { path = "assets/eg_4x6.fff" }

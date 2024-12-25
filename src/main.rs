@@ -3,7 +3,7 @@
 
 use core::cell::OnceCell;
 use firefly_rust::*;
-use fixedstr::{str256, str_format};
+use fixedstr::{str256, str32, str_format};
 
 const TILE_WIDTH: u8 = 8;
 const TILE_HEIGHT: u8 = 8;
@@ -43,6 +43,7 @@ struct State {
     spritesheet: FileBuf,
     tiles: [TileCollider; 64],
     collected: [bool; 600],
+    font: FileBuf,
 }
 
 fn get_state() -> &'static mut State {
@@ -239,10 +240,12 @@ impl Blutti {
     }
 
     fn collect_item(&mut self) {
-        self.points += 1;
         let state = get_state();
         let tile_pos = get_tile_index(self.position);
-        state.collected[tile_pos] = true;
+        if !state.collected[tile_pos] {
+            self.points += 1;
+            state.collected[tile_pos] = true;
+        }
     }
 
     fn current_tile(&self) -> TileCollider {
@@ -320,6 +323,13 @@ fn get_tile_index(point: Point) -> usize {
     (tile_y * TILES_H as i32 + tile_x) as usize
 }
 
+fn render_ui() {
+    let state = get_state();
+    let font = state.font.as_font();
+    let text = str_format!(str32, "Points: {}", state.blutti.points);
+    draw_text(text.as_str(), &font, Point { x: 4, y: 10 }, Color::Black);
+}
+
 fn render_level() {
     let state = get_state();
     let sheet = state.spritesheet.as_image();
@@ -364,6 +374,7 @@ extern "C" fn boot() {
         spritesheet: load_file_buf("spritesheet").unwrap(),
         tiles,
         collected: [false; 600],
+        font: load_file_buf("font").unwrap(),
     };
     unsafe { STATE.set(state) }.ok().unwrap();
 }
@@ -403,5 +414,6 @@ extern "C" fn render() {
     let state = get_state();
     clear_screen(Color::White);
     render_level();
+    render_ui();
     state.blutti.draw();
 }
