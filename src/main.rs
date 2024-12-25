@@ -148,6 +148,7 @@ impl Blutti {
 
     fn start_dash(&mut self) {
         if self.dash_timer == 0 {
+            play_sound("sound_dash");
             self.dash_timer = Self::DASH_TIME;
         }
     }
