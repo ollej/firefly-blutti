@@ -45,6 +45,7 @@ struct State {
     collected: [bool; 600],
     font: FileBuf,
     fx: audio::Node<audio::Gain>,
+    theme: audio::Node<audio::Gain>,
 }
 
 fn get_state() -> &'static mut State {
@@ -140,7 +141,7 @@ impl Blutti {
 
     fn start_jump(&mut self) {
         if self.jump_timer == 0 && self.is_standing() {
-            self.play_sound("sound_jump");
+            play_sound("sound_jump");
             self.jump_timer = Self::JUMP_TIME;
         }
     }
@@ -237,22 +238,16 @@ impl Blutti {
             match LEVEL[tile_pos] {
                 10 => {
                     self.points += 1;
-                    self.play_sound("sound_coin");
+                    play_sound("sound_coin");
                 }
                 11 => {
                     self.lives += 1;
-                    self.play_sound("sound_powerup");
+                    play_sound("sound_powerup");
                 }
                 _ => (),
             }
             state.collected[tile_pos] = true;
         }
-    }
-
-    fn play_sound(&self, sound: &str) {
-        let state = get_state();
-        state.fx.clear();
-        state.fx.add_file(sound);
     }
 
     fn current_tile(&self) -> TileCollider {
@@ -321,6 +316,18 @@ impl Blutti {
             || self.tile_at_point(self.position_left_foot()) == TileCollider::Climbable
             || self.tile_at_point(self.position_right_foot()) == TileCollider::Climbable
     }
+}
+
+fn play_sound(sound: &str) {
+    let state = get_state();
+    state.fx.clear();
+    state.fx.add_file(sound);
+}
+
+fn play_music(sound: &str) {
+    let state = get_state();
+    state.theme.clear();
+    state.theme.add_file(sound);
 }
 
 fn get_tile_index(point: Point) -> usize {
@@ -396,6 +403,7 @@ extern "C" fn boot() {
     tiles[10] = TileCollider::Collectable;
     tiles[11] = TileCollider::Collectable;
     let fx = audio::OUT.add_gain(0.5);
+    let theme = audio::OUT.add_gain(0.5);
     let state = State {
         blutti: Blutti::default(),
         spritesheet: load_file_buf("spritesheet").unwrap(),
@@ -403,8 +411,10 @@ extern "C" fn boot() {
         collected: [false; 600],
         font: load_file_buf("font").unwrap(),
         fx,
+        theme,
     };
     unsafe { STATE.set(state) }.ok().unwrap();
+    play_music("sound_theme");
 }
 
 #[no_mangle]
