@@ -32,7 +32,7 @@ const LEVEL: [i32; 600] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 10, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 4, 3, 3, 3, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 4, 3, 3, 3, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 11, 0, 0,
     3, 3, 3, 3, 8, 8, 8, 8, 8, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 ];
 
@@ -75,20 +75,22 @@ struct Blutti {
     movement: i32,
     direction: Direction,
     points: i32,
+    lives: i32,
 }
 
 impl Default for Blutti {
     fn default() -> Self {
         Self {
             position: Point {
-                x: 120 - Self::SIZE,
-                y: 160 - Self::SIZE - TILE_HEIGHT,
+                x: WIDTH / 2 - Self::SIZE,
+                y: HEIGHT - Self::SIZE - TILE_HEIGHT,
             },
             jump_timer: 0,
             dash_timer: 0,
             movement: 0,
             points: 0,
             direction: Direction::Left,
+            lives: 3,
         }
     }
 }
@@ -138,6 +140,7 @@ impl Blutti {
 
     fn start_jump(&mut self) {
         if self.jump_timer == 0 && self.is_standing() {
+            self.play_sound("sound_jump");
             self.jump_timer = Self::JUMP_TIME;
         }
     }
@@ -231,9 +234,18 @@ impl Blutti {
         let state = get_state();
         let tile_pos = get_tile_index(self.position);
         if !state.collected[tile_pos] {
-            self.points += 1;
+            match LEVEL[tile_pos] {
+                10 => {
+                    self.points += 1;
+                    self.play_sound("sound_coin");
+                }
+                11 => {
+                    self.lives += 1;
+                    self.play_sound("sound_powerup");
+                }
+                _ => (),
+            }
             state.collected[tile_pos] = true;
-            self.play_sound("sound_coin");
         }
     }
 
@@ -345,6 +357,15 @@ fn render_ui() {
         str_format!(str32, "Points: {}", state.blutti.points).as_str(),
         Point { x: 4, y: 10 },
     );
+    for heart in 0..state.blutti.lives {
+        draw_tile(
+            11,
+            Point {
+                x: WIDTH - heart * TILE_WIDTH - TILE_WIDTH - 3,
+                y: 4,
+            },
+        );
+    }
 }
 
 fn render_level() {
@@ -373,6 +394,7 @@ extern "C" fn boot() {
     tiles[8] = TileCollider::Full;
     tiles[9] = TileCollider::Climbable;
     tiles[10] = TileCollider::Collectable;
+    tiles[11] = TileCollider::Collectable;
     let fx = audio::OUT.add_gain(0.5);
     let state = State {
         blutti: Blutti::default(),
@@ -420,6 +442,6 @@ extern "C" fn render() {
     let state = get_state();
     clear_screen(Color::White);
     render_level();
-    render_ui();
     state.blutti.draw();
+    render_ui();
 }
