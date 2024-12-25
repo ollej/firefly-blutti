@@ -103,7 +103,7 @@ impl Blutti {
     const JUMP_SPEED: i32 = 2;
     const DASH_TIME: i32 = 8;
     const DASH_WAIT_TIME: i32 = 32;
-    const DASH_SPEED: i32 = 1;
+    const DASH_SPEED: i32 = 3;
     const GRAVITY: i32 = 2;
     const MIN: Point = Point::MIN;
     const MAX: Point = Point {
