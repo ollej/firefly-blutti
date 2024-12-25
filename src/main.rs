@@ -109,24 +109,11 @@ impl Blutti {
     };
 
     fn draw(&self) {
-        let state = get_state();
-        let blutti = match self.direction {
-            Direction::Left | Direction::Up => state.spritesheet.as_image().sub(
-                Point { x: 8, y: 0 },
-                Size {
-                    width: 8,
-                    height: 8,
-                },
-            ),
-            Direction::Right | Direction::Down => state.spritesheet.as_image().sub(
-                Point { x: 16, y: 0 },
-                Size {
-                    width: 8,
-                    height: 8,
-                },
-            ),
+        let tile = match self.direction {
+            Direction::Left | Direction::Up => 1u8,
+            Direction::Right | Direction::Down => 2u8,
         };
-        draw_sub_image(&blutti, self.position);
+        draw_tile(&tile, self.position);
     }
 
     fn move_left(&mut self) {
@@ -331,6 +318,21 @@ fn get_tile_index(point: Point) -> usize {
     (tile_y * TILES_H as i32 + tile_x) as usize
 }
 
+fn draw_tile(pos: &u8, point: Point) {
+    let state = get_state();
+    let tile_sprite = state.spritesheet.as_image().sub(
+        Point {
+            x: ((pos % SPRITES_H) * TILE_WIDTH) as i32,
+            y: ((pos / SPRITES_H) * TILE_HEIGHT) as i32,
+        },
+        Size {
+            width: 8,
+            height: 8,
+        },
+    );
+    draw_sub_image(&tile_sprite, point);
+}
+
 fn render_ui() {
     let state = get_state();
     let font = state.font.as_font();
@@ -340,29 +342,16 @@ fn render_ui() {
 
 fn render_level() {
     let state = get_state();
-    let sheet = state.spritesheet.as_image();
     for (i, tile) in LEVEL.iter().enumerate() {
         let mut tile = tile;
         if state.collected[i] {
             tile = &0u8;
         }
-        let tile_sprite = sheet.sub(
-            Point {
-                x: ((tile % SPRITES_H) * TILE_WIDTH) as i32,
-                y: ((tile / SPRITES_H) * TILE_HEIGHT) as i32,
-            }, // FIXME: calc row
-            Size {
-                width: 8,
-                height: 8,
-            },
-        );
-        draw_sub_image(
-            &tile_sprite,
-            Point {
-                x: ((i as u16 % TILES_H as u16) * TILE_WIDTH as u16) as i32,
-                y: ((i as u16 / TILES_H as u16) * TILE_HEIGHT as u16) as i32,
-            },
-        );
+        let point = Point {
+            x: ((i as u16 % TILES_H as u16) * TILE_WIDTH as u16) as i32,
+            y: ((i as u16 / TILES_H as u16) * TILE_HEIGHT as u16) as i32,
+        };
+        draw_tile(tile, point);
     }
 }
 
