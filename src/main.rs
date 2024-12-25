@@ -5,15 +5,15 @@ use core::cell::OnceCell;
 use firefly_rust::*;
 use fixedstr::{str256, str32, str_format};
 
-const TILE_WIDTH: u8 = 8;
-const TILE_HEIGHT: u8 = 8;
-const SPRITES_H: u8 = 8;
-const SPRITES_V: u8 = 8;
-const TILES_H: u8 = 30;
-const TILES_V: u8 = 20;
+const TILE_WIDTH: i32 = 8;
+const TILE_HEIGHT: i32 = 8;
+const SPRITES_H: i32 = 8;
+const SPRITES_V: i32 = 8;
+const TILES_H: i32 = 30;
+const TILES_V: i32 = 20;
 
 #[rustfmt::skip]
-const LEVEL: [u8; 600] = [
+const LEVEL: [i32; 600] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -82,7 +82,7 @@ impl Default for Blutti {
         Self {
             position: Point {
                 x: 120 - Self::SIZE,
-                y: 160 - Self::SIZE - TILE_HEIGHT as i32,
+                y: 160 - Self::SIZE - TILE_HEIGHT,
             },
             jump_timer: 0,
             dash_timer: 0,
@@ -110,10 +110,10 @@ impl Blutti {
 
     fn draw(&self) {
         let tile = match self.direction {
-            Direction::Left | Direction::Up => 1u8,
-            Direction::Right | Direction::Down => 2u8,
+            Direction::Left | Direction::Up => 1,
+            Direction::Right | Direction::Down => 2,
         };
-        draw_tile(&tile, self.position);
+        draw_tile(tile, self.position);
     }
 
     fn move_left(&mut self) {
@@ -194,7 +194,7 @@ impl Blutti {
 
         if self.position.x != new_position.x {
             let test_x = if new_position.x > self.position.x {
-                new_position.x + TILE_WIDTH as i32 - 1
+                new_position.x + TILE_WIDTH - 1
             } else {
                 new_position.x
             };
@@ -207,7 +207,7 @@ impl Blutti {
         }
         if self.position.y != new_position.y {
             let test_y = if new_position.y > self.position.y {
-                new_position.y + TILE_HEIGHT as i32 - 1
+                new_position.y + TILE_HEIGHT - 1
             } else {
                 new_position.y
             };
@@ -273,28 +273,28 @@ impl Blutti {
     fn position_below_left_foot(&self) -> Point {
         Point {
             x: self.position.x,
-            y: self.position.y + TILE_HEIGHT as i32,
+            y: self.position.y + TILE_HEIGHT,
         }
     }
 
     fn position_below_right_foot(&self) -> Point {
         Point {
-            x: self.position.x + TILE_WIDTH as i32 - 1,
-            y: self.position.y + TILE_HEIGHT as i32,
+            x: self.position.x + TILE_WIDTH - 1,
+            y: self.position.y + TILE_HEIGHT,
         }
     }
 
     fn position_left_foot(&self) -> Point {
         Point {
             x: self.position.x,
-            y: self.position.y + TILE_HEIGHT as i32 - 1,
+            y: self.position.y + TILE_HEIGHT - 1,
         }
     }
 
     fn position_right_foot(&self) -> Point {
         Point {
-            x: self.position.x + TILE_WIDTH as i32 - 1,
-            y: self.position.y + TILE_HEIGHT as i32 - 1,
+            x: self.position.x + TILE_WIDTH - 1,
+            y: self.position.y + TILE_HEIGHT - 1,
         }
     }
 
@@ -312,18 +312,18 @@ impl Blutti {
 }
 
 fn get_tile_index(point: Point) -> usize {
-    let tile_x = point.x / TILE_WIDTH as i32;
-    let tile_y = point.y / TILE_WIDTH as i32;
+    let tile_x = point.x / TILE_WIDTH;
+    let tile_y = point.y / TILE_WIDTH;
     //log_debug(str_format!(str256, "tile_x: {} tile_y: {}", tile_x, tile_y).as_str());
-    (tile_y * TILES_H as i32 + tile_x) as usize
+    (tile_y * TILES_H + tile_x) as usize
 }
 
-fn draw_tile(pos: &u8, point: Point) {
+fn draw_tile(pos: i32, point: Point) {
     let state = get_state();
     let tile_sprite = state.spritesheet.as_image().sub(
         Point {
-            x: ((pos % SPRITES_H) * TILE_WIDTH) as i32,
-            y: ((pos / SPRITES_H) * TILE_HEIGHT) as i32,
+            x: ((pos % SPRITES_H) * TILE_WIDTH),
+            y: ((pos / SPRITES_H) * TILE_HEIGHT),
         },
         Size {
             width: 8,
@@ -333,23 +333,30 @@ fn draw_tile(pos: &u8, point: Point) {
     draw_sub_image(&tile_sprite, point);
 }
 
-fn render_ui() {
+fn display_text(text: &str, position: Point) {
     let state = get_state();
     let font = state.font.as_font();
-    let text = str_format!(str32, "Points: {}", state.blutti.points);
-    draw_text(text.as_str(), &font, Point { x: 4, y: 10 }, Color::Black);
+    draw_text(text, &font, position, Color::Black);
+}
+
+fn render_ui() {
+    let state = get_state();
+    display_text(
+        str_format!(str32, "Points: {}", state.blutti.points).as_str(),
+        Point { x: 4, y: 10 },
+    );
 }
 
 fn render_level() {
     let state = get_state();
     for (i, tile) in LEVEL.iter().enumerate() {
-        let mut tile = tile;
+        let mut tile = *tile;
         if state.collected[i] {
-            tile = &0u8;
+            tile = 0;
         }
         let point = Point {
-            x: ((i as u16 % TILES_H as u16) * TILE_WIDTH as u16) as i32,
-            y: ((i as u16 / TILES_H as u16) * TILE_HEIGHT as u16) as i32,
+            x: ((i as i32 % TILES_H) * TILE_WIDTH),
+            y: ((i as i32 / TILES_H) * TILE_HEIGHT),
         };
         draw_tile(tile, point);
     }
