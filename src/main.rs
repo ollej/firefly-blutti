@@ -20,19 +20,19 @@ const LEVEL: [u8; 600] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 4, 3, 3, 3, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 9, 3, 3, 3, 3, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 4, 3, 3, 3, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
     3, 3, 3, 3, 8, 8, 8, 8, 8, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 ];
 
@@ -41,15 +41,27 @@ static mut STATE: OnceCell<State> = OnceCell::new();
 struct State {
     blutti: Blutti,
     spritesheet: FileBuf,
+    tiles: [TileCollider; 64],
 }
 
 fn get_state() -> &'static mut State {
     unsafe { STATE.get_mut() }.unwrap()
 }
 
+#[derive(PartialEq)]
 enum Direction {
     Left,
     Right,
+    Up,
+    Down,
+}
+
+#[derive(PartialEq, Clone, Copy, Debug)]
+enum TileCollider {
+    Full,
+    Top,
+    Climbable,
+    None,
 }
 
 struct Blutti {
@@ -83,7 +95,7 @@ impl Blutti {
     const DASH_TIME: i32 = 8;
     const DASH_WAIT_TIME: i32 = 32;
     const DASH_SPEED: i32 = 1;
-    const GRAVITY: i32 = 1;
+    const GRAVITY: i32 = 2;
     const MIN: Point = Point::MIN;
     const MAX: Point = Point {
         x: Point::MAX.x - Self::SIZE,
@@ -93,14 +105,14 @@ impl Blutti {
     fn draw(&self) {
         let state = get_state();
         let blutti = match self.direction {
-            Direction::Left => state.spritesheet.as_image().sub(
+            Direction::Left | Direction::Up => state.spritesheet.as_image().sub(
                 Point { x: 8, y: 0 },
                 Size {
                     width: 8,
                     height: 8,
                 },
             ),
-            Direction::Right => state.spritesheet.as_image().sub(
+            Direction::Right | Direction::Down => state.spritesheet.as_image().sub(
                 Point { x: 16, y: 0 },
                 Size {
                     width: 8,
@@ -121,8 +133,18 @@ impl Blutti {
         self.movement = Self::SPEED;
     }
 
+    fn move_up(&mut self) {
+        self.direction = Direction::Up;
+        self.movement = -Self::SPEED;
+    }
+
+    fn move_down(&mut self) {
+        self.direction = Direction::Down;
+        self.movement = Self::SPEED;
+    }
+
     fn start_jump(&mut self) {
-        if self.jump_timer == 0 && self.standing() {
+        if self.jump_timer == 0 && self.is_standing() {
             self.jump_timer = Self::JUMP_TIME;
         }
     }
@@ -134,10 +156,21 @@ impl Blutti {
     }
 
     fn movement(&mut self) {
-        let mut new_x = self.position.x + self.movement;
+        let mut new_x = self.position.x;
         let mut new_y = self.position.y;
 
-        if self.dash_timer > 0 {
+        match self.direction {
+            Direction::Left | Direction::Right => new_x += self.movement,
+            Direction::Up | Direction::Down => {
+                if self.is_on_ladder() {
+                    new_y += self.movement;
+                }
+            }
+        };
+
+        if self.dash_timer > 0
+            && (self.direction == Direction::Left || self.direction == Direction::Right)
+        {
             new_x = self.position.x + Self::DASH_SPEED * self.movement;
         }
         if self.jump_timer > 0 {
@@ -145,7 +178,9 @@ impl Blutti {
             self.jump_timer -= 1;
         }
         if self.jump_timer == 0 && self.dash_timer <= 0 {
-            new_y += Self::GRAVITY;
+            if !self.is_standing() {
+                new_y += Self::GRAVITY;
+            }
         }
 
         if self.dash_timer == 1 {
@@ -170,7 +205,7 @@ impl Blutti {
             } else {
                 new_position.x
             };
-            if self.is_tile_empty(Point {
+            if self.is_tile_free(Point {
                 x: test_x,
                 y: self.position.y,
             }) {
@@ -183,7 +218,7 @@ impl Blutti {
             } else {
                 new_position.y
             };
-            if self.is_tile_empty(Point {
+            if self.is_tile_free(Point {
                 x: self.position.x,
                 y: test_y,
             }) {
@@ -192,22 +227,66 @@ impl Blutti {
         }
     }
 
-    fn is_tile_empty(&self, test_point: Point) -> bool {
+    fn is_tile_empty(&self, point: Point) -> bool {
+        self.tile_at_point(point) == TileCollider::None
+    }
+
+    fn is_tile_free(&self, point: Point) -> bool {
+        match self.tile_at_point(point) {
+            TileCollider::None | TileCollider::Climbable => true,
+            TileCollider::Full | TileCollider::Top => false,
+        }
+    }
+
+    fn tile_at_point(&self, test_point: Point) -> TileCollider {
         //log_debug(str_format!(str256, "x: {}", test_point.x).as_str());
         //log_debug(str_format!(str256, "y: {}", test_point.y).as_str());
         let tile_pos = get_tile_index(test_point);
         //log_debug(str_format!(str256, "tile_pos: {}", tile_pos).as_str());
-        let level_pos = LEVEL[tile_pos as usize];
-        //log_debug(str_format!(str256, "level_pos: {}", level_pos).as_str());
-        level_pos == 0
+        let tile = LEVEL[tile_pos as usize];
+        //log_debug(str_format!(str256, "tile: {}", tile).as_str());
+        let state = get_state();
+        state.tiles[tile as usize]
     }
 
-    fn standing(&self) -> bool {
-        let position_below = Point {
+    fn position_below_left_foot(&self) -> Point {
+        Point {
             x: self.position.x,
             y: self.position.y + TILE_HEIGHT as i32,
-        };
-        !self.is_tile_empty(position_below)
+        }
+    }
+
+    fn position_below_right_foot(&self) -> Point {
+        Point {
+            x: self.position.x + TILE_WIDTH as i32 - 1,
+            y: self.position.y + TILE_HEIGHT as i32,
+        }
+    }
+
+    fn position_left_foot(&self) -> Point {
+        Point {
+            x: self.position.x,
+            y: self.position.y + TILE_HEIGHT as i32 - 1,
+        }
+    }
+
+    fn position_right_foot(&self) -> Point {
+        Point {
+            x: self.position.x + TILE_WIDTH as i32 - 1,
+            y: self.position.y + TILE_HEIGHT as i32 - 1,
+        }
+    }
+
+    fn is_standing(&self) -> bool {
+        !(self.is_tile_empty(self.position_below_left_foot())
+            && self.is_tile_empty(self.position_below_right_foot()))
+    }
+
+    fn is_on_ladder(&self) -> bool {
+        self.tile_at_point(self.position_below_left_foot()) == TileCollider::Climbable
+            || self.tile_at_point(self.position_below_right_foot()) == TileCollider::Climbable
+            || self.tile_at_point(self.position_left_foot()) == TileCollider::Climbable
+            || self.tile_at_point(self.position_right_foot()) == TileCollider::Climbable
     }
 }
 
@@ -244,9 +323,18 @@ fn render_level() {
 
 #[no_mangle]
 extern "C" fn boot() {
+    let mut tiles = [TileCollider::None; 64];
+    tiles[3] = TileCollider::Full;
+    tiles[4] = TileCollider::Full;
+    tiles[5] = TileCollider::Full;
+    tiles[6] = TileCollider::Full;
+    tiles[7] = TileCollider::Full;
+    tiles[8] = TileCollider::Full;
+    tiles[9] = TileCollider::Climbable;
     let state = State {
         blutti: Blutti::default(),
         spritesheet: load_file_buf("spritesheet").unwrap(),
+        tiles,
     };
     unsafe { STATE.set(state) }.ok().unwrap();
 }
@@ -262,6 +350,12 @@ extern "C" fn update() {
         }
         if dpad.right {
             state.blutti.move_right();
+        }
+        if dpad.up {
+            state.blutti.move_up();
+        }
+        if dpad.down {
+            state.blutti.move_down();
         }
     }
     let buttons = read_buttons(Peer::COMBINED);
