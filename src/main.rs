@@ -507,6 +507,17 @@ impl Updateable for Monster {
             } else {
                 self.movement *= -1;
             }
+
+            let state = get_state();
+            let pos = state.blutti.position;
+
+            if self.position.x <= pos.x + TILE_WIDTH
+                && (self.position.x + TILE_WIDTH) >= pos.x
+                && self.position.y <= (pos.y + TILE_HEIGHT)
+                && (self.position.y + TILE_WIDTH) >= pos.y
+            {
+                state.blutti.die();
+            }
         }
     }
 
