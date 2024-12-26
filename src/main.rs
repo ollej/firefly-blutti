@@ -192,6 +192,10 @@ trait Drawable {
     }
 }
 
+trait Updateable {
+    fn update(&mut self);
+}
+
 struct Blutti {
     position: Point,
     start_position: Point,
@@ -240,69 +244,8 @@ impl Drawable for Blutti {
     }
 }
 
-impl Blutti {
-    const SIZE: i32 = 8;
-    const SPEED: i32 = 2;
-    const JUMP_TIME: i32 = 8;
-    const JUMP_SPEED: i32 = 2;
-    const DASH_TIME: i32 = 8;
-    const DASH_WAIT_TIME: i32 = 32;
-    const DASH_SPEED: i32 = 3;
-    const GRAVITY: i32 = 2;
-    const MAX_FALL_HEIGHT: i32 = 30;
-    const START_POSITION: Point = Point {
-        x: WIDTH / 2 - Self::SIZE,
-        y: HEIGHT - Self::SIZE - TILE_HEIGHT,
-    };
-    const MIN: Point = Point::MIN;
-    const MAX: Point = Point {
-        x: Point::MAX.x - Self::SIZE,
-        y: Point::MAX.y - Self::SIZE,
-    };
-
-    fn with_start_position(start_position: Point) -> Self {
-        Blutti {
-            position: start_position,
-            start_position,
-            ..Blutti::default()
-        }
-    }
-
-    fn move_left(&mut self) {
-        self.direction = Direction::Left;
-        self.movement = -Self::SPEED;
-    }
-
-    fn move_right(&mut self) {
-        self.direction = Direction::Right;
-        self.movement = Self::SPEED;
-    }
-
-    fn move_up(&mut self) {
-        self.direction = Direction::Up;
-        self.movement = -Self::SPEED;
-    }
-
-    fn move_down(&mut self) {
-        self.direction = Direction::Down;
-        self.movement = Self::SPEED;
-    }
-
-    fn start_jump(&mut self) {
-        if self.jump_timer == 0 && self.is_standing() {
-            play_sound("sound_jump");
-            self.jump_timer = Self::JUMP_TIME;
-        }
-    }
-
-    fn start_dash(&mut self) {
-        if self.dash_timer == 0 {
-            play_sound("sound_dash");
-            self.dash_timer = Self::DASH_TIME;
-        }
-    }
-
-    fn movement(&mut self) {
+impl Updateable for Blutti {
+    fn update(&mut self) {
         let mut new_x = self.position.x;
         let mut new_y = self.position.y;
 
@@ -379,6 +322,69 @@ impl Blutti {
             }) {
                 self.position.y = new_position.y;
             }
+        }
+    }
+}
+
+impl Blutti {
+    const SIZE: i32 = 8;
+    const SPEED: i32 = 2;
+    const JUMP_TIME: i32 = 8;
+    const JUMP_SPEED: i32 = 2;
+    const DASH_TIME: i32 = 8;
+    const DASH_WAIT_TIME: i32 = 32;
+    const DASH_SPEED: i32 = 3;
+    const GRAVITY: i32 = 2;
+    const MAX_FALL_HEIGHT: i32 = 30;
+    const START_POSITION: Point = Point {
+        x: WIDTH / 2 - Self::SIZE,
+        y: HEIGHT - Self::SIZE - TILE_HEIGHT,
+    };
+    const MIN: Point = Point::MIN;
+    const MAX: Point = Point {
+        x: Point::MAX.x - Self::SIZE,
+        y: Point::MAX.y - Self::SIZE,
+    };
+
+    fn with_start_position(start_position: Point) -> Self {
+        Blutti {
+            position: start_position,
+            start_position,
+            ..Blutti::default()
+        }
+    }
+
+    fn move_left(&mut self) {
+        self.direction = Direction::Left;
+        self.movement = -Self::SPEED;
+    }
+
+    fn move_right(&mut self) {
+        self.direction = Direction::Right;
+        self.movement = Self::SPEED;
+    }
+
+    fn move_up(&mut self) {
+        self.direction = Direction::Up;
+        self.movement = -Self::SPEED;
+    }
+
+    fn move_down(&mut self) {
+        self.direction = Direction::Down;
+        self.movement = Self::SPEED;
+    }
+
+    fn start_jump(&mut self) {
+        if self.jump_timer == 0 && self.is_standing() {
+            play_sound("sound_jump");
+            self.jump_timer = Self::JUMP_TIME;
+        }
+    }
+
+    fn start_dash(&mut self) {
+        if self.dash_timer == 0 {
+            play_sound("sound_dash");
+            self.dash_timer = Self::DASH_TIME;
         }
     }
 
@@ -481,6 +487,10 @@ impl Drawable for Monster {
     }
 }
 
+impl Updateable for Monster {
+    fn update(&mut self) {}
+}
+
 fn play_sound(sound: &str) {
     let state = get_state();
     state.fx.clear();
@@ -568,6 +578,13 @@ fn render_ui() {
     }
 }
 
+fn render_monsters() {
+    let state = get_state();
+    for monster in state.level.monsters.iter() {
+        monster.draw();
+    }
+}
+
 fn render_level() {
     let state = get_state();
     for (i, tile) in state.level.tiles.iter().enumerate() {
@@ -634,7 +651,10 @@ extern "C" fn update() {
                 if buttons.w {
                     state.blutti.start_dash();
                 }
-                state.blutti.movement();
+                state.blutti.update();
+                for monster in state.level.monsters.iter_mut() {
+                    monster.update();
+                }
                 state.blutti.handle_effects();
             }
         }
@@ -661,6 +681,7 @@ extern "C" fn render() {
         GameState::Playing => {
             render_level();
             state.blutti.draw();
+            render_monsters();
             render_ui();
         }
         GameState::GameOver(won) => {
