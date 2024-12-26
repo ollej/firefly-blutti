@@ -41,6 +41,7 @@ struct Level {
     stars: i32,
     collision: [TileCollider; 64],
     start_position: Point,
+    monsters: [Monster; 2],
 }
 
 impl Level {
@@ -57,11 +58,13 @@ impl Level {
         collision[11] = TileCollider::Collectable;
         collision[12] = TileCollider::Collectable;
         let start_position = Point { x: 8, y: 144 };
+        let monsters = [Monster::alive(Point { x: 120, y: 144 }), Monster::dead()];
         Level {
             tiles,
             stars,
             collision,
             start_position,
+            monsters,
         }
     }
 
@@ -137,6 +140,58 @@ enum GameState {
     GameOver(bool),
 }
 
+trait Drawable {
+    fn draw(&self);
+    fn position(&self) -> Point;
+
+    fn collision(&self, position: Point) -> TileCollider {
+        let state = get_state();
+        state.level.collision_at_point(position)
+    }
+
+    fn is_tile_empty(&self, position: Point) -> bool {
+        let tile = self.collision(position);
+        tile == TileCollider::None || tile == TileCollider::Collectable
+    }
+
+    fn is_tile_free(&self, position: Point) -> bool {
+        self.collision(position) != TileCollider::Full
+    }
+
+    fn position_below_left_foot(&self) -> Point {
+        Point {
+            x: self.position().x,
+            y: self.position().y + TILE_HEIGHT,
+        }
+    }
+
+    fn position_below_right_foot(&self) -> Point {
+        Point {
+            x: self.position().x + TILE_WIDTH - 1,
+            y: self.position().y + TILE_HEIGHT,
+        }
+    }
+
+    fn position_left_foot(&self) -> Point {
+        Point {
+            x: self.position().x,
+            y: self.position().y + TILE_HEIGHT - 1,
+        }
+    }
+
+    fn position_right_foot(&self) -> Point {
+        Point {
+            x: self.position().x + TILE_WIDTH - 1,
+            y: self.position().y + TILE_HEIGHT - 1,
+        }
+    }
+
+    fn is_standing(&self) -> bool {
+        !(self.is_tile_empty(self.position_below_left_foot())
+            && self.is_tile_empty(self.position_below_right_foot()))
+    }
+}
+
 struct Blutti {
     position: Point,
     start_position: Point,
@@ -169,6 +224,22 @@ impl Default for Blutti {
     }
 }
 
+impl Drawable for Blutti {
+    fn draw(&self) {
+        if self.is_alive() {
+            let tile = match self.direction {
+                Direction::Left | Direction::Up => 1,
+                Direction::Right | Direction::Down => 2,
+            };
+            draw_tile(tile, self.position());
+        }
+    }
+
+    fn position(&self) -> Point {
+        self.position
+    }
+}
+
 impl Blutti {
     const SIZE: i32 = 8;
     const SPEED: i32 = 2;
@@ -194,16 +265,6 @@ impl Blutti {
             position: start_position,
             start_position,
             ..Blutti::default()
-        }
-    }
-
-    fn draw(&self) {
-        if self.is_alive() {
-            let tile = match self.direction {
-                Direction::Left | Direction::Up => 1,
-                Direction::Right | Direction::Down => 2,
-            };
-            draw_tile(tile, self.position);
         }
     }
 
@@ -372,53 +433,6 @@ impl Blutti {
         self.direction = Direction::Left;
     }
 
-    fn collision(&self, position: Point) -> TileCollider {
-        let state = get_state();
-        state.level.collision_at_point(position)
-    }
-
-    fn is_tile_empty(&self, position: Point) -> bool {
-        let tile = self.collision(position);
-        tile == TileCollider::None || tile == TileCollider::Collectable
-    }
-
-    fn is_tile_free(&self, position: Point) -> bool {
-        self.collision(position) != TileCollider::Full
-    }
-
-    fn position_below_left_foot(&self) -> Point {
-        Point {
-            x: self.position.x,
-            y: self.position.y + TILE_HEIGHT,
-        }
-    }
-
-    fn position_below_right_foot(&self) -> Point {
-        Point {
-            x: self.position.x + TILE_WIDTH - 1,
-            y: self.position.y + TILE_HEIGHT,
-        }
-    }
-
-    fn position_left_foot(&self) -> Point {
-        Point {
-            x: self.position.x,
-            y: self.position.y + TILE_HEIGHT - 1,
-        }
-    }
-
-    fn position_right_foot(&self) -> Point {
-        Point {
-            x: self.position.x + TILE_WIDTH - 1,
-            y: self.position.y + TILE_HEIGHT - 1,
-        }
-    }
-
-    fn is_standing(&self) -> bool {
-        !(self.is_tile_empty(self.position_below_left_foot())
-            && self.is_tile_empty(self.position_below_right_foot()))
-    }
-
     fn is_on_ladder(&self) -> bool {
         self.collision(self.position_below_left_foot()) == TileCollider::Climbable
             || self.collision(self.position_below_right_foot()) == TileCollider::Climbable
@@ -428,6 +442,42 @@ impl Blutti {
 
     fn is_alive(&self) -> bool {
         self.lives > 0
+    }
+}
+
+struct Monster {
+    position: Point,
+    alive: bool,
+    tile: i32,
+}
+
+impl Monster {
+    fn alive(position: Point) -> Self {
+        Monster {
+            position,
+            alive: true,
+            tile: 13,
+        }
+    }
+
+    fn dead() -> Self {
+        Monster {
+            position: Point::default(),
+            alive: false,
+            tile: 0,
+        }
+    }
+}
+
+impl Drawable for Monster {
+    fn draw(&self) {
+        if self.alive {
+            draw_tile(self.tile, self.position());
+        }
+    }
+
+    fn position(&self) -> Point {
+        self.position
     }
 }
 
