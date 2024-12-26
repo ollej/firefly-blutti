@@ -36,6 +36,14 @@ const LEVEL: [i32; 600] = [
     3, 3, 3, 3, 8, 8, 8, 8, 8, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 ];
 
+const CREDITS: [&str; 5] = [
+    "Credits:",
+    "Programming: Olle Wreede",
+    "Graphics: Olle Wreede",
+    "Music: Zane Little Music",
+    "SFX: @Shades, Luke.RUSTLTD, sauer2",
+];
+
 struct Level {
     tiles: [i32; 600],
     stars: i32,
@@ -143,6 +151,7 @@ enum TileCollider {
 enum GameState {
     Playing,
     Menu,
+    Credits,
     GameOver(bool),
 }
 
@@ -620,6 +629,18 @@ fn render_monsters() {
     }
 }
 
+fn render_credits() {
+    for (i, line) in CREDITS.iter().enumerate() {
+        display_text(
+            line,
+            Point {
+                x: 4,
+                y: (i as i32 + 1) * TILE_HEIGHT,
+            },
+        );
+    }
+}
+
 fn render_level() {
     let state = get_state();
     for (i, tile) in state.level.tiles.iter().enumerate() {
@@ -629,6 +650,12 @@ fn render_level() {
         };
         draw_tile(*tile, point);
     }
+}
+
+#[no_mangle]
+extern "C" fn handle_menu(menu_item: u8) {
+    let state = get_state();
+    state.game_state = GameState::Credits;
 }
 
 #[no_mangle]
@@ -646,6 +673,7 @@ extern "C" fn boot() {
         game_state: GameState::Menu,
     };
     unsafe { STATE.set(state) }.ok().unwrap();
+    add_menu_item(1, "Credits");
     play_music("sound_theme");
 }
 
@@ -657,6 +685,11 @@ extern "C" fn update() {
         GameState::Menu => {
             if buttons.s {
                 state.game_state = GameState::Playing;
+            }
+        }
+        GameState::Credits => {
+            if buttons.s {
+                state.game_state = GameState::Menu;
             }
         }
         GameState::Playing => {
@@ -712,6 +745,9 @@ extern "C" fn render() {
             render_level();
             render_ui();
             render_menu();
+        }
+        GameState::Credits => {
+            render_credits();
         }
         GameState::Playing => {
             render_level();
