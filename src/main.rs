@@ -65,10 +65,6 @@ impl Level {
         }
     }
 
-    fn blutti(&self) -> Blutti {
-        Blutti::with_start_position(self.start_position)
-    }
-
     fn tile_at_pos(&self, tile_pos: usize) -> i32 {
         self.tiles[tile_pos]
     }
@@ -112,6 +108,7 @@ struct State {
     fx: audio::Node<audio::Gain>,
     theme: audio::Node<audio::Gain>,
     level: Level,
+    game_state: GameState,
 }
 
 fn get_state() -> &'static mut State {
@@ -134,6 +131,12 @@ enum TileCollider {
     None,
 }
 
+enum GameState {
+    Playing,
+    Menu,
+    GameOver(bool),
+}
+
 struct Blutti {
     position: Point,
     start_position: Point,
@@ -145,6 +148,7 @@ struct Blutti {
     points: i32,
     stars: i32,
     lives: i32,
+    finished_level: bool,
 }
 
 impl Default for Blutti {
@@ -160,6 +164,7 @@ impl Default for Blutti {
             stars: 0,
             direction: Direction::Left,
             lives: 3,
+            finished_level: false,
         }
     }
 }
@@ -341,7 +346,7 @@ impl Blutti {
                 }
                 12 => {
                     if self.stars >= state.level.stars {
-                        self.lives = 0;
+                        self.finished_level = true;
                         play_sound("sound_exit");
                     } else {
                         play_sound("sound_wrong");
@@ -466,28 +471,48 @@ fn display_text(text: &str, position: Point) {
     draw_text(text, &font, position, Color::Black);
 }
 
-fn render_ui() {
-    let state = get_state();
+fn render_menu() {
     display_text(
-        str_format!(str32, "Points: {}", state.blutti.points).as_str(),
-        Point { x: 4, y: 10 },
+        "Press <X> to start!",
+        Point {
+            x: WIDTH / 2 - 38,
+            y: HEIGHT / 2 - 3,
+        },
     );
-    if state.blutti.lives > 0 {
-        for heart in 0..state.blutti.lives {
-            draw_tile(
-                11,
-                Point {
-                    x: WIDTH - heart * TILE_WIDTH - TILE_WIDTH - 3,
-                    y: 4,
-                },
-            );
-        }
+}
+
+fn render_gameover(won: bool) {
+    if won {
+        display_text(
+            "You win!",
+            Point {
+                x: WIDTH / 2 - 16,
+                y: HEIGHT / 2 - 3,
+            },
+        );
     } else {
         display_text(
             "Game Over!",
             Point {
                 x: WIDTH / 2 - 20,
                 y: HEIGHT / 2 - 3,
+            },
+        );
+    }
+}
+
+fn render_ui() {
+    let state = get_state();
+    display_text(
+        str_format!(str32, "Points: {}", state.blutti.points).as_str(),
+        Point { x: 4, y: 10 },
+    );
+    for heart in 0..state.blutti.lives {
+        draw_tile(
+            11,
+            Point {
+                x: WIDTH - heart * TILE_WIDTH - TILE_WIDTH - 3,
+                y: 4,
             },
         );
     }
@@ -508,14 +533,15 @@ fn render_level() {
 extern "C" fn boot() {
     let fx = audio::OUT.add_gain(1.0);
     let theme = audio::OUT.add_gain(0.5);
-    let level = Level::new(LEVEL, 10);
+    let level = Level::new(LEVEL.clone(), 10);
     let state = State {
-        blutti: level.blutti(),
+        blutti: Blutti::with_start_position(level.start_position),
         spritesheet: load_file_buf("spritesheet").unwrap(),
         font: load_file_buf("font").unwrap(),
         fx,
         theme,
         level,
+        game_state: GameState::Menu,
     };
     unsafe { STATE.set(state) }.ok().unwrap();
     play_music("sound_theme");
@@ -524,32 +550,51 @@ extern "C" fn boot() {
 #[no_mangle]
 extern "C" fn update() {
     let state = get_state();
-    if state.blutti.is_alive() {
-        let pad = read_pad(Peer::COMBINED);
-        if let Some(pad) = pad {
-            let dpad = pad.as_dpad();
-            if dpad.left {
-                state.blutti.move_left();
-            }
-            if dpad.right {
-                state.blutti.move_right();
-            }
-            if dpad.up {
-                state.blutti.move_up();
-            }
-            if dpad.down {
-                state.blutti.move_down();
+    let buttons = read_buttons(Peer::COMBINED);
+    match state.game_state {
+        GameState::Menu => {
+            if buttons.s {
+                state.game_state = GameState::Playing;
             }
         }
-        let buttons = read_buttons(Peer::COMBINED);
-        if buttons.s {
-            state.blutti.start_jump();
+        GameState::Playing => {
+            if !state.blutti.is_alive() || state.blutti.finished_level {
+                log_debug("unalived");
+                state.game_state = GameState::GameOver(state.blutti.finished_level);
+            } else {
+                let pad = read_pad(Peer::COMBINED);
+                if let Some(pad) = pad {
+                    let dpad = pad.as_dpad();
+                    if dpad.left {
+                        state.blutti.move_left();
+                    }
+                    if dpad.right {
+                        state.blutti.move_right();
+                    }
+                    if dpad.up {
+                        state.blutti.move_up();
+                    }
+                    if dpad.down {
+                        state.blutti.move_down();
+                    }
+                }
+                if buttons.s {
+                    state.blutti.start_jump();
+                }
+                if buttons.w {
+                    state.blutti.start_dash();
+                }
+                state.blutti.movement();
+                state.blutti.handle_effects();
+            }
         }
-        if buttons.w {
-            state.blutti.start_dash();
+        GameState::GameOver(_won) => {
+            if buttons.s {
+                state.level = Level::new(LEVEL, 10);
+                state.blutti = Blutti::with_start_position(state.level.start_position);
+                state.game_state = GameState::Menu;
+            }
         }
-        state.blutti.movement();
-        state.blutti.handle_effects();
     }
 }
 
@@ -557,7 +602,21 @@ extern "C" fn update() {
 extern "C" fn render() {
     let state = get_state();
     clear_screen(Color::White);
-    render_level();
-    state.blutti.draw();
-    render_ui();
+    match state.game_state {
+        GameState::Menu => {
+            render_level();
+            render_ui();
+            render_menu();
+        }
+        GameState::Playing => {
+            render_level();
+            state.blutti.draw();
+            render_ui();
+        }
+        GameState::GameOver(won) => {
+            render_level();
+            render_ui();
+            render_gameover(won);
+        }
+    }
 }
