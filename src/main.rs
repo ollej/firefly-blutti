@@ -24,8 +24,8 @@ const LEVEL: [i32; 600] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 4, 3, 3, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 4, 3, 3, 3, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
@@ -36,16 +36,71 @@ const LEVEL: [i32; 600] = [
     3, 3, 3, 3, 8, 8, 8, 8, 8, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 ];
 
+struct Level {
+    tiles: [i32; 600],
+    stars: i32,
+    collision: [TileCollider; 64],
+    start_position: Point,
+}
+
+impl Level {
+    fn new(tiles: [i32; 600], stars: i32) -> Self {
+        let mut collision = [TileCollider::None; 64];
+        collision[3] = TileCollider::Full;
+        collision[4] = TileCollider::Full;
+        collision[5] = TileCollider::Full;
+        collision[6] = TileCollider::Full;
+        collision[7] = TileCollider::Full;
+        collision[8] = TileCollider::Full;
+        collision[9] = TileCollider::Climbable;
+        collision[10] = TileCollider::Collectable;
+        collision[11] = TileCollider::Collectable;
+        let start_position = Point { x: 8, y: 144 };
+        Level {
+            tiles,
+            stars,
+            collision,
+            start_position,
+        }
+    }
+
+    fn blutti(&self) -> Blutti {
+        Blutti::with_start_position(self.start_position)
+    }
+
+    fn tile_at_pos(&self, tile_pos: usize) -> i32 {
+        self.tiles[tile_pos]
+    }
+
+    fn tile_at_point(&self, point: Point) -> i32 {
+        let tile_pos = get_tile_index(point);
+        self.tile_at_pos(tile_pos)
+    }
+
+    fn collision_at_point(&self, test_point: Point) -> TileCollider {
+        //log_debug(str_format!(str256, "x: {}", test_point.x).as_str());
+        //log_debug(str_format!(str256, "y: {}", test_point.y).as_str());
+        //log_debug(str_format!(str256, "tile_pos: {}", tile_pos).as_str());
+        //log_debug(str_format!(str256, "tile: {}", tile).as_str());
+        let tile = self.tile_at_point(test_point);
+        self.collision[tile as usize]
+    }
+
+    fn collect_item(&mut self, position: Point) {
+        let tile_pos = get_tile_index(position);
+        self.tiles[tile_pos] = 0;
+    }
+}
+
 static mut STATE: OnceCell<State> = OnceCell::new();
 
 struct State {
     blutti: Blutti,
     spritesheet: FileBuf,
-    tiles: [TileCollider; 64],
-    collected: [bool; 600],
     font: FileBuf,
     fx: audio::Node<audio::Gain>,
     theme: audio::Node<audio::Gain>,
+    level: Level,
 }
 
 fn get_state() -> &'static mut State {
@@ -63,7 +118,6 @@ enum Direction {
 #[derive(PartialEq, Clone, Copy, Debug)]
 enum TileCollider {
     Full,
-    Top,
     Climbable,
     Collectable,
     None,
@@ -71,6 +125,7 @@ enum TileCollider {
 
 struct Blutti {
     position: Point,
+    start_position: Point,
     jump_timer: i32,
     dash_timer: i32,
     fall_timer: i32,
@@ -83,7 +138,8 @@ struct Blutti {
 impl Default for Blutti {
     fn default() -> Self {
         Self {
-            position: Self::START_POSITION.clone(),
+            position: Self::START_POSITION,
+            start_position: Self::START_POSITION,
             jump_timer: 0,
             dash_timer: 0,
             fall_timer: 0,
@@ -114,6 +170,14 @@ impl Blutti {
         x: Point::MAX.x - Self::SIZE,
         y: Point::MAX.y - Self::SIZE,
     };
+
+    fn with_start_position(start_position: Point) -> Self {
+        Blutti {
+            position: start_position,
+            start_position,
+            ..Blutti::default()
+        }
+    }
 
     fn draw(&self) {
         if self.is_alive() {
@@ -240,7 +304,7 @@ impl Blutti {
     }
 
     fn handle_effects(&mut self) {
-        match self.current_tile() {
+        match self.collision(self.position) {
             TileCollider::Collectable => self.collect_item(),
             _ => (),
         }
@@ -248,21 +312,18 @@ impl Blutti {
 
     fn collect_item(&mut self) {
         let state = get_state();
-        let tile_pos = get_tile_index(self.position);
-        if !state.collected[tile_pos] {
-            match LEVEL[tile_pos] {
-                10 => {
-                    self.points += 1;
-                    play_sound("sound_coin");
-                }
-                11 => {
-                    self.lives += 1;
-                    play_sound("sound_powerup");
-                }
-                _ => (),
+        match state.level.tile_at_point(self.position) {
+            10 => {
+                self.points += 1;
+                play_sound("sound_coin");
             }
-            state.collected[tile_pos] = true;
+            11 => {
+                self.lives += 1;
+                play_sound("sound_powerup");
+            }
+            _ => (),
         }
+        state.level.collect_item(self.position);
     }
 
     fn die(&mut self) {
@@ -272,7 +333,7 @@ impl Blutti {
     }
 
     fn reset(&mut self) {
-        self.position = Self::START_POSITION;
+        self.position = self.start_position;
         self.jump_timer = 0;
         self.dash_timer = 0;
         self.fall_timer = 0;
@@ -280,31 +341,18 @@ impl Blutti {
         self.direction = Direction::Left;
     }
 
-    fn current_tile(&self) -> TileCollider {
-        self.tile_at_point(self.position)
+    fn collision(&self, position: Point) -> TileCollider {
+        let state = get_state();
+        state.level.collision_at_point(position)
     }
 
-    fn is_tile_empty(&self, point: Point) -> bool {
-        let tile = self.tile_at_point(point);
+    fn is_tile_empty(&self, position: Point) -> bool {
+        let tile = self.collision(position);
         tile == TileCollider::None || tile == TileCollider::Collectable
     }
 
-    fn is_tile_free(&self, point: Point) -> bool {
-        match self.tile_at_point(point) {
-            TileCollider::None | TileCollider::Climbable | TileCollider::Collectable => true,
-            TileCollider::Full | TileCollider::Top => false,
-        }
-    }
-
-    fn tile_at_point(&self, test_point: Point) -> TileCollider {
-        //log_debug(str_format!(str256, "x: {}", test_point.x).as_str());
-        //log_debug(str_format!(str256, "y: {}", test_point.y).as_str());
-        let tile_pos = get_tile_index(test_point);
-        //log_debug(str_format!(str256, "tile_pos: {}", tile_pos).as_str());
-        let tile = LEVEL[tile_pos as usize];
-        //log_debug(str_format!(str256, "tile: {}", tile).as_str());
-        let state = get_state();
-        state.tiles[tile as usize]
+    fn is_tile_free(&self, position: Point) -> bool {
+        self.collision(position) != TileCollider::Full
     }
 
     fn position_below_left_foot(&self) -> Point {
@@ -341,10 +389,10 @@ impl Blutti {
     }
 
     fn is_on_ladder(&self) -> bool {
-        self.tile_at_point(self.position_below_left_foot()) == TileCollider::Climbable
-            || self.tile_at_point(self.position_below_right_foot()) == TileCollider::Climbable
-            || self.tile_at_point(self.position_left_foot()) == TileCollider::Climbable
-            || self.tile_at_point(self.position_right_foot()) == TileCollider::Climbable
+        self.collision(self.position_below_left_foot()) == TileCollider::Climbable
+            || self.collision(self.position_below_right_foot()) == TileCollider::Climbable
+            || self.collision(self.position_left_foot()) == TileCollider::Climbable
+            || self.collision(self.position_right_foot()) == TileCollider::Climbable
     }
 
     fn is_alive(&self) -> bool {
@@ -421,41 +469,27 @@ fn render_ui() {
 
 fn render_level() {
     let state = get_state();
-    for (i, tile) in LEVEL.iter().enumerate() {
-        let mut tile = *tile;
-        if state.collected[i] {
-            tile = 0;
-        }
+    for (i, tile) in state.level.tiles.iter().enumerate() {
         let point = Point {
             x: ((i as i32 % TILES_H) * TILE_WIDTH),
             y: ((i as i32 / TILES_H) * TILE_HEIGHT),
         };
-        draw_tile(tile, point);
+        draw_tile(*tile, point);
     }
 }
 
 #[no_mangle]
 extern "C" fn boot() {
-    let mut tiles = [TileCollider::None; 64];
-    tiles[3] = TileCollider::Full;
-    tiles[4] = TileCollider::Full;
-    tiles[5] = TileCollider::Full;
-    tiles[6] = TileCollider::Full;
-    tiles[7] = TileCollider::Full;
-    tiles[8] = TileCollider::Full;
-    tiles[9] = TileCollider::Climbable;
-    tiles[10] = TileCollider::Collectable;
-    tiles[11] = TileCollider::Collectable;
     let fx = audio::OUT.add_gain(0.5);
     let theme = audio::OUT.add_gain(0.5);
+    let level = Level::new(LEVEL, 10);
     let state = State {
-        blutti: Blutti::default(),
+        blutti: level.blutti(),
         spritesheet: load_file_buf("spritesheet").unwrap(),
-        tiles,
-        collected: [false; 600],
         font: load_file_buf("font").unwrap(),
         fx,
         theme,
+        level,
     };
     unsafe { STATE.set(state) }.ok().unwrap();
     play_music("sound_theme");
