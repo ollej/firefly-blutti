@@ -11,6 +11,7 @@ const SPRITES_H: i32 = 8;
 const SPRITES_V: i32 = 8;
 const TILES_H: i32 = 30;
 const TILES_V: i32 = 20;
+const BADGE_STARS: Badge = Badge(1);
 
 #[rustfmt::skip]
 const LEVEL: [i32; 600] = [
@@ -423,7 +424,7 @@ impl Blutti {
                 }
                 12 => {
                     if self.stars >= state.level.stars {
-                        self.finished_level = true;
+                        self.finish_level();
                         play_sound("sound_exit");
                     } else {
                         play_sound("sound_wrong");
@@ -438,6 +439,12 @@ impl Blutti {
         self.lives -= 1;
         self.reset();
         play_sound("sound_death");
+    }
+
+    fn finish_level(&mut self) {
+        self.finished_level = true;
+        let peer = get_me();
+        let _best = add_progress(peer, BADGE_STARS, self.stars as i16);
     }
 
     fn reset(&mut self) {
@@ -706,7 +713,6 @@ extern "C" fn update() {
         }
         GameState::Playing => {
             if !state.blutti.is_alive() || state.blutti.finished_level {
-                log_debug("unalived");
                 state.game_state = GameState::GameOver(state.blutti.finished_level);
             } else {
                 let pad = read_pad(Peer::COMBINED);

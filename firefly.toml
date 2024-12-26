@@ -14,3 +14,6 @@ sound_death = { path = "assets/death.wav" }
 sound_exit = { path = "assets/round_end.wav" }
 sound_wrong = { path = "assets/wrong3.wav" }
 sound_theme = { path = "assets/hallowquest.wav" }
+
+[badges]
+1 = { name = "stars", steps = 100, descr = "Collect 100 stars" }
