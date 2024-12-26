@@ -575,6 +575,13 @@ fn display_text(text: &str, position: Point) {
     draw_text(text, &font, position, Color::Black);
 }
 
+fn restart() {
+    let state = get_state();
+    state.level = Level::new(LEVEL, 10);
+    state.blutti = Blutti::with_start_position(state.level.start_position);
+    state.game_state = GameState::Menu;
+}
+
 fn render_menu() {
     display_text(
         "Press <X> to start!",
@@ -655,7 +662,11 @@ fn render_level() {
 #[no_mangle]
 extern "C" fn handle_menu(menu_item: u8) {
     let state = get_state();
-    state.game_state = GameState::Credits;
+    match menu_item {
+        1 => state.game_state = GameState::Credits,
+        2 => restart(),
+        _ => (),
+    }
 }
 
 #[no_mangle]
@@ -674,6 +685,7 @@ extern "C" fn boot() {
     };
     unsafe { STATE.set(state) }.ok().unwrap();
     add_menu_item(1, "Credits");
+    add_menu_item(2, "Restart");
     play_music("sound_theme");
 }
 
@@ -728,9 +740,7 @@ extern "C" fn update() {
         }
         GameState::GameOver(_won) => {
             if buttons.s {
-                state.level = Level::new(LEVEL, 10);
-                state.blutti = Blutti::with_start_position(state.level.start_position);
-                state.game_state = GameState::Menu;
+                restart();
             }
         }
     }
