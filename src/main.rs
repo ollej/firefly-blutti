@@ -45,6 +45,12 @@ struct Level {
 }
 
 impl Level {
+    const MIN: Point = Point::MIN;
+    const MAX: Point = Point {
+        x: Point::MAX.x - TILE_WIDTH,
+        y: Point::MAX.y - TILE_WIDTH,
+    };
+
     fn new(tiles: [i32; 600], stars: i32) -> Self {
         let mut collision = [TileCollider::None; 64];
         collision[3] = TileCollider::Full;
@@ -142,6 +148,11 @@ enum GameState {
 
 trait Drawable {
     fn draw(&self);
+}
+
+trait Updateable {
+    fn update(&mut self);
+
     fn position(&self) -> Point;
 
     fn collision(&self, position: Point) -> TileCollider {
@@ -192,10 +203,6 @@ trait Drawable {
     }
 }
 
-trait Updateable {
-    fn update(&mut self);
-}
-
 struct Blutti {
     position: Point,
     start_position: Point,
@@ -238,13 +245,13 @@ impl Drawable for Blutti {
             draw_tile(tile, self.position());
         }
     }
-
-    fn position(&self) -> Point {
-        self.position
-    }
 }
 
 impl Updateable for Blutti {
+    fn position(&self) -> Point {
+        self.position
+    }
+
     fn update(&mut self) {
         let mut new_x = self.position.x;
         let mut new_y = self.position.y;
@@ -293,8 +300,8 @@ impl Updateable for Blutti {
         }
 
         let new_position = Point {
-            x: new_x.clamp(Self::MIN.x, Self::MAX.x),
-            y: new_y.clamp(Self::MIN.y, Self::MAX.y),
+            x: new_x.clamp(Level::MIN.x, Level::MAX.x),
+            y: new_y.clamp(Level::MIN.y, Level::MAX.y),
         };
 
         if self.position.x != new_position.x {
@@ -327,7 +334,6 @@ impl Updateable for Blutti {
 }
 
 impl Blutti {
-    const SIZE: i32 = 8;
     const SPEED: i32 = 2;
     const JUMP_TIME: i32 = 8;
     const JUMP_SPEED: i32 = 2;
@@ -337,13 +343,8 @@ impl Blutti {
     const GRAVITY: i32 = 2;
     const MAX_FALL_HEIGHT: i32 = 30;
     const START_POSITION: Point = Point {
-        x: WIDTH / 2 - Self::SIZE,
-        y: HEIGHT - Self::SIZE - TILE_HEIGHT,
-    };
-    const MIN: Point = Point::MIN;
-    const MAX: Point = Point {
-        x: Point::MAX.x - Self::SIZE,
-        y: Point::MAX.y - Self::SIZE,
+        x: WIDTH / 2 - TILE_WIDTH,
+        y: HEIGHT - TILE_WIDTH - TILE_HEIGHT,
     };
 
     fn with_start_position(start_position: Point) -> Self {
@@ -455,6 +456,7 @@ struct Monster {
     position: Point,
     alive: bool,
     tile: i32,
+    movement: i32,
 }
 
 impl Monster {
@@ -463,6 +465,7 @@ impl Monster {
             position,
             alive: true,
             tile: 13,
+            movement: 1,
         }
     }
 
@@ -471,6 +474,7 @@ impl Monster {
             position: Point::default(),
             alive: false,
             tile: 0,
+            movement: 0,
         }
     }
 }
@@ -481,14 +485,34 @@ impl Drawable for Monster {
             draw_tile(self.tile, self.position());
         }
     }
+}
+
+impl Updateable for Monster {
+    fn update(&mut self) {
+        if self.alive {
+            let new_x = self.position.x + self.movement;
+            let test_x = if new_x > self.position.x {
+                new_x + TILE_WIDTH - 1
+            } else {
+                new_x
+            };
+            if new_x >= Level::MIN.x
+                && new_x < Level::MAX.x
+                && self.is_tile_free(Point {
+                    x: test_x,
+                    y: self.position.y,
+                })
+            {
+                self.position.x = new_x;
+            } else {
+                self.movement *= -1;
+            }
+        }
+    }
 
     fn position(&self) -> Point {
         self.position
     }
-}
-
-impl Updateable for Monster {
-    fn update(&mut self) {}
 }
 
 fn play_sound(sound: &str) {
