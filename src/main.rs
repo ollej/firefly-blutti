@@ -55,6 +55,7 @@ impl Level {
         collision[9] = TileCollider::Climbable;
         collision[10] = TileCollider::Collectable;
         collision[11] = TileCollider::Collectable;
+        collision[12] = TileCollider::Collectable;
         let start_position = Point { x: 8, y: 144 };
         Level {
             tiles,
@@ -86,9 +87,19 @@ impl Level {
         self.collision[tile as usize]
     }
 
-    fn collect_item(&mut self, position: Point) {
-        let tile_pos = get_tile_index(position);
-        self.tiles[tile_pos] = 0;
+    fn collectable_at_point(&self, position: Point) -> bool {
+        self.collision_at_point(position) == TileCollider::Collectable
+    }
+
+    fn collect_item(&mut self, position: Point) -> Option<i32> {
+        if self.collectable_at_point(position) {
+            let tile_pos = get_tile_index(position);
+            let collected_tile = self.tiles[tile_pos];
+            self.tiles[tile_pos] = 0;
+            Some(collected_tile)
+        } else {
+            None
+        }
     }
 }
 
@@ -132,6 +143,7 @@ struct Blutti {
     movement: i32,
     direction: Direction,
     points: i32,
+    stars: i32,
     lives: i32,
 }
 
@@ -145,6 +157,7 @@ impl Default for Blutti {
             fall_timer: 0,
             movement: 0,
             points: 0,
+            stars: 0,
             direction: Direction::Left,
             lives: 3,
         }
@@ -312,18 +325,31 @@ impl Blutti {
 
     fn collect_item(&mut self) {
         let state = get_state();
-        match state.level.tile_at_point(self.position) {
-            10 => {
-                self.points += 1;
-                play_sound("sound_coin");
+        if state.level.collectable_at_point(self.position) {
+            let tile = state.level.tile_at_point(self.position);
+            match tile {
+                10 => {
+                    self.points += 1;
+                    self.stars += 1;
+                    state.level.collect_item(self.position);
+                    play_sound("sound_coin");
+                }
+                11 => {
+                    self.lives += 1;
+                    state.level.collect_item(self.position);
+                    play_sound("sound_powerup");
+                }
+                12 => {
+                    if self.stars >= state.level.stars {
+                        self.lives = 0;
+                        play_sound("sound_exit");
+                    } else {
+                        play_sound("sound_wrong");
+                    }
+                }
+                _ => (),
             }
-            11 => {
-                self.lives += 1;
-                play_sound("sound_powerup");
-            }
-            _ => (),
         }
-        state.level.collect_item(self.position);
     }
 
     fn die(&mut self) {
@@ -480,7 +506,7 @@ fn render_level() {
 
 #[no_mangle]
 extern "C" fn boot() {
-    let fx = audio::OUT.add_gain(0.5);
+    let fx = audio::OUT.add_gain(1.0);
     let theme = audio::OUT.add_gain(0.5);
     let level = Level::new(LEVEL, 10);
     let state = State {
