@@ -19,13 +19,13 @@ const LEVEL: [i32; 600] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 10, 0, 0, 10, 0, 10, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 9, 3, 3, 3, 3, 0, 0,
+    0, 0, 10, 10, 0, 0, 0, 0, 0, 0, 0, 0, 10, 10, 0, 0, 0, 0, 0, 10, 0, 10, 0, 0, 10, 0, 10, 0, 0, 0,
+    0, 4, 3, 3, 5, 0, 0, 0, 0, 0, 0, 4, 3, 3, 5, 0, 0, 0, 4, 3, 3, 3, 3, 9, 3, 3, 3, 5, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 4, 3, 3, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
@@ -73,6 +73,7 @@ struct Blutti {
     position: Point,
     jump_timer: i32,
     dash_timer: i32,
+    fall_timer: i32,
     movement: i32,
     direction: Direction,
     points: i32,
@@ -82,12 +83,10 @@ struct Blutti {
 impl Default for Blutti {
     fn default() -> Self {
         Self {
-            position: Point {
-                x: WIDTH / 2 - Self::SIZE,
-                y: HEIGHT - Self::SIZE - TILE_HEIGHT,
-            },
+            position: Self::START_POSITION.clone(),
             jump_timer: 0,
             dash_timer: 0,
+            fall_timer: 0,
             movement: 0,
             points: 0,
             direction: Direction::Left,
@@ -105,6 +104,11 @@ impl Blutti {
     const DASH_WAIT_TIME: i32 = 32;
     const DASH_SPEED: i32 = 3;
     const GRAVITY: i32 = 2;
+    const MAX_FALL_HEIGHT: i32 = 30;
+    const START_POSITION: Point = Point {
+        x: WIDTH / 2 - Self::SIZE,
+        y: HEIGHT - Self::SIZE - TILE_HEIGHT,
+    };
     const MIN: Point = Point::MIN;
     const MAX: Point = Point {
         x: Point::MAX.x - Self::SIZE,
@@ -112,11 +116,13 @@ impl Blutti {
     };
 
     fn draw(&self) {
-        let tile = match self.direction {
-            Direction::Left | Direction::Up => 1,
-            Direction::Right | Direction::Down => 2,
-        };
-        draw_tile(tile, self.position);
+        if self.is_alive() {
+            let tile = match self.direction {
+                Direction::Left | Direction::Up => 1,
+                Direction::Right | Direction::Down => 2,
+            };
+            draw_tile(tile, self.position);
+        }
     }
 
     fn move_left(&mut self) {
@@ -176,8 +182,16 @@ impl Blutti {
             self.jump_timer -= 1;
         }
         if self.jump_timer == 0 && self.dash_timer <= 0 {
-            if !self.is_standing() {
+            if self.is_standing() {
+                if self.fall_timer > Self::MAX_FALL_HEIGHT {
+                    self.die();
+                    return;
+                } else if self.fall_timer > 0 {
+                    self.fall_timer = 0;
+                }
+            } else {
                 new_y += Self::GRAVITY;
+                self.fall_timer += 1;
             }
         }
 
@@ -251,6 +265,21 @@ impl Blutti {
         }
     }
 
+    fn die(&mut self) {
+        self.lives -= 1;
+        self.reset();
+        play_sound("sound_death");
+    }
+
+    fn reset(&mut self) {
+        self.position = Self::START_POSITION;
+        self.jump_timer = 0;
+        self.dash_timer = 0;
+        self.fall_timer = 0;
+        self.movement = 0;
+        self.direction = Direction::Left;
+    }
+
     fn current_tile(&self) -> TileCollider {
         self.tile_at_point(self.position)
     }
@@ -317,6 +346,10 @@ impl Blutti {
             || self.tile_at_point(self.position_left_foot()) == TileCollider::Climbable
             || self.tile_at_point(self.position_right_foot()) == TileCollider::Climbable
     }
+
+    fn is_alive(&self) -> bool {
+        self.lives > 0
+    }
 }
 
 fn play_sound(sound: &str) {
@@ -365,12 +398,22 @@ fn render_ui() {
         str_format!(str32, "Points: {}", state.blutti.points).as_str(),
         Point { x: 4, y: 10 },
     );
-    for heart in 0..state.blutti.lives {
-        draw_tile(
-            11,
+    if state.blutti.lives > 0 {
+        for heart in 0..state.blutti.lives {
+            draw_tile(
+                11,
+                Point {
+                    x: WIDTH - heart * TILE_WIDTH - TILE_WIDTH - 3,
+                    y: 4,
+                },
+            );
+        }
+    } else {
+        display_text(
+            "Game Over!",
             Point {
-                x: WIDTH - heart * TILE_WIDTH - TILE_WIDTH - 3,
-                y: 4,
+                x: WIDTH / 2 - 20,
+                y: HEIGHT / 2 - 3,
             },
         );
     }
@@ -421,31 +464,33 @@ extern "C" fn boot() {
 #[no_mangle]
 extern "C" fn update() {
     let state = get_state();
-    let pad = read_pad(Peer::COMBINED);
-    if let Some(pad) = pad {
-        let dpad = pad.as_dpad();
-        if dpad.left {
-            state.blutti.move_left();
+    if state.blutti.is_alive() {
+        let pad = read_pad(Peer::COMBINED);
+        if let Some(pad) = pad {
+            let dpad = pad.as_dpad();
+            if dpad.left {
+                state.blutti.move_left();
+            }
+            if dpad.right {
+                state.blutti.move_right();
+            }
+            if dpad.up {
+                state.blutti.move_up();
+            }
+            if dpad.down {
+                state.blutti.move_down();
+            }
         }
-        if dpad.right {
-            state.blutti.move_right();
+        let buttons = read_buttons(Peer::COMBINED);
+        if buttons.s {
+            state.blutti.start_jump();
         }
-        if dpad.up {
-            state.blutti.move_up();
+        if buttons.w {
+            state.blutti.start_dash();
         }
-        if dpad.down {
-            state.blutti.move_down();
-        }
+        state.blutti.movement();
+        state.blutti.handle_effects();
     }
-    let buttons = read_buttons(Peer::COMBINED);
-    if buttons.s {
-        state.blutti.start_jump();
-    }
-    if buttons.w {
-        state.blutti.start_dash();
-    }
-    state.blutti.movement();
-    state.blutti.handle_effects();
 }
 
 #[no_mangle]

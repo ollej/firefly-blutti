@@ -10,4 +10,5 @@ sound_coin = { path = "assets/coin5.wav" }
 sound_jump = { path = "assets/jump3.wav" }
 sound_dash = { path = "assets/jump4.wav" }
 sound_powerup = { path = "assets/powerup3.wav" }
+sound_death = { path = "assets/explosion3.wav" }
 sound_theme = { path = "assets/hallowquest.wav" }
