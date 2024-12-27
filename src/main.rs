@@ -47,6 +47,7 @@ const CREDITS: [&str; 5] = [
 
 struct Level {
     tiles: [i32; 600],
+    background_color: Color,
     stars: i32,
     collision: [TileCollider; 64],
     start_position: Point,
@@ -76,6 +77,7 @@ impl Level {
         let monsters = [Monster::alive(Point { x: 120, y: 144 }), Monster::dead()];
         Level {
             tiles,
+            background_color: Color::LightBlue,
             stars,
             collision,
             start_position,
@@ -644,6 +646,7 @@ fn render_monsters() {
 }
 
 fn render_credits() {
+    clear_screen(Color::White);
     for (i, line) in CREDITS.iter().enumerate() {
         display_text(
             line,
@@ -657,6 +660,8 @@ fn render_credits() {
 
 fn render_level() {
     let state = get_state();
+
+    clear_screen(state.level.background_color);
     for (i, tile) in state.level.tiles.iter().enumerate() {
         let point = Point {
             x: ((i as i32 % TILES_H) * TILE_WIDTH),
@@ -755,7 +760,6 @@ extern "C" fn update() {
 #[no_mangle]
 extern "C" fn render() {
     let state = get_state();
-    clear_screen(Color::White);
     match state.game_state {
         GameState::Menu => {
             render_level();
