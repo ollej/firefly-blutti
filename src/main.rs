@@ -1,9 +1,15 @@
 #![no_std]
 #![no_main]
 
+extern crate alloc;
+
+//use alloc::vec::Vec;
 use core::cell::OnceCell;
 use firefly_rust::*;
 use fixedstr::{str256, str32, str_format};
+use heapless::Vec;
+use serde::Deserialize;
+use serde_json_core;
 
 const TILE_WIDTH: i32 = 8;
 const TILE_HEIGHT: i32 = 8;
@@ -13,30 +19,6 @@ const TILES_H: i32 = 30;
 const TILES_V: i32 = 20;
 const BADGE_STARS: Badge = Badge(1);
 
-#[rustfmt::skip]
-const LEVEL: [i32; 600] = [
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 10, 10, 0, 0, 0, 0, 0, 0, 0, 0, 10, 10, 0, 0, 0, 0, 0, 10, 0, 10, 0, 0, 10, 0, 10, 0, 0, 0,
-    0, 4, 3, 3, 5, 0, 0, 0, 0, 0, 0, 4, 3, 3, 5, 0, 0, 0, 4, 3, 3, 3, 3, 9, 3, 3, 3, 5, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 4, 3, 3, 3, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 10, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 4, 3, 3, 3, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 11, 0, 0,
-    3, 3, 3, 3, 8, 8, 8, 8, 8, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-];
-
 const CREDITS: [&str; 5] = [
     "Credits:",
     "Programming: Olle Wreede",
@@ -45,13 +27,67 @@ const CREDITS: [&str; 5] = [
     "SFX: @Shades, Luke.RUSTLTD, sauer2",
 ];
 
+#[derive(Clone, Copy, Debug, Deserialize)]
+struct Tile {
+    sprite: i32,
+    collision: TileCollider,
+}
+
+impl Tile {
+    fn empty() -> Self {
+        Tile {
+            sprite: 0,
+            collision: TileCollider::None,
+        }
+    }
+}
+
+#[derive(PartialEq, Clone, Copy, Debug, Deserialize)]
+enum TileCollider {
+    Full,
+    Climbable,
+    Collectable,
+    None,
+}
+
+#[derive(Deserialize)]
+#[serde(remote = "Point")]
+struct PointDef {
+    x: i32,
+    y: i32,
+}
+
+#[derive(Deserialize)]
+#[serde(remote = "Color")]
+enum ColorDef {
+    None,
+    Black,
+    Purple,
+    Red,
+    Orange,
+    Yellow,
+    LightGreen,
+    Green,
+    DarkGreen,
+    DarkBlue,
+    Blue,
+    LightBlue,
+    Cyan,
+    White,
+    LightGray,
+    Gray,
+    DarkGray,
+}
+
+#[derive(Clone, Debug, Deserialize)]
 struct Level {
-    tiles: [i32; 600],
+    tiles: Vec<Tile, 600>,
+    #[serde(with = "ColorDef")]
     background_color: Color,
     stars: i32,
-    collision: [TileCollider; 64],
+    #[serde(with = "PointDef")]
     start_position: Point,
-    monsters: [Monster; 2],
+    monsters: Vec<Monster, 16>,
 }
 
 impl Level {
@@ -61,57 +97,33 @@ impl Level {
         y: Point::MAX.y - TILE_WIDTH,
     };
 
-    fn new(tiles: [i32; 600], stars: i32) -> Self {
-        let mut collision = [TileCollider::None; 64];
-        collision[3] = TileCollider::Full;
-        collision[4] = TileCollider::Full;
-        collision[5] = TileCollider::Full;
-        collision[6] = TileCollider::Full;
-        collision[7] = TileCollider::Full;
-        collision[8] = TileCollider::Full;
-        collision[9] = TileCollider::Climbable;
-        collision[10] = TileCollider::Collectable;
-        collision[11] = TileCollider::Collectable;
-        collision[12] = TileCollider::Collectable;
-        let start_position = Point { x: 8, y: 144 };
-        let monsters = [Monster::alive(Point { x: 120, y: 144 }), Monster::dead()];
-        Level {
-            tiles,
-            background_color: Color::LightBlue,
-            stars,
-            collision,
-            start_position,
-            monsters,
-        }
-    }
-
-    fn tile_at_pos(&self, tile_pos: usize) -> i32 {
+    fn tile_at_pos(&self, tile_pos: usize) -> Tile {
         self.tiles[tile_pos]
     }
 
-    fn tile_at_point(&self, point: Point) -> i32 {
+    fn tile_at_position(&self, point: Point) -> Tile {
         let tile_pos = get_tile_index(point);
         self.tile_at_pos(tile_pos)
     }
 
-    fn collision_at_point(&self, test_point: Point) -> TileCollider {
+    fn collision_at_position(&self, position: Point) -> TileCollider {
         //log_debug(str_format!(str256, "x: {}", test_point.x).as_str());
         //log_debug(str_format!(str256, "y: {}", test_point.y).as_str());
         //log_debug(str_format!(str256, "tile_pos: {}", tile_pos).as_str());
         //log_debug(str_format!(str256, "tile: {}", tile).as_str());
-        let tile = self.tile_at_point(test_point);
-        self.collision[tile as usize]
+        let tile = self.tile_at_position(position);
+        tile.collision
     }
 
     fn collectable_at_point(&self, position: Point) -> bool {
-        self.collision_at_point(position) == TileCollider::Collectable
+        self.collision_at_position(position) == TileCollider::Collectable
     }
 
-    fn collect_item(&mut self, position: Point) -> Option<i32> {
+    fn collect_item(&mut self, position: Point) -> Option<Tile> {
         if self.collectable_at_point(position) {
             let tile_pos = get_tile_index(position);
             let collected_tile = self.tiles[tile_pos];
-            self.tiles[tile_pos] = 0;
+            self.tiles[tile_pos] = Tile::empty();
             Some(collected_tile)
         } else {
             None
@@ -127,8 +139,9 @@ struct State {
     font: FileBuf,
     fx: audio::Node<audio::Gain>,
     theme: audio::Node<audio::Gain>,
-    level: Level,
+    current_level: Level,
     game_state: GameState,
+    levels: Vec<Level, 10>,
 }
 
 fn get_state() -> &'static mut State {
@@ -141,14 +154,6 @@ enum Direction {
     Right,
     Up,
     Down,
-}
-
-#[derive(PartialEq, Clone, Copy, Debug)]
-enum TileCollider {
-    Full,
-    Climbable,
-    Collectable,
-    None,
 }
 
 enum GameState {
@@ -169,7 +174,7 @@ trait Updateable {
 
     fn collision(&self, position: Point) -> TileCollider {
         let state = get_state();
-        state.level.collision_at_point(position)
+        state.current_level.collision_at_position(position)
     }
 
     fn is_tile_empty(&self, position: Point) -> bool {
@@ -410,22 +415,22 @@ impl Blutti {
 
     fn collect_item(&mut self) {
         let state = get_state();
-        if state.level.collectable_at_point(self.position) {
-            let tile = state.level.tile_at_point(self.position);
-            match tile {
+        if state.current_level.collectable_at_point(self.position) {
+            let tile = state.current_level.tile_at_position(self.position);
+            match tile.sprite {
                 10 => {
                     self.points += 1;
                     self.stars += 1;
-                    state.level.collect_item(self.position);
+                    state.current_level.collect_item(self.position);
                     play_sound("sound_coin");
                 }
                 11 => {
                     self.lives += 1;
-                    state.level.collect_item(self.position);
+                    state.current_level.collect_item(self.position);
                     play_sound("sound_powerup");
                 }
                 12 => {
-                    if self.stars >= state.level.stars {
+                    if self.stars >= state.current_level.stars {
                         self.finish_level();
                         play_sound("sound_exit");
                     } else {
@@ -470,37 +475,19 @@ impl Blutti {
     }
 }
 
+#[derive(Clone, Default, Debug, Deserialize)]
 struct Monster {
+    #[serde(with = "PointDef")]
     position: Point,
     alive: bool,
-    tile: i32,
+    sprite: i32,
     movement: i32,
-}
-
-impl Monster {
-    fn alive(position: Point) -> Self {
-        Monster {
-            position,
-            alive: true,
-            tile: 13,
-            movement: 1,
-        }
-    }
-
-    fn dead() -> Self {
-        Monster {
-            position: Point::default(),
-            alive: false,
-            tile: 0,
-            movement: 0,
-        }
-    }
 }
 
 impl Drawable for Monster {
     fn draw(&self) {
         if self.alive {
-            draw_tile(self.tile, self.position());
+            draw_tile(self.sprite, self.position());
         }
     }
 }
@@ -586,8 +573,8 @@ fn display_text(text: &str, position: Point) {
 
 fn restart() {
     let state = get_state();
-    state.level = Level::new(LEVEL, 10);
-    state.blutti = Blutti::with_start_position(state.level.start_position);
+    state.current_level = state.levels.first().unwrap().clone();
+    state.blutti = Blutti::with_start_position(state.current_level.start_position);
     state.game_state = GameState::Menu;
 }
 
@@ -640,7 +627,7 @@ fn render_ui() {
 
 fn render_monsters() {
     let state = get_state();
-    for monster in state.level.monsters.iter() {
+    for monster in state.current_level.monsters.iter() {
         monster.draw();
     }
 }
@@ -661,13 +648,13 @@ fn render_credits() {
 fn render_level() {
     let state = get_state();
 
-    clear_screen(state.level.background_color);
-    for (i, tile) in state.level.tiles.iter().enumerate() {
+    clear_screen(state.current_level.background_color);
+    for (i, tile) in state.current_level.tiles.iter().enumerate() {
         let point = Point {
             x: ((i as i32 % TILES_H) * TILE_WIDTH),
             y: ((i as i32 / TILES_H) * TILE_HEIGHT),
         };
-        draw_tile(*tile, point);
+        draw_tile(tile.sprite, point);
     }
 }
 
@@ -685,15 +672,22 @@ extern "C" fn handle_menu(menu_item: u8) {
 extern "C" fn boot() {
     let fx = audio::OUT.add_gain(1.0);
     let theme = audio::OUT.add_gain(0.5);
-    let level = Level::new(LEVEL.clone(), 10);
+    log_debug("before loading data");
+    let level_data = load_file_buf("levels").unwrap();
+    log_debug("loaded data");
+    let (levels, _remainder) =
+        serde_json_core::from_slice::<Vec<Level, 10>>(level_data.data()).unwrap();
+    log_debug("deserialized data");
+    let level = levels.first().unwrap().clone();
     let state = State {
         blutti: Blutti::with_start_position(level.start_position),
         spritesheet: load_file_buf("spritesheet").unwrap(),
         font: load_file_buf("font").unwrap(),
         fx,
         theme,
-        level,
+        current_level: level,
         game_state: GameState::Menu,
+        levels,
     };
     unsafe { STATE.set(state) }.ok().unwrap();
     add_menu_item(1, "Credits");
@@ -743,7 +737,7 @@ extern "C" fn update() {
                     state.blutti.start_dash();
                 }
                 state.blutti.update();
-                for monster in state.level.monsters.iter_mut() {
+                for monster in state.current_level.monsters.iter_mut() {
                     monster.update();
                 }
                 state.blutti.handle_effects();
