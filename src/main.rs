@@ -26,6 +26,8 @@ const CREDITS: [&str; 5] = [
     "SFX: @Shades, Luke.RUSTLTD, sauer2",
 ];
 
+const LEVELS: [&str; 2] = ["level1", "level2"];
+
 const COLLISION: [TileCollider; 64] = [
     TileCollider::None,
     TileCollider::None,
@@ -42,6 +44,7 @@ const COLLISION: [TileCollider; 64] = [
     TileCollider::Collectable,
     TileCollider::None,
     TileCollider::None,
+    TileCollider::None,
     TileCollider::Full,
     TileCollider::Full,
     TileCollider::Full,
@@ -50,13 +53,12 @@ const COLLISION: [TileCollider; 64] = [
     TileCollider::Full,
     TileCollider::None,
     TileCollider::None,
-    TileCollider::None,
-    TileCollider::None,
-    TileCollider::None,
-    TileCollider::None,
-    TileCollider::None,
-    TileCollider::None,
-    TileCollider::None,
+    TileCollider::Full,
+    TileCollider::Full,
+    TileCollider::Full,
+    TileCollider::Full,
+    TileCollider::Full,
+    TileCollider::Full,
     TileCollider::None,
     TileCollider::None,
     TileCollider::None,
@@ -137,6 +139,8 @@ struct Level {
     tiles: Vec<Sprite>,
     #[serde(with = "ColorDef")]
     background_color: Color,
+    #[serde(with = "ColorDef")]
+    font_color: Color,
     stars: i32,
     #[serde(with = "PointDef")]
     start_position: Point,
@@ -151,7 +155,7 @@ impl Level {
     };
 
     fn sprite_at_pos(&self, tile_pos: usize) -> Sprite {
-        self.tiles[tile_pos]
+        self.tiles[tile_pos] - 1
     }
 
     fn sprite_at_position(&self, point: Point) -> Sprite {
@@ -165,7 +169,11 @@ impl Level {
         //log_debug(str_format!(str256, "tile_pos: {}", tile_pos).as_str());
         //log_debug(str_format!(str256, "tile: {}", tile).as_str());
         let sprite = self.sprite_at_position(position);
-        COLLISION[sprite as usize]
+        if sprite >= 0 {
+            COLLISION[sprite as usize]
+        } else {
+            TileCollider::None
+        }
     }
 
     fn collectable_at_point(&self, position: Point) -> bool {
@@ -284,6 +292,7 @@ struct Blutti {
     stars: i32,
     lives: i32,
     finished_level: bool,
+    current_level: i32,
 }
 
 impl Default for Blutti {
@@ -300,6 +309,7 @@ impl Default for Blutti {
             direction: Direction::Left,
             lives: 3,
             finished_level: false,
+            current_level: 0,
         }
     }
 }
@@ -619,13 +629,23 @@ fn draw_tile(pos: i32, point: Point) {
 
 fn display_text(text: &str, position: Point) {
     let state = get_state();
-    let font = state.font.as_font();
-    draw_text(text, &font, position, Color::Black);
+    let color = state.level.font_color;
+    display_text_color(text, position, color);
 }
 
-fn restart() {
+fn display_text_color(text: &str, position: Point, color: Color) {
     let state = get_state();
-    state.level = load_level("level1");
+    let font = state.font.as_font();
+    draw_text(text, &font, position, color);
+}
+
+fn restart(mut level: usize) {
+    let state = get_state();
+    if level >= LEVELS.len() {
+        level = 0;
+    }
+    state.blutti.current_level = level as i32;
+    state.level = load_level(level);
     state.blutti = Blutti::with_start_position(state.level.start_position);
     state.game_state = GameState::Menu;
 }
@@ -687,12 +707,13 @@ fn render_monsters() {
 fn render_credits() {
     clear_screen(Color::White);
     for (i, line) in CREDITS.iter().enumerate() {
-        display_text(
+        display_text_color(
             line,
             Point {
                 x: 4,
                 y: (i as i32 + 1) * TILE_HEIGHT,
             },
+            Color::Black,
         );
     }
 }
@@ -701,17 +722,20 @@ fn render_level() {
     let state = get_state();
 
     clear_screen(state.level.background_color);
-    for (i, tile) in state.level.tiles.iter().enumerate() {
+    for (i, &tile) in state.level.tiles.iter().enumerate() {
         let point = Point {
             x: ((i as i32 % TILES_H) * TILE_WIDTH),
             y: ((i as i32 / TILES_H) * TILE_HEIGHT),
         };
-        draw_tile(*tile, point);
+        if tile > 0 {
+            draw_tile(tile - 1, point);
+        }
     }
 }
 
-fn load_level(level: &str) -> Level {
-    let level_data = load_file_buf(level).expect("Couldn't load level data");
+fn load_level(level: usize) -> Level {
+    let level_name = LEVELS[level];
+    let level_data = load_file_buf(level_name).expect("Couldn't load level data");
     serde_json::from_slice::<Level>(level_data.data()).expect("Couldn't parse level data")
 }
 
@@ -720,7 +744,7 @@ extern "C" fn handle_menu(menu_item: u8) {
     let state = get_state();
     match menu_item {
         1 => state.game_state = GameState::Credits,
-        2 => restart(),
+        2 => restart(0),
         _ => (),
     }
 }
@@ -729,7 +753,7 @@ extern "C" fn handle_menu(menu_item: u8) {
 extern "C" fn boot() {
     let fx = audio::OUT.add_gain(1.0);
     let theme = audio::OUT.add_gain(0.5);
-    let level = load_level("level1");
+    let level = load_level(0);
     let state = State {
         blutti: Blutti::with_start_position(level.start_position),
         spritesheet: load_file_buf("spritesheet").unwrap(),
@@ -793,9 +817,13 @@ extern "C" fn update() {
                 state.blutti.handle_effects();
             }
         }
-        GameState::GameOver(_won) => {
+        GameState::GameOver(won) => {
             if buttons.s {
-                restart();
+                if won {
+                    restart(state.blutti.current_level as usize + 1);
+                } else {
+                    restart(0);
+                }
             }
         }
     }
