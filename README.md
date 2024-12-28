@@ -15,11 +15,11 @@ https://fireflyzero.com/
 
 ## Credits
 
-Programming: Olle Wreede
-Graphics: Olle Wreede
-Music: Zane Little Music
-SFX: @Shades, Luke.RUSTLTD, sauer2
-Map editor: [Tiled](https://www.mapeditor.org/)
+- Programming: Olle Wreede
+- Graphics: Olle Wreede
+- Music: Zane Little Music
+- SFX: @Shades, Luke.RUSTLTD, sauer2
+- Map editor: [Tiled](https://www.mapeditor.org/)
 
 ## License
 
