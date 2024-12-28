@@ -26,6 +26,73 @@ const CREDITS: [&str; 5] = [
     "SFX: @Shades, Luke.RUSTLTD, sauer2",
 ];
 
+const COLLISION: [TileCollider; 64] = [
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::Full,
+    TileCollider::Full,
+    TileCollider::Full,
+    TileCollider::Full,
+    TileCollider::Full,
+    TileCollider::Full,
+    TileCollider::Climbable,
+    TileCollider::Collectable,
+    TileCollider::Collectable,
+    TileCollider::Collectable,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::Full,
+    TileCollider::Full,
+    TileCollider::Full,
+    TileCollider::Full,
+    TileCollider::Full,
+    TileCollider::Full,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+    TileCollider::None,
+];
+
 #[derive(PartialEq, Clone, Copy, Debug, Deserialize)]
 enum TileCollider {
     Full,
@@ -64,11 +131,10 @@ enum ColorDef {
 }
 
 type Sprite = i32;
-type Tile = (Sprite, TileCollider);
 
 #[derive(Clone, Debug, Deserialize)]
 struct Level {
-    tiles: Vec<Tile>,
+    tiles: Vec<Sprite>,
     #[serde(with = "ColorDef")]
     background_color: Color,
     stars: i32,
@@ -84,13 +150,13 @@ impl Level {
         y: Point::MAX.y - TILE_WIDTH,
     };
 
-    fn tile_at_pos(&self, tile_pos: usize) -> Tile {
+    fn sprite_at_pos(&self, tile_pos: usize) -> Sprite {
         self.tiles[tile_pos]
     }
 
-    fn tile_at_position(&self, point: Point) -> Tile {
+    fn sprite_at_position(&self, point: Point) -> Sprite {
         let tile_pos = get_tile_index(point);
-        self.tile_at_pos(tile_pos)
+        self.sprite_at_pos(tile_pos)
     }
 
     fn collision_at_position(&self, position: Point) -> TileCollider {
@@ -98,19 +164,19 @@ impl Level {
         //log_debug(str_format!(str256, "y: {}", test_point.y).as_str());
         //log_debug(str_format!(str256, "tile_pos: {}", tile_pos).as_str());
         //log_debug(str_format!(str256, "tile: {}", tile).as_str());
-        let tile = self.tile_at_position(position);
-        tile.1
+        let sprite = self.sprite_at_position(position);
+        COLLISION[sprite as usize]
     }
 
     fn collectable_at_point(&self, position: Point) -> bool {
         self.collision_at_position(position) == TileCollider::Collectable
     }
 
-    fn collect_item(&mut self, position: Point) -> Option<Tile> {
+    fn collect_item(&mut self, position: Point) -> Option<Sprite> {
         if self.collectable_at_point(position) {
             let tile_pos = get_tile_index(position);
             let collected_tile = self.tiles[tile_pos];
-            self.tiles[tile_pos] = (0, TileCollider::None);
+            self.tiles[tile_pos] = 0;
             Some(collected_tile)
         } else {
             None
@@ -402,8 +468,8 @@ impl Blutti {
     fn collect_item(&mut self) {
         let state = get_state();
         if state.level.collectable_at_point(self.position) {
-            let tile = state.level.tile_at_position(self.position);
-            match tile.0 {
+            let tile = state.level.sprite_at_position(self.position);
+            match tile {
                 10 => {
                     self.points += 1;
                     self.stars += 1;
@@ -640,7 +706,7 @@ fn render_level() {
             x: ((i as i32 % TILES_H) * TILE_WIDTH),
             y: ((i as i32 / TILES_H) * TILE_HEIGHT),
         };
-        draw_tile(tile.0, point);
+        draw_tile(*tile, point);
     }
 }
 
