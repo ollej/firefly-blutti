@@ -3,13 +3,12 @@
 
 extern crate alloc;
 
-//use alloc::vec::Vec;
+use alloc::vec::Vec;
 use core::cell::OnceCell;
 use firefly_rust::*;
 use fixedstr::{str256, str32, str_format};
-use heapless::Vec;
 use serde::Deserialize;
-use serde_json_core;
+use serde_json;
 
 const TILE_WIDTH: i32 = 8;
 const TILE_HEIGHT: i32 = 8;
@@ -26,21 +25,6 @@ const CREDITS: [&str; 5] = [
     "Music: Zane Little Music",
     "SFX: @Shades, Luke.RUSTLTD, sauer2",
 ];
-
-#[derive(Clone, Copy, Debug, Deserialize)]
-struct Tile {
-    sprite: i32,
-    collision: TileCollider,
-}
-
-impl Tile {
-    fn empty() -> Self {
-        Tile {
-            sprite: 0,
-            collision: TileCollider::None,
-        }
-    }
-}
 
 #[derive(PartialEq, Clone, Copy, Debug, Deserialize)]
 enum TileCollider {
@@ -79,15 +63,18 @@ enum ColorDef {
     DarkGray,
 }
 
+type Sprite = i32;
+type Tile = (Sprite, TileCollider);
+
 #[derive(Clone, Debug, Deserialize)]
 struct Level {
-    tiles: Vec<Tile, 600>,
+    tiles: Vec<Tile>,
     #[serde(with = "ColorDef")]
     background_color: Color,
     stars: i32,
     #[serde(with = "PointDef")]
     start_position: Point,
-    monsters: Vec<Monster, 16>,
+    monsters: Vec<Monster>,
 }
 
 impl Level {
@@ -112,7 +99,7 @@ impl Level {
         //log_debug(str_format!(str256, "tile_pos: {}", tile_pos).as_str());
         //log_debug(str_format!(str256, "tile: {}", tile).as_str());
         let tile = self.tile_at_position(position);
-        tile.collision
+        tile.1
     }
 
     fn collectable_at_point(&self, position: Point) -> bool {
@@ -123,7 +110,7 @@ impl Level {
         if self.collectable_at_point(position) {
             let tile_pos = get_tile_index(position);
             let collected_tile = self.tiles[tile_pos];
-            self.tiles[tile_pos] = Tile::empty();
+            self.tiles[tile_pos] = (0, TileCollider::None);
             Some(collected_tile)
         } else {
             None
@@ -141,7 +128,7 @@ struct State {
     theme: audio::Node<audio::Gain>,
     current_level: Level,
     game_state: GameState,
-    levels: Vec<Level, 10>,
+    levels: Vec<Level>,
 }
 
 fn get_state() -> &'static mut State {
@@ -417,7 +404,7 @@ impl Blutti {
         let state = get_state();
         if state.current_level.collectable_at_point(self.position) {
             let tile = state.current_level.tile_at_position(self.position);
-            match tile.sprite {
+            match tile.0 {
                 10 => {
                     self.points += 1;
                     self.stars += 1;
@@ -654,7 +641,7 @@ fn render_level() {
             x: ((i as i32 % TILES_H) * TILE_WIDTH),
             y: ((i as i32 / TILES_H) * TILE_HEIGHT),
         };
-        draw_tile(tile.sprite, point);
+        draw_tile(tile.0, point);
     }
 }
 
@@ -670,15 +657,16 @@ extern "C" fn handle_menu(menu_item: u8) {
 
 #[no_mangle]
 extern "C" fn boot() {
+    log_debug("boot");
     let fx = audio::OUT.add_gain(1.0);
     let theme = audio::OUT.add_gain(0.5);
     log_debug("before loading data");
     let level_data = load_file_buf("levels").unwrap();
     log_debug("loaded data");
-    let (levels, _remainder) =
-        serde_json_core::from_slice::<Vec<Level, 10>>(level_data.data()).unwrap();
+    let levels = serde_json::from_slice::<Vec<Level>>(level_data.data()).unwrap();
+    //let levels: Vec<Level> = Vec::new();
     log_debug("deserialized data");
-    let level = levels.first().unwrap().clone();
+    let level = levels.first().expect("No levels available.").clone();
     let state = State {
         blutti: Blutti::with_start_position(level.start_position),
         spritesheet: load_file_buf("spritesheet").unwrap(),

@@ -6,9 +6,8 @@ edition = "2021"
 [dependencies]
 firefly-rust = { version="0.7.1", features=["alloc", "talc"] }
 fixedstr = { version="0.5", features=["no-alloc"] }
-heapless = "0.8.0"
 serde = { version="1.0.216", default-features=false, features=["alloc", "derive"] }
-serde-json-core = "0.6.0"
+serde_json = { version="1.0.134", default-features=false, features=["alloc"] }
 
 # https://github.com/johnthagen/min-sized-rust
 [profile.release]
