@@ -126,9 +126,8 @@ struct State {
     font: FileBuf,
     fx: audio::Node<audio::Gain>,
     theme: audio::Node<audio::Gain>,
-    current_level: Level,
+    level: Level,
     game_state: GameState,
-    levels: Vec<Level>,
 }
 
 fn get_state() -> &'static mut State {
@@ -161,7 +160,7 @@ trait Updateable {
 
     fn collision(&self, position: Point) -> TileCollider {
         let state = get_state();
-        state.current_level.collision_at_position(position)
+        state.level.collision_at_position(position)
     }
 
     fn is_tile_empty(&self, position: Point) -> bool {
@@ -402,22 +401,22 @@ impl Blutti {
 
     fn collect_item(&mut self) {
         let state = get_state();
-        if state.current_level.collectable_at_point(self.position) {
-            let tile = state.current_level.tile_at_position(self.position);
+        if state.level.collectable_at_point(self.position) {
+            let tile = state.level.tile_at_position(self.position);
             match tile.0 {
                 10 => {
                     self.points += 1;
                     self.stars += 1;
-                    state.current_level.collect_item(self.position);
+                    state.level.collect_item(self.position);
                     play_sound("sound_coin");
                 }
                 11 => {
                     self.lives += 1;
-                    state.current_level.collect_item(self.position);
+                    state.level.collect_item(self.position);
                     play_sound("sound_powerup");
                 }
                 12 => {
-                    if self.stars >= state.current_level.stars {
+                    if self.stars >= state.level.stars {
                         self.finish_level();
                         play_sound("sound_exit");
                     } else {
@@ -560,8 +559,8 @@ fn display_text(text: &str, position: Point) {
 
 fn restart() {
     let state = get_state();
-    state.current_level = state.levels.first().unwrap().clone();
-    state.blutti = Blutti::with_start_position(state.current_level.start_position);
+    state.level = load_level("level1");
+    state.blutti = Blutti::with_start_position(state.level.start_position);
     state.game_state = GameState::Menu;
 }
 
@@ -614,7 +613,7 @@ fn render_ui() {
 
 fn render_monsters() {
     let state = get_state();
-    for monster in state.current_level.monsters.iter() {
+    for monster in state.level.monsters.iter() {
         monster.draw();
     }
 }
@@ -635,14 +634,19 @@ fn render_credits() {
 fn render_level() {
     let state = get_state();
 
-    clear_screen(state.current_level.background_color);
-    for (i, tile) in state.current_level.tiles.iter().enumerate() {
+    clear_screen(state.level.background_color);
+    for (i, tile) in state.level.tiles.iter().enumerate() {
         let point = Point {
             x: ((i as i32 % TILES_H) * TILE_WIDTH),
             y: ((i as i32 / TILES_H) * TILE_HEIGHT),
         };
         draw_tile(tile.0, point);
     }
+}
+
+fn load_level(level: &str) -> Level {
+    let level_data = load_file_buf(level).expect("Couldn't load level data");
+    serde_json::from_slice::<Level>(level_data.data()).expect("Couldn't parse level data")
 }
 
 #[no_mangle]
@@ -657,25 +661,17 @@ extern "C" fn handle_menu(menu_item: u8) {
 
 #[no_mangle]
 extern "C" fn boot() {
-    log_debug("boot");
     let fx = audio::OUT.add_gain(1.0);
     let theme = audio::OUT.add_gain(0.5);
-    log_debug("before loading data");
-    let level_data = load_file_buf("levels").unwrap();
-    log_debug("loaded data");
-    let levels = serde_json::from_slice::<Vec<Level>>(level_data.data()).unwrap();
-    //let levels: Vec<Level> = Vec::new();
-    log_debug("deserialized data");
-    let level = levels.first().expect("No levels available.").clone();
+    let level = load_level("level1");
     let state = State {
         blutti: Blutti::with_start_position(level.start_position),
         spritesheet: load_file_buf("spritesheet").unwrap(),
         font: load_file_buf("font").unwrap(),
         fx,
         theme,
-        current_level: level,
+        level,
         game_state: GameState::Menu,
-        levels,
     };
     unsafe { STATE.set(state) }.ok().unwrap();
     add_menu_item(1, "Credits");
@@ -725,7 +721,7 @@ extern "C" fn update() {
                     state.blutti.start_dash();
                 }
                 state.blutti.update();
-                for monster in state.current_level.monsters.iter_mut() {
+                for monster in state.level.monsters.iter_mut() {
                     monster.update();
                 }
                 state.blutti.handle_effects();

@@ -6,7 +6,7 @@ app_name = "Firefly Blutti"
 [files]
 spritesheet = { path = "assets/spritesheet.png" }
 font = { path = "assets/eg_4x6.fff" }
-levels = { path = "assets/levels.json", copy = true }
+level1 = { path = "assets/level1.json", copy = true }
 sound_coin = { path = "assets/coin5.wav" }
 sound_jump = { path = "assets/jump3.wav" }
 sound_dash = { path = "assets/jump4.wav" }
