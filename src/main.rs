@@ -426,11 +426,10 @@ impl Blutti {
         y: HEIGHT - TILE_WIDTH - TILE_HEIGHT,
     };
 
-    fn with_start_position(start_position: Point, points: i32) -> Self {
+    fn with_start_position(start_position: Point) -> Self {
         Blutti {
             position: start_position,
             start_position,
-            points,
             ..Blutti::default()
         }
     }
@@ -581,6 +580,10 @@ impl Updateable for Monster {
                     x: test_x,
                     y: self.position.y,
                 })
+                && !self.is_tile_free(Point {
+                    x: test_x,
+                    y: self.position.y + TILE_HEIGHT,
+                })
             {
                 self.position.x = new_x;
             } else {
@@ -590,6 +593,7 @@ impl Updateable for Monster {
             let state = get_state();
             let pos = state.blutti.position;
 
+            // Check for death
             if self.position.x <= pos.x + TILE_WIDTH
                 && (self.position.x + TILE_WIDTH) >= pos.x
                 && self.position.y <= (pos.y + TILE_HEIGHT)
@@ -651,15 +655,19 @@ fn display_text_color(text: &str, position: Point, color: Color) {
     draw_text(text, &font, position, color);
 }
 
-fn restart(mut level: usize) {
+fn restart(mut level: usize, won: bool) {
     let state = get_state();
     if level >= LEVELS.len() {
         level = 0;
     }
     state.level = load_level(level);
-    state.blutti = state
-        .blutti
-        .at_new_level(state.level.start_position, level as i32);
+    if won {
+        state.blutti = state
+            .blutti
+            .at_new_level(state.level.start_position, level as i32);
+    } else {
+        state.blutti = Blutti::with_start_position(state.level.start_position);
+    }
     state.game_state = GameState::Menu;
 }
 
@@ -757,7 +765,7 @@ extern "C" fn handle_menu(menu_item: u8) {
     let state = get_state();
     match menu_item {
         1 => state.game_state = GameState::Credits,
-        2 => restart(0),
+        2 => restart(0, false),
         _ => (),
     }
 }
@@ -768,7 +776,7 @@ extern "C" fn boot() {
     let theme = audio::OUT.add_gain(0.5);
     let level = load_level(0);
     let state = State {
-        blutti: Blutti::with_start_position(level.start_position, 0),
+        blutti: Blutti::with_start_position(level.start_position),
         spritesheet: load_file_buf("spritesheet").unwrap(),
         font: load_file_buf("font").unwrap(),
         fx,
@@ -833,9 +841,9 @@ extern "C" fn update() {
         GameState::GameOver(won) => {
             if buttons.s {
                 if won {
-                    restart(state.blutti.current_level as usize + 1);
+                    restart(state.blutti.current_level as usize + 1, won);
                 } else {
-                    restart(0);
+                    restart(0, won);
                 }
             }
         }
