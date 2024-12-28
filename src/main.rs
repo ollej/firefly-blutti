@@ -145,6 +145,8 @@ struct Level {
     #[serde(with = "PointDef")]
     start_position: Point,
     monsters: Vec<Monster>,
+    #[serde(skip)]
+    original_monsters: Vec<Monster>,
 }
 
 impl Level {
@@ -153,6 +155,19 @@ impl Level {
         x: Point::MAX.x - TILE_WIDTH,
         y: Point::MAX.y - TILE_WIDTH,
     };
+
+    fn load_level(level: usize) -> Self {
+        let level_name = LEVELS[level];
+        let level_data = load_file_buf(level_name).expect("Couldn't load level data");
+        let mut level =
+            serde_json::from_slice::<Level>(level_data.data()).expect("Couldn't parse level data");
+        level.original_monsters = level.monsters.clone();
+        level
+    }
+
+    fn reset(&mut self) {
+        self.monsters = self.original_monsters.clone();
+    }
 
     fn sprite_at_pos(&self, tile_pos: usize) -> Sprite {
         self.tiles[tile_pos] - 1
@@ -516,6 +531,8 @@ impl Blutti {
     }
 
     fn die(&mut self) {
+        let state = get_state();
+        state.level.reset();
         self.lives -= 1;
         self.reset();
         play_sound("sound_death");
@@ -552,55 +569,50 @@ impl Blutti {
 struct Monster {
     #[serde(with = "PointDef")]
     position: Point,
-    alive: bool,
     sprite: i32,
     movement: i32,
 }
 
 impl Drawable for Monster {
     fn draw(&self) {
-        if self.alive {
-            draw_tile(self.sprite, self.position());
-        }
+        draw_tile(self.sprite, self.position());
     }
 }
 
 impl Updateable for Monster {
     fn update(&mut self) {
-        if self.alive {
-            let new_x = self.position.x + self.movement;
-            let test_x = if new_x > self.position.x {
-                new_x + TILE_WIDTH - 1
-            } else {
-                new_x
-            };
-            if new_x >= Level::MIN.x
-                && new_x < Level::MAX.x
-                && self.is_tile_free(Point {
-                    x: test_x,
-                    y: self.position.y,
-                })
-                && !self.is_tile_free(Point {
-                    x: test_x,
-                    y: self.position.y + TILE_HEIGHT,
-                })
-            {
-                self.position.x = new_x;
-            } else {
-                self.movement *= -1;
-            }
+        let new_x = self.position.x + self.movement;
+        let test_x = if new_x > self.position.x {
+            new_x + TILE_WIDTH - 1
+        } else {
+            new_x
+        };
+        if new_x >= Level::MIN.x
+            && new_x < Level::MAX.x
+            && self.is_tile_free(Point {
+                x: test_x,
+                y: self.position.y,
+            })
+            && !self.is_tile_free(Point {
+                x: test_x,
+                y: self.position.y + TILE_HEIGHT,
+            })
+        {
+            self.position.x = new_x;
+        } else {
+            self.movement *= -1;
+        }
 
-            let state = get_state();
-            let pos = state.blutti.position;
+        let state = get_state();
+        let pos = state.blutti.position;
 
-            // Check for death
-            if self.position.x <= pos.x + TILE_WIDTH
-                && (self.position.x + TILE_WIDTH) >= pos.x
-                && self.position.y <= (pos.y + TILE_HEIGHT)
-                && (self.position.y + TILE_WIDTH) >= pos.y
-            {
-                state.blutti.die();
-            }
+        // Check for death
+        if self.position.x <= pos.x + TILE_WIDTH
+            && (self.position.x + TILE_WIDTH) >= pos.x
+            && self.position.y <= (pos.y + TILE_HEIGHT)
+            && (self.position.y + TILE_WIDTH) >= pos.y
+        {
+            state.blutti.die();
         }
     }
 
@@ -660,13 +672,14 @@ fn restart(mut level: usize, won: bool) {
     if level >= LEVELS.len() {
         level = 0;
     }
-    state.level = load_level(level);
+    state.level = Level::load_level(level);
     if won {
         state.blutti = state
             .blutti
             .at_new_level(state.level.start_position, level as i32);
     } else {
         state.blutti = Blutti::with_start_position(state.level.start_position);
+        state.level.reset();
     }
     state.game_state = GameState::Menu;
 }
@@ -754,12 +767,6 @@ fn render_level() {
     }
 }
 
-fn load_level(level: usize) -> Level {
-    let level_name = LEVELS[level];
-    let level_data = load_file_buf(level_name).expect("Couldn't load level data");
-    serde_json::from_slice::<Level>(level_data.data()).expect("Couldn't parse level data")
-}
-
 #[no_mangle]
 extern "C" fn handle_menu(menu_item: u8) {
     let state = get_state();
@@ -774,7 +781,7 @@ extern "C" fn handle_menu(menu_item: u8) {
 extern "C" fn boot() {
     let fx = audio::OUT.add_gain(1.0);
     let theme = audio::OUT.add_gain(0.5);
-    let level = load_level(0);
+    let level = Level::load_level(0);
     let state = State {
         blutti: Blutti::with_start_position(level.start_position),
         spritesheet: load_file_buf("spritesheet").unwrap(),

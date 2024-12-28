@@ -12,7 +12,6 @@
                 "x": 120,
                 "y": 144
             },
-            "alive": true,
             "sprite": 13,
             "movement": 1
         }
