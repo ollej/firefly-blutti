@@ -426,10 +426,22 @@ impl Blutti {
         y: HEIGHT - TILE_WIDTH - TILE_HEIGHT,
     };
 
-    fn with_start_position(start_position: Point) -> Self {
+    fn with_start_position(start_position: Point, points: i32) -> Self {
         Blutti {
             position: start_position,
             start_position,
+            points,
+            ..Blutti::default()
+        }
+    }
+
+    fn at_new_level(&self, start_position: Point, current_level: i32) -> Self {
+        Blutti {
+            position: start_position,
+            start_position,
+            points: self.points,
+            lives: self.lives,
+            current_level,
             ..Blutti::default()
         }
     }
@@ -644,9 +656,10 @@ fn restart(mut level: usize) {
     if level >= LEVELS.len() {
         level = 0;
     }
-    state.blutti.current_level = level as i32;
     state.level = load_level(level);
-    state.blutti = Blutti::with_start_position(state.level.start_position);
+    state.blutti = state
+        .blutti
+        .at_new_level(state.level.start_position, level as i32);
     state.game_state = GameState::Menu;
 }
 
@@ -755,7 +768,7 @@ extern "C" fn boot() {
     let theme = audio::OUT.add_gain(0.5);
     let level = load_level(0);
     let state = State {
-        blutti: Blutti::with_start_position(level.start_position),
+        blutti: Blutti::with_start_position(level.start_position, 0),
         spritesheet: load_file_buf("spritesheet").unwrap(),
         font: load_file_buf("font").unwrap(),
         fx,
