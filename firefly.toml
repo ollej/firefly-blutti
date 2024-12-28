@@ -1,7 +1,7 @@
 author_id = "olle"
-app_id = "firefly-blutti"
+app_id = "blutti"
 author_name = "Olle Wreede"
-app_name = "Firefly Blutti"
+app_name = "Blutti"
 
 [files]
 spritesheet = { path = "assets/spritesheet.png" }
