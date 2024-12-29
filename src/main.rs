@@ -243,7 +243,7 @@ enum Direction {
 
 enum GameState {
     Playing,
-    Menu,
+    Title,
     Credits,
     Info,
     GameOver(bool),
@@ -692,10 +692,10 @@ fn restart(mut level: usize, won: bool) {
         state.blutti = Blutti::with_start_position(state.level.start_position);
         state.level.reset();
     }
-    state.game_state = GameState::Menu;
+    state.game_state = GameState::Title;
 }
 
-fn render_menu() {
+fn render_title() {
     display_text(
         "Press <Y> to start!",
         Point {
@@ -829,7 +829,7 @@ extern "C" fn boot() {
         fx,
         theme,
         level,
-        game_state: GameState::Menu,
+        game_state: GameState::Title,
     };
     unsafe { STATE.set(state) }.ok().unwrap();
     add_menu_item(1, "Credits");
@@ -843,19 +843,19 @@ extern "C" fn update() {
     let state = get_state();
     let buttons = read_buttons(Peer::COMBINED);
     match state.game_state {
-        GameState::Menu => {
+        GameState::Title => {
             if buttons.n {
                 state.game_state = GameState::Playing;
             }
         }
         GameState::Credits => {
             if buttons.n {
-                state.game_state = GameState::Menu;
+                state.game_state = GameState::Title;
             }
         }
         GameState::Info => {
             if buttons.n {
-                state.game_state = GameState::Menu;
+                state.game_state = GameState::Title;
             }
         }
         GameState::Playing => {
@@ -907,10 +907,10 @@ extern "C" fn update() {
 extern "C" fn render() {
     let state = get_state();
     match state.game_state {
-        GameState::Menu => {
+        GameState::Title => {
             render_level();
             render_ui();
-            render_menu();
+            render_title();
         }
         GameState::Credits => {
             render_credits();
