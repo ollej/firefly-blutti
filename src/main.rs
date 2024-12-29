@@ -321,7 +321,7 @@ struct Blutti {
     lives: i32,
     finished_level: bool,
     current_level: i32,
-    entered_tile: i32,
+    current_tile: i32,
 }
 
 impl Default for Blutti {
@@ -339,7 +339,7 @@ impl Default for Blutti {
             lives: 3,
             finished_level: false,
             current_level: 0,
-            entered_tile: 0,
+            current_tile: 0,
         }
     }
 }
@@ -515,7 +515,7 @@ impl Blutti {
             TileCollider::Collectable => self.collect_item(),
             _ => (),
         }
-        state.blutti.entered_tile = get_tile_index(self.position) as i32;
+        state.blutti.current_tile = get_tile_index(self.position) as i32;
     }
 
     fn collect_item(&mut self) {
@@ -540,9 +540,9 @@ impl Blutti {
                         play_sound("sound_exit");
                     } else {
                         let tile_pos = get_tile_index(self.position) as i32;
-                        if tile_pos != state.blutti.entered_tile {
+                        if tile_pos != state.blutti.current_tile {
                             play_sound("sound_wrong");
-                            state.blutti.entered_tile = tile_pos;
+                            state.blutti.current_tile = tile_pos;
                         }
                     }
                 }
@@ -572,7 +572,7 @@ impl Blutti {
         self.fall_timer = 0;
         self.movement = 0;
         self.direction = Direction::Left;
-        self.entered_tile = 0;
+        self.current_tile = 0;
     }
 
     fn is_on_ladder(&self) -> bool {
