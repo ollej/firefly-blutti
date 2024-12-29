@@ -222,11 +222,13 @@ static mut STATE: OnceCell<State> = OnceCell::new();
 struct State {
     blutti: Blutti,
     spritesheet: FileBuf,
+    title: FileBuf,
     font: FileBuf,
     fx: audio::Node<audio::Gain>,
     theme: audio::Node<audio::Gain>,
     level: Level,
     game_state: GameState,
+    buttons: Buttons,
 }
 
 fn get_state() -> &'static mut State {
@@ -696,16 +698,22 @@ fn restart(mut level: usize, won: bool) {
 }
 
 fn render_title() {
-    display_text(
+    let state = get_state();
+    clear_screen(Color::Black);
+    draw_image(&state.title.as_image(), Point { x: 0, y: 0 });
+    display_text_color(
         "Press <Y> to start!",
         Point {
             x: WIDTH / 2 - 38,
             y: HEIGHT / 2 - 3,
         },
+        Color::White,
     );
 }
 
 fn render_gameover(won: bool) {
+    render_level();
+    render_ui();
     if won {
         display_text(
             "You win!",
@@ -806,6 +814,15 @@ fn render_level() {
     }
 }
 
+fn render_playing() {
+    let state = get_state();
+
+    render_level();
+    state.blutti.draw();
+    render_monsters();
+    render_ui();
+}
+
 #[no_mangle]
 extern "C" fn handle_menu(menu_item: u8) {
     let state = get_state();
@@ -825,11 +842,13 @@ extern "C" fn boot() {
     let state = State {
         blutti: Blutti::with_start_position(level.start_position),
         spritesheet: load_file_buf("spritesheet").unwrap(),
+        title: load_file_buf("title").unwrap(),
         font: load_file_buf("font").unwrap(),
         fx,
         theme,
         level,
         game_state: GameState::Title,
+        buttons: Buttons::default(),
     };
     unsafe { STATE.set(state) }.ok().unwrap();
     add_menu_item(1, "Credits");
@@ -842,19 +861,22 @@ extern "C" fn boot() {
 extern "C" fn update() {
     let state = get_state();
     let buttons = read_buttons(Peer::COMBINED);
+    let just_pressed = buttons.just_pressed(&state.buttons);
+    state.buttons = buttons;
+
     match state.game_state {
         GameState::Title => {
-            if buttons.n {
+            if just_pressed.n {
                 state.game_state = GameState::Playing;
             }
         }
         GameState::Credits => {
-            if buttons.n {
+            if just_pressed.n {
                 state.game_state = GameState::Title;
             }
         }
         GameState::Info => {
-            if buttons.n {
+            if just_pressed.n {
                 state.game_state = GameState::Title;
             }
         }
@@ -878,10 +900,10 @@ extern "C" fn update() {
                         state.blutti.move_down();
                     }
                 }
-                if buttons.s {
+                if just_pressed.s {
                     state.blutti.start_jump();
                 }
-                if buttons.w {
+                if just_pressed.w {
                     state.blutti.start_dash();
                 }
                 state.blutti.update();
@@ -892,7 +914,7 @@ extern "C" fn update() {
             }
         }
         GameState::GameOver(won) => {
-            if buttons.n {
+            if just_pressed.n {
                 if won {
                     restart(state.blutti.current_level as usize + 1, won);
                 } else {
@@ -907,27 +929,10 @@ extern "C" fn update() {
 extern "C" fn render() {
     let state = get_state();
     match state.game_state {
-        GameState::Title => {
-            render_level();
-            render_ui();
-            render_title();
-        }
-        GameState::Credits => {
-            render_credits();
-        }
-        GameState::Info => {
-            render_info();
-        }
-        GameState::Playing => {
-            render_level();
-            state.blutti.draw();
-            render_monsters();
-            render_ui();
-        }
-        GameState::GameOver(won) => {
-            render_level();
-            render_ui();
-            render_gameover(won);
-        }
+        GameState::Title => render_title(),
+        GameState::Credits => render_credits(),
+        GameState::Info => render_info(),
+        GameState::Playing => render_playing(),
+        GameState::GameOver(won) => render_gameover(won),
     }
 }

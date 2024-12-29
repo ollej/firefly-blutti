@@ -5,6 +5,7 @@ app_name = "Blutti"
 
 [files]
 spritesheet = { path = "assets/spritesheet.png" }
+title = { path = "assets/blutti-title.png" }
 font = { path = "assets/eg_4x6.fff" }
 level1 = { path = "assets/level1.json", copy = true }
 level2 = { path = "assets/level2.json", copy = true }
