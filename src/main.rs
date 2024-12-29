@@ -699,11 +699,12 @@ fn restart(mut level: usize, won: bool) {
         state.blutti = state
             .blutti
             .at_new_level(state.level.start_position, level as i32);
+        state.game_state = GameState::Playing;
     } else {
         state.blutti = Blutti::with_start_position(state.level.start_position);
         state.level.reset();
+        state.game_state = GameState::Title;
     }
-    state.game_state = GameState::Title;
 }
 
 fn render_title() {
