@@ -7,6 +7,13 @@ console.
 
 Develeoped with the Rust programming language.
 
+## Gameplay
+
+Collect enough stars to open up the exit door, each level requires a different
+number of stars. Beware of monsters.
+
+Press "A" (south button) to jump, press "X" (west button) to dash.
+
 ## Firefly Zero
 
 Firefly Zero is a modern handheld game console with effortless multiplayer. It's fun to play, alone or with friends, and easy to program.

@@ -18,12 +18,22 @@ const TILES_H: i32 = 30;
 const TILES_V: i32 = 20;
 const BADGE_STARS: Badge = Badge(1);
 
-const CREDITS: [&str; 5] = [
+const CREDITS: [&str; 7] = [
     "Credits:",
     "Programming: Olle Wreede",
     "Graphics: Olle Wreede",
     "Music: Zane Little Music",
     "SFX: @Shades, Luke.RUSTLTD, sauer2",
+    "",
+    "Press <Y> to go back to game",
+];
+
+const INFO: [&str; 5] = [
+    "Controls:",
+    "Press <A> to jump",
+    "Press <X> to dash",
+    "",
+    "Press <Y> to go back to game",
 ];
 
 const LEVELS: [&str; 2] = ["level1", "level2"];
@@ -235,6 +245,7 @@ enum GameState {
     Playing,
     Menu,
     Credits,
+    Info,
     GameOver(bool),
 }
 
@@ -686,7 +697,7 @@ fn restart(mut level: usize, won: bool) {
 
 fn render_menu() {
     display_text(
-        "Press <X> to start!",
+        "Press <Y> to start!",
         Point {
             x: WIDTH / 2 - 38,
             y: HEIGHT / 2 - 3,
@@ -700,7 +711,14 @@ fn render_gameover(won: bool) {
             "You win!",
             Point {
                 x: WIDTH / 2 - 16,
-                y: HEIGHT / 2 - 3,
+                y: HEIGHT / 2 - TILE_HEIGHT,
+            },
+        );
+        display_text(
+            "Press <Y> to start next level!",
+            Point {
+                x: WIDTH / 2 - 60,
+                y: HEIGHT / 2 + 2,
             },
         );
     } else {
@@ -708,7 +726,14 @@ fn render_gameover(won: bool) {
             "Game Over!",
             Point {
                 x: WIDTH / 2 - 20,
-                y: HEIGHT / 2 - 3,
+                y: HEIGHT / 2 - TILE_HEIGHT,
+            },
+        );
+        display_text(
+            "Press <Y> to start again!",
+            Point {
+                x: WIDTH / 2 - 50,
+                y: HEIGHT / 2 + 2,
             },
         );
     }
@@ -752,6 +777,20 @@ fn render_credits() {
     }
 }
 
+fn render_info() {
+    clear_screen(Color::White);
+    for (i, line) in INFO.iter().enumerate() {
+        display_text_color(
+            line,
+            Point {
+                x: 4,
+                y: (i as i32 + 1) * TILE_HEIGHT,
+            },
+            Color::Black,
+        );
+    }
+}
+
 fn render_level() {
     let state = get_state();
 
@@ -773,6 +812,7 @@ extern "C" fn handle_menu(menu_item: u8) {
     match menu_item {
         1 => state.game_state = GameState::Credits,
         2 => restart(0, false),
+        3 => state.game_state = GameState::Info,
         _ => (),
     }
 }
@@ -794,6 +834,7 @@ extern "C" fn boot() {
     unsafe { STATE.set(state) }.ok().unwrap();
     add_menu_item(1, "Credits");
     add_menu_item(2, "Restart");
+    add_menu_item(3, "Info");
     play_music("sound_theme");
 }
 
@@ -803,12 +844,17 @@ extern "C" fn update() {
     let buttons = read_buttons(Peer::COMBINED);
     match state.game_state {
         GameState::Menu => {
-            if buttons.s {
+            if buttons.n {
                 state.game_state = GameState::Playing;
             }
         }
         GameState::Credits => {
-            if buttons.s {
+            if buttons.n {
+                state.game_state = GameState::Menu;
+            }
+        }
+        GameState::Info => {
+            if buttons.n {
                 state.game_state = GameState::Menu;
             }
         }
@@ -846,7 +892,7 @@ extern "C" fn update() {
             }
         }
         GameState::GameOver(won) => {
-            if buttons.s {
+            if buttons.n {
                 if won {
                     restart(state.blutti.current_level as usize + 1, won);
                 } else {
@@ -868,6 +914,9 @@ extern "C" fn render() {
         }
         GameState::Credits => {
             render_credits();
+        }
+        GameState::Info => {
+            render_info();
         }
         GameState::Playing => {
             render_level();
