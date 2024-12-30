@@ -53,8 +53,8 @@ const COLLISION: [TileCollider; 64] = [
     TileCollider::Collectable,
     TileCollider::Collectable,
     TileCollider::None,
+    TileCollider::Deadly,
     TileCollider::None,
-    TileCollider::None,
     TileCollider::Full,
     TileCollider::Full,
     TileCollider::Full,
@@ -62,7 +62,7 @@ const COLLISION: [TileCollider; 64] = [
     TileCollider::Full,
     TileCollider::Full,
     TileCollider::None,
-    TileCollider::None,
+    TileCollider::Full,
     TileCollider::Full,
     TileCollider::Full,
     TileCollider::Full,
@@ -105,11 +105,41 @@ const COLLISION: [TileCollider; 64] = [
     TileCollider::None,
 ];
 
+trait PointMath {
+    fn top_right(&self) -> Point;
+    fn bottom_left(&self) -> Point;
+    fn bottom_right(&self) -> Point;
+}
+
+impl PointMath for Point {
+    fn top_right(&self) -> Point {
+        Point {
+            x: self.x + TILE_WIDTH - 1,
+            y: self.y,
+        }
+    }
+
+    fn bottom_left(&self) -> Point {
+        Point {
+            x: self.x,
+            y: self.y + TILE_HEIGHT - 1,
+        }
+    }
+
+    fn bottom_right(&self) -> Point {
+        Point {
+            x: self.x + TILE_WIDTH - 1,
+            y: self.y + TILE_HEIGHT - 1,
+        }
+    }
+}
+
 #[derive(PartialEq, Clone, Copy, Debug, Deserialize)]
 enum TileCollider {
     Full,
     Climbable,
     Collectable,
+    Deadly,
     None,
 }
 
@@ -143,6 +173,12 @@ enum ColorDef {
 }
 
 type Sprite = i32;
+
+struct Collision {
+    sprite: i32,
+    tile_collider: TileCollider,
+    position: Point,
+}
 
 #[derive(Clone, Debug, Deserialize)]
 struct Level {
@@ -188,32 +224,35 @@ impl Level {
         self.sprite_at_pos(tile_pos)
     }
 
-    fn collision_at_position(&self, position: Point) -> TileCollider {
+    fn collision_at_position(&self, position: Point) -> Option<Collision> {
         //log_debug(str_format!(str256, "x: {}", test_point.x).as_str());
         //log_debug(str_format!(str256, "y: {}", test_point.y).as_str());
         //log_debug(str_format!(str256, "tile_pos: {}", tile_pos).as_str());
         //log_debug(str_format!(str256, "tile: {}", tile).as_str());
         let sprite = self.sprite_at_position(position);
         if sprite >= 0 {
-            COLLISION[sprite as usize]
-        } else {
-            TileCollider::None
-        }
-    }
-
-    fn collectable_at_point(&self, position: Point) -> bool {
-        self.collision_at_position(position) == TileCollider::Collectable
-    }
-
-    fn collect_item(&mut self, position: Point) -> Option<Sprite> {
-        if self.collectable_at_point(position) {
-            let tile_pos = get_tile_index(position);
-            let collected_tile = self.tiles[tile_pos];
-            self.tiles[tile_pos] = 0;
-            Some(collected_tile)
+            Some(Collision {
+                sprite,
+                tile_collider: COLLISION[sprite as usize],
+                position,
+            })
         } else {
             None
         }
+    }
+
+    fn all_collisions_at_rect(&self, position: Point) -> [Option<Collision>; 4] {
+        [
+            self.collision_at_position(position),
+            self.collision_at_position(position.top_right()),
+            self.collision_at_position(position.bottom_left()),
+            self.collision_at_position(position.bottom_right()),
+        ]
+    }
+
+    fn collect_item(&mut self, position: Point) {
+        let tile_pos = get_tile_index(position);
+        self.tiles[tile_pos] = 0;
     }
 }
 
@@ -262,12 +301,17 @@ trait Updateable {
 
     fn collision(&self, position: Point) -> TileCollider {
         let state = get_state();
-        state.level.collision_at_position(position)
+        state
+            .level
+            .collision_at_position(position)
+            .map_or(TileCollider::None, |c| c.tile_collider)
     }
 
     fn is_tile_empty(&self, position: Point) -> bool {
-        let tile = self.collision(position);
-        tile == TileCollider::None || tile == TileCollider::Collectable
+        match self.collision(position) {
+            TileCollider::None | TileCollider::Collectable | TileCollider::Deadly => true,
+            TileCollider::Climbable | TileCollider::Full => false,
+        }
     }
 
     fn is_tile_free(&self, position: Point) -> bool {
@@ -437,6 +481,7 @@ impl Updateable for Blutti {
                 y: test_y,
             }) {
                 self.position.y = new_position.y;
+                //log_debug(str_format!(str32, "new y: {}", new_position.y).as_str());
             }
         }
     }
@@ -511,43 +556,49 @@ impl Blutti {
 
     fn handle_effects(&mut self) {
         let state = get_state();
-        match self.collision(self.position) {
-            TileCollider::Collectable => self.collect_item(),
-            _ => (),
+        for collision in state
+            .level
+            .all_collisions_at_rect(self.position)
+            .iter()
+            .flatten()
+        {
+            match collision.tile_collider {
+                TileCollider::Collectable => self.collect_item(collision),
+                TileCollider::Deadly => self.die(),
+                _ => (),
+            }
         }
         state.blutti.current_tile = get_tile_index(self.position) as i32;
     }
 
-    fn collect_item(&mut self) {
+    fn collect_item(&mut self, collission: &Collision) {
         let state = get_state();
-        if state.level.collectable_at_point(self.position) {
-            let tile = state.level.sprite_at_position(self.position);
-            match tile {
-                10 => {
-                    self.points += 1;
-                    self.stars += 1;
-                    state.level.collect_item(self.position);
-                    play_sound("sound_coin");
-                }
-                11 => {
-                    self.lives += 1;
-                    state.level.collect_item(self.position);
-                    play_sound("sound_powerup");
-                }
-                12 => {
-                    if self.stars >= state.level.stars {
-                        self.finish_level();
-                        play_sound("sound_exit");
-                    } else {
-                        let tile_pos = get_tile_index(self.position) as i32;
-                        if tile_pos != state.blutti.current_tile {
-                            play_sound("sound_wrong");
-                            state.blutti.current_tile = tile_pos;
-                        }
+        //log_debug(str_format!(str32, "new y: {}", new_position.y).as_str());
+        match collission.sprite {
+            10 => {
+                self.points += 1;
+                self.stars += 1;
+                state.level.collect_item(collission.position);
+                play_sound("sound_coin");
+            }
+            11 => {
+                self.lives += 1;
+                state.level.collect_item(collission.position);
+                play_sound("sound_powerup");
+            }
+            12 => {
+                if self.stars >= state.level.stars {
+                    self.finish_level();
+                    play_sound("sound_exit");
+                } else {
+                    let tile_pos = get_tile_index(self.position) as i32;
+                    if tile_pos != state.blutti.current_tile {
+                        play_sound("sound_wrong");
+                        state.blutti.current_tile = tile_pos;
                     }
                 }
-                _ => (),
             }
+            _ => (),
         }
     }
 
