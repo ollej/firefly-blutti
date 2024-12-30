@@ -202,8 +202,8 @@ impl Level {
         y: Point::MAX.y - TILE_WIDTH,
     };
 
-    fn load_level(level: usize) -> Self {
-        let level_name = LEVELS[level];
+    fn load_level(level: i32) -> Self {
+        let level_name = LEVELS[level as usize];
         let level_data = load_file_buf(level_name).expect("Couldn't load level data");
         let mut level =
             serde_json::from_slice::<Level>(level_data.data()).expect("Couldn't parse level data");
@@ -740,9 +740,9 @@ fn display_text_color(text: &str, position: Point, color: Color) {
     draw_text(text, &font, position, color);
 }
 
-fn restart(mut level: usize, won: bool) {
+fn restart(mut level: i32, won: bool) -> i32 {
     let state = get_state();
-    if level >= LEVELS.len() {
+    if level >= LEVELS.len() as i32 {
         level = 0;
     }
     state.level = Level::load_level(level);
@@ -756,6 +756,7 @@ fn restart(mut level: usize, won: bool) {
         state.level.reset();
         state.game_state = GameState::Title;
     }
+    level
 }
 
 fn render_title() {
@@ -884,12 +885,36 @@ fn render_playing() {
     render_ui();
 }
 
+fn add_lives(lives: i32) -> i32 {
+    let state = get_state();
+    state.blutti.lives += lives;
+    state.blutti.lives
+}
+
+fn add_points(points: i32) -> i32 {
+    let state = get_state();
+    state.blutti.points += points;
+    state.blutti.points
+}
+
+#[no_mangle]
+extern "C" fn cheat(cmd: i32, val: i32) -> i32 {
+    match cmd {
+        1 => restart(val, true),
+        2 => add_lives(val),
+        3 => add_points(val),
+        _ => 0,
+    }
+}
+
 #[no_mangle]
 extern "C" fn handle_menu(menu_item: u8) {
     let state = get_state();
     match menu_item {
         1 => state.game_state = GameState::Credits,
-        2 => restart(0, false),
+        2 => {
+            restart(0, false);
+        }
         3 => state.game_state = GameState::Info,
         _ => (),
     }
@@ -977,7 +1002,7 @@ extern "C" fn update() {
         GameState::GameOver(won) => {
             if just_pressed.n {
                 if won {
-                    restart(state.blutti.current_level as usize + 1, won);
+                    restart(state.blutti.current_level + 1, won);
                 } else {
                     restart(0, won);
                 }

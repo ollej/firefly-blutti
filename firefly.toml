@@ -20,3 +20,8 @@ sound_theme = { path = "assets/hallowquest.wav" }
 
 [badges]
 1 = { name = "stars", steps = 100, descr = "Collect 100 stars" }
+
+[cheats]
+set-level = 1
+add-lives = 2
+add-points = 3
