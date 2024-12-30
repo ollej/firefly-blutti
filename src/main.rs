@@ -20,6 +20,8 @@ const BADGE_STARS: Badge = Badge(1);
 const BADGE_LEVELS: Badge = Badge(2);
 const BADGE_DEATHS: Badge = Badge(3);
 
+const LEVELS: [&str; 3] = ["level1", "level2", "level3"];
+
 const CREDITS: [&str; 7] = [
     "Credits:",
     "Programming: Olle Wreede",
@@ -37,8 +39,6 @@ const INFO: [&str; 5] = [
     "",
     "Press <Y> to go back to game",
 ];
-
-const LEVELS: [&str; 2] = ["level1", "level2"];
 
 const COLLISION: [TileCollider; 64] = [
     TileCollider::None,
