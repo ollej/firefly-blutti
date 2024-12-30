@@ -17,6 +17,8 @@ const SPRITES_V: i32 = 8;
 const TILES_H: i32 = 30;
 const TILES_V: i32 = 20;
 const BADGE_STARS: Badge = Badge(1);
+const BADGE_LEVELS: Badge = Badge(2);
+const BADGE_DEATHS: Badge = Badge(3);
 
 const CREDITS: [&str; 7] = [
     "Credits:",
@@ -571,18 +573,33 @@ impl Blutti {
         state.blutti.current_tile = get_tile_index(self.position) as i32;
     }
 
+    fn collect_star(&mut self) {
+        self.add_points(1);
+        self.stars += 1;
+        add_progress(get_me(), BADGE_STARS, 1);
+    }
+
+    fn add_lives(&mut self, lives: i32) -> i32 {
+        self.lives += lives;
+        self.lives
+    }
+
+    fn add_points(&mut self, points: i32) -> i32 {
+        self.points += points;
+        self.points
+    }
+
     fn collect_item(&mut self, collission: &Collision) {
         let state = get_state();
         //log_debug(str_format!(str32, "new y: {}", new_position.y).as_str());
         match collission.sprite {
             10 => {
-                self.points += 1;
-                self.stars += 1;
+                self.collect_star();
                 state.level.collect_item(collission.position);
                 play_sound("sound_coin");
             }
             11 => {
-                self.lives += 1;
+                self.add_lives(1);
                 state.level.collect_item(collission.position);
                 play_sound("sound_powerup");
             }
@@ -605,15 +622,15 @@ impl Blutti {
     fn die(&mut self) {
         let state = get_state();
         state.level.reset();
-        self.lives -= 1;
+        self.add_lives(-1);
+        add_progress(get_me(), BADGE_DEATHS, 1);
         self.reset();
         play_sound("sound_death");
     }
 
     fn finish_level(&mut self) {
         self.finished_level = true;
-        let peer = get_me();
-        let _best = add_progress(peer, BADGE_STARS, self.stars as i16);
+        add_progress(get_me(), BADGE_LEVELS, 1);
     }
 
     fn reset(&mut self) {
@@ -887,14 +904,12 @@ fn render_playing() {
 
 fn add_lives(lives: i32) -> i32 {
     let state = get_state();
-    state.blutti.lives += lives;
-    state.blutti.lives
+    state.blutti.add_lives(lives)
 }
 
 fn add_points(points: i32) -> i32 {
     let state = get_state();
-    state.blutti.points += points;
-    state.blutti.points
+    state.blutti.add_points(points)
 }
 
 #[no_mangle]
