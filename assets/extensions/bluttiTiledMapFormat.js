@@ -63,7 +63,7 @@ var bluttiMapFormat = {
         }
 
         var file = new TextFile(fileName, TextFile.WriteOnly);
-        file.write(JSON.stringify(m));
+        file.write(JSON.stringify(m, null, 4));
         file.commit();
     },
 }
