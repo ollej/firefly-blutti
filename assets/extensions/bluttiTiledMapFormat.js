@@ -36,23 +36,28 @@ var bluttiMapFormat = {
             tiles: []
         };
 
-        var monster1 = map.property("monster1")["value"];
-        if (monster1) {
-            monster1["position"] = monster1["position"]["value"];
-            m.monsters.push(monster1);
-        }
-        var monster2 = map.property("monster2")["value"];
-        if (monster2["sprite"]) {
-            m.monsters.push(monster2);
-        }
-
         for (var i = 0; i < map.layerCount; ++i) {
             var layer = map.layerAt(i);
             if (layer.isTileLayer) {
-                var tiles = [];
                 for (y = 0; y < layer.height; ++y) {
-                    for (x = 0; x < layer.width; ++x)
+                    for (x = 0; x < layer.width; ++x) {
                         m.tiles.push(layer.cellAt(x, y).tileId + 1);
+                    }
+                }
+            }
+            if (layer.isObjectLayer) {
+                for (x = 0; x < layer.objects.length; ++x) {
+                    var obj = layer.objectAt(x);
+                    var tile = obj["tile"];
+                    var monster = {
+                        position: {
+                            x: obj["x"],
+                            y: obj["y"]
+                        },
+                        sprite: tile["id"],
+                        movement: obj.property("movement")
+                    };
+                    m.monsters.push(monster);
                 }
             }
         }
