@@ -14,6 +14,18 @@ number of stars. Beware of monsters.
 
 Press "A" (south button) to jump, press "X" (west button) to dash.
 
+## Installation
+
+Install the Firefly Emulator and the Firefly CLI according to [these instructions](https://docs.fireflyzero.com/user/installation/). 
+
+Then you can install Blutti with the following command:
+
+```
+firefly_cli import olle.blutti 
+```
+
+After that you can start `firefly-emulator` which will launch the game.
+
 ## Create maps
 
 Use [Tiled](https://www.mapeditor.org/) mapeditor to create maps. Load the
@@ -35,7 +47,7 @@ should start.
 Once the map is finished, it can be exported using the `Blutti map format` to
 the `assets` directory..
 
-The filename (without extension) should be added to the `LEVELS` const at the
+The filename (without extension) has to be added to the `LEVELS` const at the
 top of `src/main.rs`. The position in the array defines when it will show up
 in the game. Finally, a reference to the file needs to be added under the
 `files` section in `firefly.toml` with the attribute `copy` set to `true`.
