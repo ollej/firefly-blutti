@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <tileset version="1.11" tiledversion="1.11.0" name="Blutti" tilewidth="8" tileheight="8" tilecount="64" columns="8" objectalignment="topleft">
  <image source="spritesheet.png" width="64" height="64"/>
+ <tile id="13">
+  <properties>
+   <property name="movement" type="int" value="0"/>
+  </properties>
+ </tile>
  <wangsets>
   <wangset name="Grass" type="mixed" tile="-1">
    <wangcolor name="Blutti tile" color="#00ff00" tile="-1" probability="1"/>

@@ -22,10 +22,11 @@ const BADGE_DEATHS: Badge = Badge(3);
 
 const LEVELS: [&str; 3] = ["level1", "level2", "level3"];
 
-const CREDITS: [&str; 7] = [
+const CREDITS: [&str; 8] = [
     "Credits:",
     "Programming: Olle Wreede",
     "Graphics: Olle Wreede",
+    "Level design: Olle Wreede",
     "Music: Zane Little Music",
     "SFX: @Shades, Luke.RUSTLTD, sauer2",
     "",
