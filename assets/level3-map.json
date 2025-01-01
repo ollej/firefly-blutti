@@ -32,10 +32,85 @@
          "width":30,
          "x":0,
          "y":0
+        }, 
+        {
+         "draworder":"topdown",
+         "id":2,
+         "name":"Monsters",
+         "objects":[
+                {
+                 "gid":14,
+                 "height":8,
+                 "id":1,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"movement",
+                         "type":"int",
+                         "value":-1
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":8,
+                 "x":192,
+                 "y":112
+                }, 
+                {
+                 "gid":14,
+                 "height":8,
+                 "id":3,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"movement",
+                         "type":"int",
+                         "value":1
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":8,
+                 "x":192,
+                 "y":48
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
         }],
- "nextlayerid":2,
- "nextobjectid":1,
+ "nextlayerid":3,
+ "nextobjectid":4,
  "orientation":"orthogonal",
+ "properties":[
+        {
+         "name":"background_color",
+         "propertytype":"FireflyColor",
+         "type":"string",
+         "value":"Blue"
+        }, 
+        {
+         "name":"font_color",
+         "propertytype":"FireflyColor",
+         "type":"string",
+         "value":"White"
+        }, 
+        {
+         "name":"stars",
+         "type":"int",
+         "value":10
+        }, 
+        {
+         "name":"start_position",
+         "propertytype":"Point",
+         "type":"class",
+         "value":
+            {
+             "x":16,
+             "y":144
+            }
+        }],
  "renderorder":"right-down",
  "tiledversion":"1.11.0",
  "tileheight":8,
