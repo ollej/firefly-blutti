@@ -1,5 +1,13 @@
 { "backgroundcolor":"#b4000000",
  "compressionlevel":-1,
+ "editorsettings":
+    {
+     "export":
+        {
+         "format":"blutti",
+         "target":"level2.json"
+        }
+    },
  "height":20,
  "infinite":false,
  "layers":[
@@ -33,10 +41,85 @@
          "width":30,
          "x":0,
          "y":0
+        }, 
+        {
+         "draworder":"topdown",
+         "id":2,
+         "name":"Object Layer 1",
+         "objects":[
+                {
+                 "gid":14,
+                 "height":8,
+                 "id":1,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"movement",
+                         "type":"int",
+                         "value":2
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":8,
+                 "x":136,
+                 "y":144
+                }, 
+                {
+                 "gid":14,
+                 "height":8,
+                 "id":2,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"movement",
+                         "type":"int",
+                         "value":-1
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":8,
+                 "x":48,
+                 "y":72
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
         }],
- "nextlayerid":2,
- "nextobjectid":1,
+ "nextlayerid":3,
+ "nextobjectid":3,
  "orientation":"orthogonal",
+ "properties":[
+        {
+         "name":"background_color",
+         "propertytype":"FireflyColor",
+         "type":"string",
+         "value":"Black"
+        }, 
+        {
+         "name":"font_color",
+         "propertytype":"FireflyColor",
+         "type":"string",
+         "value":"White"
+        }, 
+        {
+         "name":"stars",
+         "type":"int",
+         "value":10
+        }, 
+        {
+         "name":"start_position",
+         "propertytype":"Point",
+         "type":"class",
+         "value":
+            {
+             "x":16,
+             "y":144
+            }
+        }],
  "renderorder":"right-down",
  "tiledversion":"1.11.0",
  "tileheight":8,
