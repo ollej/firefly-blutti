@@ -24,7 +24,7 @@ const BADGE_STARS: Badge = Badge(1);
 const BADGE_LEVELS: Badge = Badge(2);
 const BADGE_DEATHS: Badge = Badge(3);
 
-const LEVELS: [&str; 3] = ["level1", "level2", "level3"];
+const LEVELS: [&str; 4] = ["level1", "level2", "level3", "level4"];
 
 const CREDITS: [&str; 8] = [
     "Credits:",
@@ -84,11 +84,11 @@ const COLLISION: [TileCollider; 64] = [
     TileCollider::None,
     TileCollider::None,
     TileCollider::Deadly,
-    TileCollider::None,
-    TileCollider::None,
-    TileCollider::None,
-    TileCollider::None,
-    TileCollider::None,
+    TileCollider::Full,
+    TileCollider::Full,
+    TileCollider::Full,
+    TileCollider::Full,
+    TileCollider::Full,
     TileCollider::None,
     TileCollider::None,
     TileCollider::None,
