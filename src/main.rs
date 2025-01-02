@@ -18,8 +18,8 @@ const TILES_H: i32 = 30;
 const TILES_V: i32 = 20;
 const HALF_FONT_WIDTH: i32 = 2;
 const FONT_HEIGHT: i32 = 6;
+const FONT_BASE_LINE: i32 = 4;
 const LINE_HEIGHT: i32 = 8;
-const LINE_SPACING: i32 = 2;
 const BADGE_STARS: Badge = Badge(1);
 const BADGE_LEVELS: Badge = Badge(2);
 const BADGE_DEATHS: Badge = Badge(3);
@@ -770,6 +770,36 @@ fn display_text_color(text: &str, position: Point, color: Color) {
     draw_text(text, &font, position, color);
 }
 
+fn display_centered_message(color: Option<Color>, lines: &[&str]) {
+    let state = get_state();
+    let color = color.unwrap_or(state.level.font_color);
+    let y_pos: i32 = HEIGHT / 2 + FONT_BASE_LINE - lines.len() as i32 * LINE_HEIGHT / 2;
+    for (i, line) in lines.iter().enumerate() {
+        display_text_color(
+            line,
+            Point {
+                x: WIDTH / 2 - (line.len() as i32 * HALF_FONT_WIDTH),
+                y: y_pos + i as i32 * LINE_HEIGHT,
+            },
+            color,
+        );
+    }
+}
+
+fn display_left_message(lines: &[&str]) {
+    let y_pos: i32 = FONT_BASE_LINE + 4;
+    for (i, line) in lines.iter().enumerate() {
+        display_text_color(
+            line,
+            Point {
+                x: 4,
+                y: y_pos + i as i32 * LINE_HEIGHT,
+            },
+            Color::Black,
+        );
+    }
+}
+
 fn restart(mut level: i32, won: bool) -> i32 {
     let state = get_state();
     if level >= LEVELS.len() as i32 {
@@ -789,50 +819,26 @@ fn restart(mut level: i32, won: bool) -> i32 {
     level
 }
 
-fn render_message(message: &str, click_info: &str) {
-    display_text(
-        message,
-        Point {
-            x: WIDTH / 2 - (message.len() as i32 * HALF_FONT_WIDTH),
-            y: HEIGHT / 2 - LINE_HEIGHT,
-        },
-    );
-    display_text(
-        click_info,
-        Point {
-            x: WIDTH / 2 - (click_info.len() as i32 * HALF_FONT_WIDTH),
-            y: HEIGHT / 2 + LINE_SPACING,
-        },
-    );
-}
-
 fn render_title() {
     let state = get_state();
     clear_screen(Color::Black);
     draw_image(&state.title.as_image(), Point { x: 0, y: 0 });
-    display_text_color(
-        "Press <Y> to start!",
-        Point {
-            x: WIDTH / 2 - 38,
-            y: HEIGHT / 2 - 3,
-        },
-        Color::White,
-    );
+    display_centered_message(Some(Color::White), &["Press <Y> to start!"]);
 }
 
 fn render_died() {
     render_level();
     render_ui();
-    render_message("You died!", "Press <Y> to restart level");
+    display_centered_message(None, &["You died!", "Press <Y> to restart level"]);
 }
 
 fn render_gameover(won: bool) {
     render_level();
     render_ui();
     if won {
-        render_message("You win!", "Press <Y> to start next level!");
+        display_centered_message(None, &["You win!", "Press <Y> to start next level!"]);
     } else {
-        render_message("Game Over!", "Press <Y> to start again!");
+        display_centered_message(None, &["Game Over!", "Press <Y> to start again!"]);
     }
 }
 
@@ -840,7 +846,10 @@ fn render_ui() {
     let state = get_state();
     display_text(
         str_format!(str32, "Points: {}", state.blutti.points).as_str(),
-        Point { x: 4, y: 10 },
+        Point {
+            x: 4,
+            y: FONT_BASE_LINE + 4,
+        },
     );
     for heart in 0..state.blutti.lives {
         draw_tile(
@@ -862,30 +871,12 @@ fn render_monsters() {
 
 fn render_credits() {
     clear_screen(Color::White);
-    for (i, line) in CREDITS.iter().enumerate() {
-        display_text_color(
-            line,
-            Point {
-                x: 4,
-                y: (i as i32 + 1) * TILE_HEIGHT,
-            },
-            Color::Black,
-        );
-    }
+    display_left_message(&CREDITS);
 }
 
 fn render_info() {
     clear_screen(Color::White);
-    for (i, line) in INFO.iter().enumerate() {
-        display_text_color(
-            line,
-            Point {
-                x: 4,
-                y: (i as i32 + 1) * TILE_HEIGHT,
-            },
-            Color::Black,
-        );
-    }
+    display_left_message(&INFO);
 }
 
 fn render_level() {
