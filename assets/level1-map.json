@@ -88,30 +88,6 @@
          "value":"Black"
         }, 
         {
-         "name":"monster1",
-         "propertytype":"Monster",
-         "type":"class",
-         "value":
-            {
-             "movement":1,
-             "position":
-                {
-                 "x":136,
-                 "y":144
-                },
-             "sprite":13
-            }
-        }, 
-        {
-         "name":"monster2",
-         "propertytype":"Monster",
-         "type":"class",
-         "value":
-            {
-
-            }
-        }, 
-        {
          "name":"stars",
          "type":"int",
          "value":10
