@@ -1,6 +1,6 @@
 # Blutti
 
-![Blutti level 1](assets/blutti-level1.png)
+![Blutti level 1](resources/screenshots/blutti-level1.png)
 
 A single screen platformer game with 8x8 tiles for the Firefly Zero handheld
 console.
