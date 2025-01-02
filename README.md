@@ -12,7 +12,8 @@ Developed with the Rust programming language.
 Collect enough stars to open up the exit door, each level requires a different
 number of stars. Beware of monsters.
 
-Press "A" (south button) to jump, press "X" (west button) to dash.
+- Press "A" (south button) to jump
+- Press "X" (west button) to dash
 
 ## Firefly Zero
 
