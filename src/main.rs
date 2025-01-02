@@ -67,7 +67,7 @@ const COLLISION: [TileCollider; 64] = [
     TileCollider::Deadly,
     TileCollider::None,
     TileCollider::Full,
-    TileCollider::Full,
+    TileCollider::Slippery,
     TileCollider::Full,
     TileCollider::Full,
     TileCollider::Full,
@@ -143,6 +143,7 @@ enum TileCollider {
     Climbable,
     Collectable,
     Deadly,
+    Slippery,
     None,
 }
 
@@ -313,12 +314,15 @@ trait Updateable {
     fn is_tile_empty(&self, position: Point) -> bool {
         match self.collision(position) {
             TileCollider::None | TileCollider::Collectable | TileCollider::Deadly => true,
-            TileCollider::Climbable | TileCollider::Full => false,
+            TileCollider::Climbable | TileCollider::Slippery | TileCollider::Full => false,
         }
     }
 
     fn is_tile_free(&self, position: Point) -> bool {
-        self.collision(position) != TileCollider::Full
+        match self.collision(position) {
+            TileCollider::Full | TileCollider::Slippery => false,
+            _ => true,
+        }
     }
 
     fn position_below_left_foot(&self) -> Point {
