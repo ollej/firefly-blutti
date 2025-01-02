@@ -14,6 +14,12 @@ number of stars. Beware of monsters.
 
 Press "A" (south button) to jump, press "X" (west button) to dash.
 
+## Firefly Zero
+
+Firefly Zero is a modern handheld game console with effortless multiplayer. It's fun to play, alone or with friends, and easy to program.
+
+https://fireflyzero.com/
+
 ## Installation
 
 Install the Firefly Emulator and the Firefly CLI according to [these instructions](https://docs.fireflyzero.com/user/installation/). 
@@ -63,19 +69,19 @@ array with collision info for each tile.
 direction.
 - `TileCollider::None` - Empty tile that player and monsters can walk through.
 
-## Firefly Zero
-
-Firefly Zero is a modern handheld game console with effortless multiplayer. It's fun to play, alone or with friends, and easy to program.
-
-https://fireflyzero.com/
-
 ## Credits
 
 - Programming: Olle Wreede
 - Graphics: Olle Wreede
-- Music: Zane Little Music
-- SFX: @Shades, Luke.RUSTLTD, sauer2
+- Level design: Olle Wreede
+- Music: [Zane Little
+Music](https://opengameart.org/content/spooky-action-loop-hallow-quest)
+- SFX: [@Shades](https://soundcloud.com/noshades),
+[Luke.RUSTLTD](https://opengameart.org/content/10-8bit-coin-sounds),
+[sauer2](https://opengameart.org/content/oldschool-win-and-die-jump-and-run-sounds)
 - Map editor: [Tiled](https://www.mapeditor.org/)
+
+Music and sound effects are CC0 public domain.
 
 ## License
 
