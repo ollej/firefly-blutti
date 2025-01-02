@@ -929,7 +929,7 @@ fn add_points(points: i32) -> i32 {
 #[no_mangle]
 extern "C" fn cheat(cmd: i32, val: i32) -> i32 {
     match cmd {
-        1 => restart(val, true),
+        1 => restart(val - 1, true) + 1,
         2 => add_lives(val),
         3 => add_points(val),
         _ => 0,
