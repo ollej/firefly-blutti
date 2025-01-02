@@ -16,6 +16,10 @@ const SPRITES_H: i32 = 8;
 const SPRITES_V: i32 = 8;
 const TILES_H: i32 = 30;
 const TILES_V: i32 = 20;
+const HALF_FONT_WIDTH: i32 = 2;
+const FONT_HEIGHT: i32 = 6;
+const LINE_HEIGHT: i32 = 8;
+const LINE_SPACING: i32 = 2;
 const BADGE_STARS: Badge = Badge(1);
 const BADGE_LEVELS: Badge = Badge(2);
 const BADGE_DEATHS: Badge = Badge(3);
@@ -291,6 +295,7 @@ enum GameState {
     Title,
     Credits,
     Info,
+    Died,
     GameOver(bool),
 }
 
@@ -370,6 +375,7 @@ struct Blutti {
     points: i32,
     stars: i32,
     lives: i32,
+    died: bool,
     finished_level: bool,
     current_level: i32,
     current_tile: i32,
@@ -388,6 +394,7 @@ impl Default for Blutti {
             stars: 0,
             direction: Direction::Left,
             lives: 3,
+            died: false,
             finished_level: false,
             current_level: 0,
             current_tile: 0,
@@ -630,6 +637,7 @@ impl Blutti {
         self.add_lives(-1);
         add_progress(get_me(), BADGE_DEATHS, 1);
         self.reset();
+        self.died = true;
         play_sound("sound_death");
     }
 
@@ -781,6 +789,23 @@ fn restart(mut level: i32, won: bool) -> i32 {
     level
 }
 
+fn render_message(message: &str, click_info: &str) {
+    display_text(
+        message,
+        Point {
+            x: WIDTH / 2 - (message.len() as i32 * HALF_FONT_WIDTH),
+            y: HEIGHT / 2 - LINE_HEIGHT,
+        },
+    );
+    display_text(
+        click_info,
+        Point {
+            x: WIDTH / 2 - (click_info.len() as i32 * HALF_FONT_WIDTH),
+            y: HEIGHT / 2 + LINE_SPACING,
+        },
+    );
+}
+
 fn render_title() {
     let state = get_state();
     clear_screen(Color::Black);
@@ -795,39 +820,19 @@ fn render_title() {
     );
 }
 
+fn render_died() {
+    render_level();
+    render_ui();
+    render_message("You died!", "Press <Y> to restart level");
+}
+
 fn render_gameover(won: bool) {
     render_level();
     render_ui();
     if won {
-        display_text(
-            "You win!",
-            Point {
-                x: WIDTH / 2 - 16,
-                y: HEIGHT / 2 - TILE_HEIGHT,
-            },
-        );
-        display_text(
-            "Press <Y> to start next level!",
-            Point {
-                x: WIDTH / 2 - 60,
-                y: HEIGHT / 2 + 2,
-            },
-        );
+        render_message("You win!", "Press <Y> to start next level!");
     } else {
-        display_text(
-            "Game Over!",
-            Point {
-                x: WIDTH / 2 - 20,
-                y: HEIGHT / 2 - TILE_HEIGHT,
-            },
-        );
-        display_text(
-            "Press <Y> to start again!",
-            Point {
-                x: WIDTH / 2 - 50,
-                y: HEIGHT / 2 + 2,
-            },
-        );
+        render_message("Game Over!", "Press <Y> to start again!");
     }
 }
 
@@ -986,37 +991,45 @@ extern "C" fn update() {
                 state.game_state = GameState::Title;
             }
         }
+        GameState::Died => {
+            if just_pressed.n {
+                state.blutti.died = false;
+                state.game_state = GameState::Playing;
+            }
+        }
         GameState::Playing => {
+            let pad = read_pad(Peer::COMBINED);
+            if let Some(pad) = pad {
+                let dpad = pad.as_dpad();
+                if dpad.left {
+                    state.blutti.move_left();
+                }
+                if dpad.right {
+                    state.blutti.move_right();
+                }
+                if dpad.up {
+                    state.blutti.move_up();
+                }
+                if dpad.down {
+                    state.blutti.move_down();
+                }
+            }
+            if just_pressed.s {
+                state.blutti.start_jump();
+            }
+            if just_pressed.w {
+                state.blutti.start_dash();
+            }
+            state.blutti.update();
+            for monster in state.level.monsters.iter_mut() {
+                monster.update();
+            }
+            state.blutti.handle_effects();
+
             if !state.blutti.is_alive() || state.blutti.finished_level {
                 state.game_state = GameState::GameOver(state.blutti.finished_level);
-            } else {
-                let pad = read_pad(Peer::COMBINED);
-                if let Some(pad) = pad {
-                    let dpad = pad.as_dpad();
-                    if dpad.left {
-                        state.blutti.move_left();
-                    }
-                    if dpad.right {
-                        state.blutti.move_right();
-                    }
-                    if dpad.up {
-                        state.blutti.move_up();
-                    }
-                    if dpad.down {
-                        state.blutti.move_down();
-                    }
-                }
-                if just_pressed.s {
-                    state.blutti.start_jump();
-                }
-                if just_pressed.w {
-                    state.blutti.start_dash();
-                }
-                state.blutti.update();
-                for monster in state.level.monsters.iter_mut() {
-                    monster.update();
-                }
-                state.blutti.handle_effects();
+            } else if state.blutti.died {
+                state.game_state = GameState::Died;
             }
         }
         GameState::GameOver(won) => {
@@ -1039,6 +1052,7 @@ extern "C" fn render() {
         GameState::Credits => render_credits(),
         GameState::Info => render_info(),
         GameState::Playing => render_playing(),
+        GameState::Died => render_died(),
         GameState::GameOver(won) => render_gameover(won),
     }
 }
