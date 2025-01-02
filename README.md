@@ -52,6 +52,17 @@ top of `src/main.rs`. The position in the array defines when it will show up
 in the game. Finally, a reference to the file needs to be added under the
 `files` section in `firefly.toml` with the attribute `copy` set to `true`.
 
+When adding new tiles to the spritesheet, remember to update the `COLLISION`
+array with collision info for each tile.
+
+- `TileCollider::Full` - Tile that player and monsters can't enter.
+- `TileCollider::Climbable` - Tiles that can be climbed, such as ladders.
+- `TileCollider::Collectable` - Something that can be picked up.
+- `TileCollider::Deadly` - Tile that the player will die when entering.
+- `TileCollider::Slippery` - Causes player to slide and be unable to change
+direction.
+- `TileCollider::None` - Empty tile that player and monsters can walk through.
+
 ## Firefly Zero
 
 Firefly Zero is a modern handheld game console with effortless multiplayer. It's fun to play, alone or with friends, and easy to program.
