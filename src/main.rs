@@ -362,6 +362,11 @@ trait Updateable {
         !(self.is_tile_empty(self.position_below_left_foot())
             && self.is_tile_empty(self.position_below_right_foot()))
     }
+
+    fn is_standing_on(&self, collision: TileCollider) -> bool {
+        self.collision(self.position_below_left_foot()) == collision
+            || self.collision(self.position_below_right_foot()) == collision
+    }
 }
 
 struct Blutti {
@@ -462,7 +467,7 @@ impl Updateable for Blutti {
         } else if self.dash_timer < 0 {
             self.dash_timer += 1;
         }
-        if self.movement != 0 {
+        if self.movement != 0 && !self.is_standing_on(TileCollider::Slippery) {
             self.movement = 0;
         }
 
@@ -536,12 +541,16 @@ impl Blutti {
 
     fn move_left(&mut self) {
         self.direction = Direction::Left;
-        self.movement = -Self::SPEED;
+        if !(self.movement > 0 && self.is_standing_on(TileCollider::Slippery)) {
+            self.movement = -Self::SPEED;
+        }
     }
 
     fn move_right(&mut self) {
         self.direction = Direction::Right;
-        self.movement = Self::SPEED;
+        if !(self.movement < 0 && self.is_standing_on(TileCollider::Slippery)) {
+            self.movement = Self::SPEED;
+        }
     }
 
     fn move_up(&mut self) {
@@ -557,7 +566,11 @@ impl Blutti {
     fn start_jump(&mut self) {
         if self.jump_timer == 0 && self.is_standing() {
             play_sound("sound_jump");
-            self.jump_timer = Self::JUMP_TIME;
+            self.jump_timer = if self.is_standing_on(TileCollider::Slippery) {
+                Self::JUMP_TIME / 2
+            } else {
+                Self::JUMP_TIME
+            }
         }
     }
 
