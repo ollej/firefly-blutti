@@ -5,7 +5,7 @@
 A single screen platformer game with 8x8 tiles for the Firefly Zero handheld
 console.
 
-Develeoped with the Rust programming language.
+Developed with the Rust programming language.
 
 ## Gameplay
 
