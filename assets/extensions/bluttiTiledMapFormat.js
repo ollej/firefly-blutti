@@ -30,6 +30,8 @@ var bluttiMapFormat = {
         var m = {
             background_color: this.COLORS[map.property("background_color")["value"]],
             font_color: this.COLORS[map.property("font_color")["value"]],
+            particle_chance: map.property("particle_chance"),
+            particle_sprite: map.property("particle_sprite"),
             stars: map.property("stars"),
             start_position: map.property("start_position")["value"],
             monsters: [],

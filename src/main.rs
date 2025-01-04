@@ -201,7 +201,11 @@ struct Level {
     stars: i32,
     #[serde(with = "PointDef")]
     start_position: Point,
+    particle_chance: i32,
+    particle_sprite: i32,
     monsters: Vec<Monster>,
+    #[serde(skip)]
+    particles: Vec<Particle>,
     #[serde(skip)]
     original_monsters: Vec<Monster>,
 }
@@ -220,6 +224,42 @@ impl Level {
             serde_json::from_slice::<Level>(level_data.data()).expect("Couldn't parse level data");
         level.original_monsters = level.monsters.clone();
         level
+    }
+
+    fn update(&mut self) {
+        for monster in self.monsters.iter_mut() {
+            monster.update();
+        }
+        if random_value(100) < self.particle_chance {
+            self.particles.push(Particle::random(self.particle_sprite));
+        }
+        for particle in self.particles.iter_mut() {
+            particle.update();
+        }
+        self.particles
+            .retain(|particle| !particle.should_be_removed());
+    }
+
+    fn draw(&mut self) {
+        clear_screen(self.background_color);
+        for (i, &tile) in self.tiles.iter().enumerate() {
+            let point = Point {
+                x: ((i as i32 % TILES_H) * TILE_WIDTH),
+                y: ((i as i32 / TILES_H) * TILE_HEIGHT),
+            };
+            if tile > 0 {
+                draw_tile(tile - 1, point);
+            }
+        }
+    }
+
+    fn draw_children(&self) {
+        for monster in self.monsters.iter() {
+            monster.draw();
+        }
+        for particle in self.particles.iter() {
+            particle.draw();
+        }
     }
 
     fn reset(&mut self) {
@@ -261,7 +301,7 @@ impl Level {
         ]
     }
 
-    fn collect_item(&mut self, position: Point) {
+    fn remove_tile(&mut self, position: Point) {
         let tile_pos = get_tile_index(position);
         self.tiles[tile_pos] = 0;
     }
@@ -616,7 +656,7 @@ impl Blutti {
 
     fn collect_star(&mut self, collision: &Collision) {
         let state = get_state();
-        state.level.collect_item(collision.position);
+        state.level.remove_tile(collision.position);
         self.add_points(1);
         self.stars += 1;
         add_progress(get_me(), BADGE_STARS, 1);
@@ -625,7 +665,7 @@ impl Blutti {
 
     fn collect_extra_life(&mut self, collision: &Collision) {
         let state = get_state();
-        state.level.collect_item(collision.position);
+        state.level.remove_tile(collision.position);
         self.add_lives(1);
         play_sound("sound_powerup");
     }
@@ -688,6 +728,57 @@ impl Blutti {
 
     fn is_alive(&self) -> bool {
         self.lives > 0
+    }
+}
+
+#[derive(Clone, Default, Debug)]
+struct Particle {
+    position: Point,
+    sprite: i32,
+}
+
+impl Particle {
+    const GRAVITY: i32 = 1;
+    const SPEED: i32 = 1;
+
+    fn random(sprite: i32) -> Self {
+        Particle {
+            position: Point {
+                x: random_value(WIDTH),
+                y: -3,
+            },
+            sprite,
+        }
+    }
+
+    fn should_be_removed(&self) -> bool {
+        self.position.y > HEIGHT
+    }
+}
+
+impl Drawable for Particle {
+    fn draw(&self) {
+        draw_tile(self.sprite, self.position());
+    }
+}
+
+impl Updateable for Particle {
+    fn update(&mut self) {
+        let new_x = match random_value(100) {
+            90.. => self.position.x + Self::SPEED,
+            60..90 => self.position.x - Self::SPEED,
+            _ => self.position.x,
+        };
+        let new_y = match random_value(100) {
+            90.. => self.position.y - Self::SPEED,
+            40..90 => self.position.y + Self::SPEED,
+            _ => self.position.y,
+        };
+        self.position = Point { x: new_x, y: new_y };
+    }
+
+    fn position(&self) -> Point {
+        self.position
     }
 }
 
@@ -759,6 +850,22 @@ fn play_music(sound: &str) {
     state.theme.add_file(sound);
 }
 
+// # Scale {value} between {min} and {max} into 0..1
+///
+/// ```
+/// assert_eq!(scale(0, 10, 1), 0.1);
+/// assert_eq!(scale(0, 100, 45), 0.45);
+/// ```
+fn scale(min: u32, max: u32, value: u32) -> f32 {
+    (value as f32 - min as f32) / (max as f32 - min as f32)
+}
+
+// # Random value between 0 and {max}
+fn random_value(max: i32) -> i32 {
+    let rnd = get_random();
+    math::floor(scale(u32::MIN, u32::MAX, rnd) * max as f32) as i32
+}
+
 fn get_tile_index(point: Point) -> usize {
     let tile_x = point.x / TILE_WIDTH;
     let tile_y = point.y / TILE_WIDTH;
@@ -766,12 +873,12 @@ fn get_tile_index(point: Point) -> usize {
     (tile_y * TILES_H + tile_x) as usize
 }
 
-fn draw_tile(pos: i32, point: Point) {
+fn draw_tile(sprite: i32, point: Point) {
     let state = get_state();
     let tile_sprite = state.spritesheet.as_image().sub(
         Point {
-            x: ((pos % SPRITES_H) * TILE_WIDTH),
-            y: ((pos / SPRITES_H) * TILE_HEIGHT),
+            x: ((sprite % SPRITES_H) * TILE_WIDTH),
+            y: ((sprite / SPRITES_H) * TILE_HEIGHT),
         },
         Size {
             width: 8,
@@ -850,13 +957,15 @@ fn render_title() {
 }
 
 fn render_died() {
-    render_level();
+    let state = get_state();
+    state.level.draw();
     render_ui();
     display_centered_message(None, &["You died!", "Press <Y> to restart level"]);
 }
 
 fn render_gameover(won: bool) {
-    render_level();
+    let state = get_state();
+    state.level.draw();
     render_ui();
     if won {
         display_centered_message(None, &["You win!", "Press <Y> to start next level!"]);
@@ -885,13 +994,6 @@ fn render_ui() {
     }
 }
 
-fn render_monsters() {
-    let state = get_state();
-    for monster in state.level.monsters.iter() {
-        monster.draw();
-    }
-}
-
 fn render_credits() {
     clear_screen(Color::White);
     display_left_message(&CREDITS);
@@ -902,27 +1004,12 @@ fn render_info() {
     display_left_message(&INFO);
 }
 
-fn render_level() {
-    let state = get_state();
-
-    clear_screen(state.level.background_color);
-    for (i, &tile) in state.level.tiles.iter().enumerate() {
-        let point = Point {
-            x: ((i as i32 % TILES_H) * TILE_WIDTH),
-            y: ((i as i32 / TILES_H) * TILE_HEIGHT),
-        };
-        if tile > 0 {
-            draw_tile(tile - 1, point);
-        }
-    }
-}
-
 fn render_playing() {
     let state = get_state();
 
-    render_level();
+    state.level.draw();
     state.blutti.draw();
-    render_monsters();
+    state.level.draw_children();
     render_ui();
 }
 
@@ -980,6 +1067,7 @@ extern "C" fn boot() {
     add_menu_item(2, "Restart");
     add_menu_item(3, "Info");
     play_music("sound_theme");
+    set_seed(4711);
 }
 
 #[no_mangle]
@@ -1035,9 +1123,7 @@ extern "C" fn update() {
                 state.blutti.start_dash();
             }
             state.blutti.update();
-            for monster in state.level.monsters.iter_mut() {
-                monster.update();
-            }
+            state.level.update();
             state.blutti.handle_effects();
 
             if !state.blutti.is_alive() || state.blutti.finished_level {

@@ -106,6 +106,16 @@
          "value":"White"
         }, 
         {
+         "name":"particle_chance",
+         "type":"int",
+         "value":0
+        }, 
+        {
+         "name":"particle_sprite",
+         "type":"int",
+         "value":0
+        }, 
+        {
          "name":"stars",
          "type":"int",
          "value":10

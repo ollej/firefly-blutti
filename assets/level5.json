@@ -1,6 +1,8 @@
 {
     "background_color": "Black",
     "font_color": "White",
+    "particle_chance": 0,
+    "particle_sprite": 0,
     "stars": 12,
     "start_position": {
         "x": 8,
