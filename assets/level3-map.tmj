@@ -108,12 +108,12 @@
         {
          "name":"particle_chance",
          "type":"int",
-         "value":0
+         "value":10
         }, 
         {
          "name":"particle_sprite",
          "type":"int",
-         "value":0
+         "value":64
         }, 
         {
          "name":"stars",

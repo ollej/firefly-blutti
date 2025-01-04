@@ -936,7 +936,7 @@ impl Particle {
     fn random(sprite: i32) -> Self {
         Particle {
             position: Point {
-                x: random_value(WIDTH),
+                x: random_value(WIDTH + 64),
                 y: -3,
             },
             sprite,
