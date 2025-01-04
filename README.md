@@ -64,7 +64,9 @@ array with collision info for each tile.
 
 - `TileCollider::Full` - Tile that player and monsters can't enter.
 - `TileCollider::Climbable` - Tiles that can be climbed, such as ladders.
-- `TileCollider::Collectable` - Something that can be picked up.
+- `TileCollider::Star` - A collectable star that gives points.
+- `TileCollider::ExtraLife` - A powerup that gives an extra life.
+- `TileCollider::Exit` - Used to exit the level when enough stars are collected.
 - `TileCollider::Deadly` - Tile that the player will die when entering.
 - `TileCollider::Slippery` - Causes player to slide and be unable to change
 direction.

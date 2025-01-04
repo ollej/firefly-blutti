@@ -11,6 +11,7 @@ level1 = { path = "assets/level1.json", copy = true }
 level2 = { path = "assets/level2.json", copy = true }
 level3 = { path = "assets/level3.json", copy = true }
 level4 = { path = "assets/level4.json", copy = true }
+level5 = { path = "assets/level5.json", copy = true }
 sound_coin = { path = "assets/coin5.wav" }
 sound_jump = { path = "assets/jump3.wav" }
 sound_dash = { path = "assets/jump4.wav" }

@@ -24,7 +24,7 @@ const BADGE_STARS: Badge = Badge(1);
 const BADGE_LEVELS: Badge = Badge(2);
 const BADGE_DEATHS: Badge = Badge(3);
 
-const LEVELS: [&str; 4] = ["level1", "level2", "level3", "level4"];
+const LEVELS: [&str; 5] = ["level1", "level2", "level3", "level4", "level5"];
 
 const CREDITS: [&str; 8] = [
     "Credits:",
@@ -56,9 +56,9 @@ const COLLISION: [TileCollider; 64] = [
     TileCollider::Full,
     TileCollider::Full,
     TileCollider::Climbable,
-    TileCollider::Collectable,
-    TileCollider::Collectable,
-    TileCollider::Collectable,
+    TileCollider::Star,
+    TileCollider::ExtraLife,
+    TileCollider::Exit,
     TileCollider::None,
     TileCollider::Deadly,
     TileCollider::Deadly,
@@ -94,20 +94,20 @@ const COLLISION: [TileCollider; 64] = [
     TileCollider::None,
     TileCollider::None,
     TileCollider::None,
-    TileCollider::None,
-    TileCollider::None,
-    TileCollider::None,
-    TileCollider::None,
-    TileCollider::None,
-    TileCollider::None,
-    TileCollider::None,
-    TileCollider::None,
-    TileCollider::None,
-    TileCollider::None,
-    TileCollider::None,
-    TileCollider::None,
-    TileCollider::None,
-    TileCollider::None,
+    TileCollider::Full,
+    TileCollider::Full,
+    TileCollider::Full,
+    TileCollider::Full,
+    TileCollider::Full,
+    TileCollider::Full,
+    TileCollider::Full,
+    TileCollider::Climbable,
+    TileCollider::Full,
+    TileCollider::Full,
+    TileCollider::Full,
+    TileCollider::Full,
+    TileCollider::Full,
+    TileCollider::Exit,
     TileCollider::None,
     TileCollider::None,
 ];
@@ -145,9 +145,11 @@ impl PointMath for Point {
 enum TileCollider {
     Full,
     Climbable,
-    Collectable,
+    Star,
+    ExtraLife,
     Deadly,
     Slippery,
+    Exit,
     None,
 }
 
@@ -318,7 +320,11 @@ trait Updateable {
 
     fn is_tile_empty(&self, position: Point) -> bool {
         match self.collision(position) {
-            TileCollider::None | TileCollider::Collectable | TileCollider::Deadly => true,
+            TileCollider::None
+            | TileCollider::Star
+            | TileCollider::ExtraLife
+            | TileCollider::Deadly
+            | TileCollider::Exit => true,
             TileCollider::Climbable | TileCollider::Slippery | TileCollider::Full => false,
         }
     }
@@ -590,7 +596,9 @@ impl Blutti {
             .flatten()
         {
             match collision.tile_collider {
-                TileCollider::Collectable => self.collect_item(collision),
+                TileCollider::Star => self.collect_star(collision),
+                TileCollider::ExtraLife => self.collect_extra_life(collision),
+                TileCollider::Exit => self.exit(),
                 TileCollider::Deadly => self.die(),
                 _ => (),
             }
@@ -598,10 +606,34 @@ impl Blutti {
         state.blutti.current_tile = get_tile_index(self.position) as i32;
     }
 
-    fn collect_star(&mut self) {
+    fn collect_star(&mut self, collision: &Collision) {
+        let state = get_state();
+        state.level.collect_item(collision.position);
         self.add_points(1);
         self.stars += 1;
         add_progress(get_me(), BADGE_STARS, 1);
+        play_sound("sound_coin");
+    }
+
+    fn collect_extra_life(&mut self, collision: &Collision) {
+        let state = get_state();
+        state.level.collect_item(collision.position);
+        self.add_lives(1);
+        play_sound("sound_powerup");
+    }
+
+    fn exit(&mut self) {
+        let state = get_state();
+        if self.stars >= state.level.stars {
+            self.finish_level();
+            play_sound("sound_exit");
+        } else {
+            let tile_pos = get_tile_index(self.position) as i32;
+            if tile_pos != state.blutti.current_tile {
+                play_sound("sound_wrong");
+                state.blutti.current_tile = tile_pos;
+            }
+        }
     }
 
     fn add_lives(&mut self, lives: i32) -> i32 {
@@ -612,36 +644,6 @@ impl Blutti {
     fn add_points(&mut self, points: i32) -> i32 {
         self.points += points;
         self.points
-    }
-
-    fn collect_item(&mut self, collission: &Collision) {
-        let state = get_state();
-        //log_debug(str_format!(str32, "new y: {}", new_position.y).as_str());
-        match collission.sprite {
-            10 => {
-                self.collect_star();
-                state.level.collect_item(collission.position);
-                play_sound("sound_coin");
-            }
-            11 => {
-                self.add_lives(1);
-                state.level.collect_item(collission.position);
-                play_sound("sound_powerup");
-            }
-            12 => {
-                if self.stars >= state.level.stars {
-                    self.finish_level();
-                    play_sound("sound_exit");
-                } else {
-                    let tile_pos = get_tile_index(self.position) as i32;
-                    if tile_pos != state.blutti.current_tile {
-                        play_sound("sound_wrong");
-                        state.blutti.current_tile = tile_pos;
-                    }
-                }
-            }
-            _ => (),
-        }
     }
 
     fn die(&mut self) {
