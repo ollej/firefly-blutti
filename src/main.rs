@@ -104,9 +104,9 @@ const COLLISION: [TileCollider; 64] = [
     TileCollider::Climbable,
     TileCollider::Full,
     TileCollider::Full,
-    TileCollider::Full,
-    TileCollider::Full,
-    TileCollider::Full,
+    TileCollider::Conveyor,
+    TileCollider::Conveyor,
+    TileCollider::Conveyor,
     TileCollider::Exit,
     TileCollider::None,
     TileCollider::None,
@@ -149,6 +149,7 @@ enum TileCollider {
     ExtraLife,
     Deadly,
     Slippery,
+    Conveyor,
     Exit,
     None,
 }
@@ -325,13 +326,16 @@ trait Updateable {
             | TileCollider::ExtraLife
             | TileCollider::Deadly
             | TileCollider::Exit => true,
-            TileCollider::Climbable | TileCollider::Slippery | TileCollider::Full => false,
+            TileCollider::Climbable
+            | TileCollider::Slippery
+            | TileCollider::Conveyor
+            | TileCollider::Full => false,
         }
     }
 
     fn is_tile_free(&self, position: Point) -> bool {
         match self.collision(position) {
-            TileCollider::Full | TileCollider::Slippery => false,
+            TileCollider::Full | TileCollider::Slippery | TileCollider::Conveyor => false,
             _ => true,
         }
     }
@@ -442,6 +446,9 @@ impl Updateable for Blutti {
                 }
             }
         };
+        if self.is_standing_on(TileCollider::Conveyor) {
+            new_x += Self::CONVEYOR_SPEED;
+        }
 
         if self.dash_timer > 0
             && (self.direction == Direction::Left || self.direction == Direction::Right)
@@ -519,6 +526,7 @@ impl Blutti {
     const DASH_TIME: i32 = 8;
     const DASH_WAIT_TIME: i32 = 32;
     const DASH_SPEED: i32 = 3;
+    const CONVEYOR_SPEED: i32 = 2;
     const GRAVITY: i32 = 2;
     const MAX_FALL_HEIGHT: i32 = 30;
     const START_POSITION: Point = Point {
