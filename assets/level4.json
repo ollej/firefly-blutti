@@ -11,18 +11,18 @@
     "monsters": [
         {
             "position": {
-                "x": 184,
+                "x": 192,
                 "y": 144
             },
-            "sprite": 13,
+            "sprite": 128,
             "movement": -1
         },
         {
             "position": {
-                "x": 144,
+                "x": 160,
                 "y": 24
             },
-            "sprite": 13,
+            "sprite": 128,
             "movement": 1
         }
     ],

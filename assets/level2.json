@@ -11,19 +11,19 @@
     "monsters": [
         {
             "position": {
-                "x": 136,
+                "x": 144,
                 "y": 144
             },
-            "sprite": 13,
-            "movement": 2
+            "sprite": 128,
+            "movement": -1
         },
         {
             "position": {
-                "x": 48,
+                "x": 40,
                 "y": 72
             },
-            "sprite": 13,
-            "movement": -1
+            "sprite": 128,
+            "movement": 1
         }
     ],
     "tiles": [

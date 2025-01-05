@@ -48,27 +48,9 @@
          "name":"Monsters",
          "objects":[
                 {
-                 "gid":14,
+                 "gid":129,
                  "height":8,
-                 "id":1,
-                 "name":"",
-                 "properties":[
-                        {
-                         "name":"movement",
-                         "type":"int",
-                         "value":2
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":8,
-                 "x":136,
-                 "y":144
-                }, 
-                {
-                 "gid":14,
-                 "height":8,
-                 "id":2,
+                 "id":3,
                  "name":"",
                  "properties":[
                         {
@@ -80,7 +62,25 @@
                  "type":"",
                  "visible":true,
                  "width":8,
-                 "x":48,
+                 "x":144,
+                 "y":144
+                }, 
+                {
+                 "gid":129,
+                 "height":8,
+                 "id":4,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"movement",
+                         "type":"int",
+                         "value":1
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":8,
+                 "x":40,
                  "y":72
                 }],
          "opacity":1,
@@ -90,7 +90,7 @@
          "y":0
         }],
  "nextlayerid":3,
- "nextobjectid":3,
+ "nextobjectid":5,
  "orientation":"orthogonal",
  "properties":[
         {

@@ -34,6 +34,7 @@
             4, 4, 4, 4, 33, 9, 9, 9, 34, 4, 4, 4, 4, 4, 16, 16, 16, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4],
          "height":20,
          "id":1,
+         "locked":true,
          "name":"Tile Layer 1",
          "opacity":1,
          "type":"tilelayer",
@@ -48,15 +49,15 @@
          "name":"Monsters",
          "objects":[
                 {
-                 "gid":14,
+                 "gid":129,
                  "height":8,
-                 "id":1,
+                 "id":2,
                  "name":"",
                  "properties":[
                         {
                          "name":"movement",
                          "type":"int",
-                         "value":1
+                         "value":-1
                         }],
                  "rotation":0,
                  "type":"",
@@ -72,7 +73,7 @@
          "y":0
         }],
  "nextlayerid":3,
- "nextobjectid":2,
+ "nextobjectid":3,
  "orientation":"orthogonal",
  "properties":[
         {

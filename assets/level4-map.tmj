@@ -48,9 +48,9 @@
          "name":"Monsters",
          "objects":[
                 {
-                 "gid":14,
+                 "gid":129,
                  "height":8,
-                 "id":1,
+                 "id":8,
                  "name":"",
                  "properties":[
                         {
@@ -62,13 +62,13 @@
                  "type":"",
                  "visible":true,
                  "width":8,
-                 "x":184,
+                 "x":192,
                  "y":144
                 }, 
                 {
-                 "gid":14,
+                 "gid":129,
                  "height":8,
-                 "id":2,
+                 "id":9,
                  "name":"",
                  "properties":[
                         {
@@ -80,7 +80,7 @@
                  "type":"",
                  "visible":true,
                  "width":8,
-                 "x":144,
+                 "x":160,
                  "y":24
                 }],
          "opacity":1,
@@ -90,7 +90,7 @@
          "y":0
         }],
  "nextlayerid":3,
- "nextobjectid":8,
+ "nextobjectid":10,
  "orientation":"orthogonal",
  "properties":[
         {

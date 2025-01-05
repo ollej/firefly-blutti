@@ -1073,22 +1073,72 @@ impl Drawable for Particle {
     }
 }
 
-#[derive(Clone, Default, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
+#[serde(from = "MonsterSerde")]
 struct Monster {
+    #[serde(with = "PointDef")]
+    position: Point,
+    sprite: i32,
+    movement: i32,
+    #[serde(skip)]
+    animation: Animation,
+}
+
+#[derive(Deserialize)]
+struct MonsterSerde {
     #[serde(with = "PointDef")]
     position: Point,
     sprite: i32,
     movement: i32,
 }
 
+impl From<MonsterSerde> for Monster {
+    fn from(value: MonsterSerde) -> Monster {
+        Monster {
+            position: value.position,
+            movement: value.movement,
+            sprite: value.sprite,
+            animation: Monster::animation_from(value.movement, value.sprite),
+        }
+    }
+}
+
+impl Monster {
+    fn animation_from(movement: i32, sprite: i32) -> Animation {
+        if movement >= 0 {
+            Animation::looping([sprite + 2, sprite + 3], 10)
+        } else {
+            Animation::looping([sprite, sprite + 1], 10)
+        }
+    }
+
+    fn change_direction(&mut self) {
+        self.movement *= -1;
+        self.animation = Self::animation_from(self.movement, self.sprite);
+    }
+}
+
+impl Default for Monster {
+    fn default() -> Self {
+        Self {
+            position: Point::default(),
+            sprite: 0,
+            movement: 0,
+            animation: Animation::default(),
+        }
+    }
+}
+
 impl Drawable for Monster {
     fn draw(&self) {
-        draw_tile(self.sprite, self.position());
+        draw_tile(self.animation.current_sprite(), self.position());
     }
 }
 
 impl Updateable for Monster {
     fn update(&mut self) {
+        self.animation.update();
+
         let new_x = self.position.x + self.movement;
         let test_x = if new_x > self.position.x {
             new_x + TILE_WIDTH - 1
@@ -1108,7 +1158,7 @@ impl Updateable for Monster {
         {
             self.position.x = new_x;
         } else {
-            self.movement *= -1;
+            self.change_direction();
         }
 
         let state = get_state();

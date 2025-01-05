@@ -14,8 +14,8 @@
                 "x": 144,
                 "y": 144
             },
-            "sprite": 13,
-            "movement": 1
+            "sprite": 128,
+            "movement": -1
         }
     ],
     "tiles": [
