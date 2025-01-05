@@ -23,6 +23,7 @@ const LINE_HEIGHT: i32 = 8;
 const BADGE_STARS: Badge = Badge(1);
 const BADGE_LEVELS: Badge = Badge(2);
 const BADGE_DEATHS: Badge = Badge(3);
+const JUMP_SPRITES: [i32; 4] = [80, 81, 82, 83];
 
 const LEVELS: [&str; 5] = ["level1", "level2", "level3", "level4", "level5"];
 
@@ -812,12 +813,20 @@ impl Blutti {
     fn start_jump(&mut self) {
         if self.jump_timer == 0 && self.is_standing() {
             play_sound("sound_jump");
+            self.add_jump_animation();
             self.jump_timer = if self.is_standing_on(TileCollider::Slippery) {
                 Self::JUMP_TIME / 2
             } else {
                 Self::JUMP_TIME
             }
         }
+    }
+
+    fn add_jump_animation(&self) {
+        let state = get_state();
+        let anim = Animation::once(JUMP_SPRITES.into(), 5);
+        let particle = Particle::stationary(self.position_left_foot(), anim);
+        state.level.particles.push(particle);
     }
 
     fn start_dash(&mut self) {
@@ -923,15 +932,33 @@ impl Blutti {
     }
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(PartialEq, Clone, Debug)]
+enum ParticleMovement {
+    Stationary,
+    Falling,
+}
+
+#[derive(Clone, Debug)]
 struct Particle {
     position: Point,
-    sprite: i32,
+    animation: Animation,
+    movement: ParticleMovement,
 }
 
 impl Particle {
-    const GRAVITY: i32 = 1;
     const SPEED: i32 = 1;
+
+    fn new(position: Point, animation: Animation, movement: ParticleMovement) -> Self {
+        Particle {
+            position,
+            animation,
+            movement,
+        }
+    }
+
+    fn stationary(position: Point, animation: Animation) -> Self {
+        Self::new(position, animation, ParticleMovement::Stationary)
+    }
 
     fn random(sprite: i32) -> Self {
         Particle {
@@ -939,34 +966,41 @@ impl Particle {
                 x: random_value(WIDTH + 64),
                 y: -3,
             },
-            sprite,
+            animation: Animation::single_frame(sprite),
+            movement: ParticleMovement::Falling,
         }
     }
 
     fn should_be_removed(&self) -> bool {
-        self.position.y > HEIGHT
+        self.animation.finished || self.position.y > HEIGHT
     }
 }
 
 impl Drawable for Particle {
     fn draw(&self) {
-        draw_tile(self.sprite, self.position());
+        draw_tile(self.animation.current_sprite(), self.position());
     }
 }
 
 impl Updateable for Particle {
     fn update(&mut self) {
-        let new_x = match random_value(100) {
-            90.. => self.position.x + Self::SPEED,
-            60..90 => self.position.x - Self::SPEED,
-            _ => self.position.x,
-        };
-        let new_y = match random_value(100) {
-            90.. => self.position.y - Self::SPEED,
-            40..90 => self.position.y + Self::SPEED,
-            _ => self.position.y,
-        };
-        self.position = Point { x: new_x, y: new_y };
+        self.animation.update();
+        match self.movement {
+            ParticleMovement::Falling => {
+                let new_x = match random_value(100) {
+                    90.. => self.position.x + Self::SPEED,
+                    60..90 => self.position.x - Self::SPEED,
+                    _ => self.position.x,
+                };
+                let new_y = match random_value(100) {
+                    90.. => self.position.y - Self::SPEED,
+                    40..90 => self.position.y + Self::SPEED,
+                    _ => self.position.y,
+                };
+                self.position = Point { x: new_x, y: new_y };
+            }
+            ParticleMovement::Stationary => (),
+        }
     }
 
     fn position(&self) -> Point {
@@ -1027,6 +1061,59 @@ impl Updateable for Monster {
 
     fn position(&self) -> Point {
         self.position
+    }
+}
+
+#[derive(Clone, Default, Debug)]
+struct Animation {
+    sprites: Vec<i32>,
+    current_frame: i32,
+    time_per_frame: i32,
+    frame_timer: i32,
+    looping: bool,
+    finished: bool,
+}
+
+impl Animation {
+    fn new(sprites: Vec<i32>, time_per_frame: i32, looping: bool) -> Self {
+        Self {
+            sprites,
+            current_frame: 0,
+            time_per_frame,
+            frame_timer: 0,
+            looping,
+            finished: false,
+        }
+    }
+
+    fn once(sprites: Vec<i32>, time_per_frame: i32) -> Self {
+        Self::new(sprites, time_per_frame, false)
+    }
+
+    fn single_frame(sprite: i32) -> Self {
+        Self::new([sprite].into(), 1, true)
+    }
+
+    fn current_sprite(&self) -> i32 {
+        self.sprites[self.current_frame as usize]
+    }
+
+    fn update(&mut self) {
+        self.frame_timer += 1;
+        if self.frame_timer > self.time_per_frame {
+            self.next_frame();
+        }
+    }
+
+    fn next_frame(&mut self) {
+        self.frame_timer = 0;
+        self.current_frame += 1;
+        if self.current_frame >= self.sprites.len() as i32 {
+            self.current_frame = 0;
+            if !self.looping {
+                self.finished = true;
+            }
+        }
     }
 }
 

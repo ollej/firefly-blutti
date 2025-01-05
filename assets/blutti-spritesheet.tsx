@@ -6,6 +6,14 @@
    <property name="movement" type="int" value="0"/>
   </properties>
  </tile>
+ <tile id="83">
+  <animation>
+   <frame tileid="80" duration="166"/>
+   <frame tileid="81" duration="166"/>
+   <frame tileid="82" duration="166"/>
+   <frame tileid="83" duration="166"/>
+  </animation>
+ </tile>
  <wangsets>
   <wangset name="Grass" type="mixed" tile="-1">
    <wangcolor name="Blutti tile" color="#00ff00" tile="-1" probability="1"/>
