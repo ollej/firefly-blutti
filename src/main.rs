@@ -23,7 +23,10 @@ const LINE_HEIGHT: i32 = 8;
 const BADGE_STARS: Badge = Badge(1);
 const BADGE_LEVELS: Badge = Badge(2);
 const BADGE_DEATHS: Badge = Badge(3);
-const JUMP_SPRITES: [i32; 4] = [80, 81, 82, 83];
+const JUMP_RIGHT_SPRITES: [i32; 4] = [80, 81, 82, 83];
+const JUMP_LEFT_SPRITES: [i32; 4] = [84, 85, 86, 87];
+const DASH_RIGHT_SPRITES: [i32; 4] = [96, 97, 98, 99];
+const DASH_LEFT_SPRITES: [i32; 4] = [100, 101, 102, 103];
 
 const LEVELS: [&str; 5] = ["level1", "level2", "level3", "level4", "level5"];
 
@@ -518,14 +521,6 @@ fn get_state() -> &'static mut State {
     unsafe { STATE.get_mut() }.unwrap()
 }
 
-#[derive(PartialEq)]
-enum Direction {
-    Left,
-    Right,
-    Up,
-    Down,
-}
-
 enum GameState {
     Playing,
     Title,
@@ -612,13 +607,20 @@ trait Updateable {
     }
 }
 
+#[derive(PartialEq)]
+enum Direction {
+    Left,
+    Right,
+}
+
 struct Blutti {
     position: Point,
     start_position: Point,
     jump_timer: i32,
     dash_timer: i32,
     fall_timer: i32,
-    movement: i32,
+    movement_x: i32,
+    movement_y: i32,
     direction: Direction,
     points: i32,
     stars: i32,
@@ -637,10 +639,11 @@ impl Default for Blutti {
             jump_timer: 0,
             dash_timer: 0,
             fall_timer: 0,
-            movement: 0,
+            movement_x: 0,
+            movement_y: 0,
+            direction: Direction::Right,
             points: 0,
             stars: 0,
-            direction: Direction::Left,
             lives: 3,
             died: false,
             finished_level: false,
@@ -654,8 +657,8 @@ impl Drawable for Blutti {
     fn draw(&self) {
         if self.is_alive() {
             let tile = match self.direction {
-                Direction::Left | Direction::Up => 1,
-                Direction::Right | Direction::Down => 2,
+                Direction::Left => 1,
+                Direction::Right => 2,
             };
             draw_tile(tile, self.position());
         }
@@ -671,22 +674,16 @@ impl Updateable for Blutti {
         let mut new_x = self.position.x;
         let mut new_y = self.position.y;
 
-        match self.direction {
-            Direction::Left | Direction::Right => new_x += self.movement,
-            Direction::Up | Direction::Down => {
-                if self.is_on_ladder() {
-                    new_y += self.movement;
-                }
-            }
-        };
+        new_x += self.movement_x;
+        if self.is_on_ladder() {
+            new_y += self.movement_y;
+        }
         if self.is_standing_on(TileCollider::Conveyor) {
             new_x += Self::CONVEYOR_SPEED;
         }
 
-        if self.dash_timer > 0
-            && (self.direction == Direction::Left || self.direction == Direction::Right)
-        {
-            new_x = self.position.x + Self::DASH_SPEED * self.movement;
+        if self.dash_timer > 0 && self.movement_x != 0 {
+            new_x = self.position.x + Self::DASH_SPEED * self.movement_x;
         }
         if self.jump_timer > 0 {
             new_y -= Self::JUMP_SPEED;
@@ -713,8 +710,11 @@ impl Updateable for Blutti {
         } else if self.dash_timer < 0 {
             self.dash_timer += 1;
         }
-        if self.movement != 0 && !self.is_standing_on(TileCollider::Slippery) {
-            self.movement = 0;
+        if self.movement_x != 0 && !self.is_standing_on(TileCollider::Slippery) {
+            self.movement_x = 0;
+        }
+        if self.is_standing() {
+            self.movement_y = 0;
         }
 
         let new_position = Point {
@@ -788,26 +788,24 @@ impl Blutti {
 
     fn move_left(&mut self) {
         self.direction = Direction::Left;
-        if !(self.movement > 0 && self.is_standing_on(TileCollider::Slippery)) {
-            self.movement = -Self::SPEED;
+        if !(self.movement_x > 0 && self.is_standing_on(TileCollider::Slippery)) {
+            self.movement_x = -Self::SPEED;
         }
     }
 
     fn move_right(&mut self) {
         self.direction = Direction::Right;
-        if !(self.movement < 0 && self.is_standing_on(TileCollider::Slippery)) {
-            self.movement = Self::SPEED;
+        if !(self.movement_x < 0 && self.is_standing_on(TileCollider::Slippery)) {
+            self.movement_x = Self::SPEED;
         }
     }
 
     fn move_up(&mut self) {
-        self.direction = Direction::Up;
-        self.movement = -Self::SPEED;
+        self.movement_y = -Self::SPEED;
     }
 
     fn move_down(&mut self) {
-        self.direction = Direction::Down;
-        self.movement = Self::SPEED;
+        self.movement_y = Self::SPEED;
     }
 
     fn start_jump(&mut self) {
@@ -823,15 +821,41 @@ impl Blutti {
     }
 
     fn add_jump_animation(&self) {
-        let state = get_state();
-        let anim = Animation::once(JUMP_SPRITES.into(), 5);
+        match self.direction {
+            Direction::Left => self.add_jump_particle(JUMP_LEFT_SPRITES),
+            Direction::Right => self.add_jump_particle(JUMP_RIGHT_SPRITES),
+        }
+    }
+
+    fn add_jump_particle(&self, sprites: [i32; 4]) {
+        let anim = Animation::once(sprites.into(), 5);
         let particle = Particle::stationary(self.position_left_foot(), anim);
+        let state = get_state();
+        state.level.particles.push(particle);
+    }
+
+    fn add_dash_animation(&self) {
+        match self.direction {
+            Direction::Left => self.add_dash_particle(DASH_LEFT_SPRITES, TILE_WIDTH),
+            Direction::Right => self.add_dash_particle(DASH_RIGHT_SPRITES, -TILE_WIDTH),
+        }
+    }
+
+    fn add_dash_particle(&self, sprites: [i32; 4], offset_x: i32) {
+        let anim = Animation::once(sprites.into(), 5);
+        let position = Point {
+            x: self.position.x + offset_x,
+            y: self.position.y,
+        };
+        let particle = Particle::following(position, anim, offset_x);
+        let state = get_state();
         state.level.particles.push(particle);
     }
 
     fn start_dash(&mut self) {
         if self.dash_timer == 0 {
             play_sound("sound_dash");
+            self.add_dash_animation();
             self.dash_timer = Self::DASH_TIME;
         }
     }
@@ -915,8 +939,8 @@ impl Blutti {
         self.jump_timer = 0;
         self.dash_timer = 0;
         self.fall_timer = 0;
-        self.movement = 0;
-        self.direction = Direction::Left;
+        self.movement_x = 0;
+        self.movement_y = 0;
         self.current_tile = 0;
     }
 
@@ -936,6 +960,7 @@ impl Blutti {
 enum ParticleMovement {
     Stationary,
     Falling,
+    Following(i32),
 }
 
 #[derive(Clone, Debug)]
@@ -960,6 +985,10 @@ impl Particle {
         Self::new(position, animation, ParticleMovement::Stationary)
     }
 
+    fn following(position: Point, animation: Animation, offset_x: i32) -> Self {
+        Self::new(position, animation, ParticleMovement::Following(offset_x))
+    }
+
     fn random(sprite: i32) -> Self {
         Particle {
             position: Point {
@@ -971,20 +1000,12 @@ impl Particle {
         }
     }
 
-    fn should_be_removed(&self) -> bool {
-        self.animation.finished || self.position.y > HEIGHT
-    }
-}
-
-impl Drawable for Particle {
-    fn draw(&self) {
-        draw_tile(self.animation.current_sprite(), self.position());
-    }
-}
-
-impl Updateable for Particle {
     fn update(&mut self) {
         self.animation.update();
+        self.update_movement();
+    }
+
+    fn update_movement(&mut self) {
         match self.movement {
             ParticleMovement::Falling => {
                 let new_x = match random_value(100) {
@@ -999,12 +1020,26 @@ impl Updateable for Particle {
                 };
                 self.position = Point { x: new_x, y: new_y };
             }
+            ParticleMovement::Following(offset_x) => {
+                let state = get_state();
+                let position = state.blutti.position;
+                self.position = Point {
+                    x: position.x + offset_x,
+                    y: position.y,
+                }
+            }
             ParticleMovement::Stationary => (),
         }
     }
 
-    fn position(&self) -> Point {
-        self.position
+    fn should_be_removed(&self) -> bool {
+        self.animation.finished || self.position.y > HEIGHT
+    }
+}
+
+impl Drawable for Particle {
+    fn draw(&self) {
+        draw_tile(self.animation.current_sprite(), self.position);
     }
 }
 
