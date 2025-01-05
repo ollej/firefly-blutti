@@ -95,7 +95,7 @@
         {
          "name":"particle_sprite",
          "type":"int",
-         "value":0
+         "value":88
         }, 
         {
          "name":"stars",

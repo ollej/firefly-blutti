@@ -2,7 +2,7 @@
     "background_color": "LightBlue",
     "font_color": "Black",
     "particle_chance": 5,
-    "particle_sprite": 0,
+    "particle_sprite": 88,
     "stars": 10,
     "start_position": {
         "x": 8,

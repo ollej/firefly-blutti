@@ -995,7 +995,7 @@ impl Particle {
                 x: random_value(WIDTH + 64),
                 y: -3,
             },
-            animation: Animation::single_frame(sprite),
+            animation: Animation::looping([sprite, sprite + 1], 15),
             movement: ParticleMovement::Falling,
         }
     }
@@ -1125,8 +1125,8 @@ impl Animation {
         Self::new(sprites, time_per_frame, false)
     }
 
-    fn single_frame(sprite: i32) -> Self {
-        Self::new([sprite].into(), 1, true)
+    fn looping(sprites: [i32; 2], time_per_frame: i32) -> Self {
+        Self::new(sprites.into(), time_per_frame, true)
     }
 
     fn current_sprite(&self) -> i32 {
