@@ -23,6 +23,10 @@ const LINE_HEIGHT: i32 = 8;
 const BADGE_STARS: Badge = Badge(1);
 const BADGE_LEVELS: Badge = Badge(2);
 const BADGE_DEATHS: Badge = Badge(3);
+const BLUTTI_RIGHT_SPRITES: [i32; 2] = [114, 115];
+const BLUTTI_LEFT_SPRITES: [i32; 2] = [112, 113];
+const BLUTTI_IDLE_RIGHT_SPRITES: [i32; 2] = [118, 119];
+const BLUTTI_IDLE_LEFT_SPRITES: [i32; 2] = [116, 117];
 const JUMP_RIGHT_SPRITES: [i32; 4] = [80, 81, 82, 83];
 const JUMP_LEFT_SPRITES: [i32; 4] = [84, 85, 86, 87];
 const DASH_RIGHT_SPRITES: [i32; 4] = [96, 97, 98, 99];
@@ -629,6 +633,7 @@ struct Blutti {
     finished_level: bool,
     current_level: i32,
     current_tile: i32,
+    animation: Animation,
 }
 
 impl Default for Blutti {
@@ -649,6 +654,7 @@ impl Default for Blutti {
             finished_level: false,
             current_level: 0,
             current_tile: 0,
+            animation: Self::animation_idle_right(),
         }
     }
 }
@@ -656,10 +662,7 @@ impl Default for Blutti {
 impl Drawable for Blutti {
     fn draw(&self) {
         if self.is_alive() {
-            let tile = match self.direction {
-                Direction::Left => 1,
-                Direction::Right => 2,
-            };
+            let tile = self.animation.current_sprite();
             draw_tile(tile, self.position());
         }
     }
@@ -671,6 +674,7 @@ impl Updateable for Blutti {
     }
 
     fn update(&mut self) {
+        self.animation.update();
         let mut new_x = self.position.x;
         let mut new_y = self.position.y;
 
@@ -711,7 +715,7 @@ impl Updateable for Blutti {
             self.dash_timer += 1;
         }
         if self.movement_x != 0 && !self.is_standing_on(TileCollider::Slippery) {
-            self.movement_x = 0;
+            self.stop_movement_x();
         }
         if self.is_standing() {
             self.movement_y = 0;
@@ -786,8 +790,33 @@ impl Blutti {
         }
     }
 
+    fn animation_idle_left() -> Animation {
+        Animation::looping(BLUTTI_IDLE_LEFT_SPRITES, 10)
+    }
+
+    fn animation_idle_right() -> Animation {
+        Animation::looping(BLUTTI_IDLE_RIGHT_SPRITES, 10)
+    }
+
+    fn animation_left() -> Animation {
+        Animation::looping(BLUTTI_LEFT_SPRITES, 10)
+    }
+
+    fn animation_right() -> Animation {
+        Animation::looping(BLUTTI_RIGHT_SPRITES, 10)
+    }
+
+    fn stop_movement_x(&mut self) {
+        self.movement_x = 0;
+        self.animation = match self.direction {
+            Direction::Left => Self::animation_idle_left(),
+            Direction::Right => Self::animation_idle_right(),
+        };
+    }
+
     fn move_left(&mut self) {
         self.direction = Direction::Left;
+        self.animation = Self::animation_left();
         if !(self.movement_x > 0 && self.is_standing_on(TileCollider::Slippery)) {
             self.movement_x = -Self::SPEED;
         }
@@ -795,6 +824,7 @@ impl Blutti {
 
     fn move_right(&mut self) {
         self.direction = Direction::Right;
+        self.animation = Self::animation_right();
         if !(self.movement_x < 0 && self.is_standing_on(TileCollider::Slippery)) {
             self.movement_x = Self::SPEED;
         }
