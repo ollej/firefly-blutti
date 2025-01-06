@@ -33,6 +33,7 @@ const BLUTTI_CLIMB_RIGHT_SPRITES: [i32; 2] = [120, 121];
 const BLUTTI_CLIMB_LEFT_SPRITES: [i32; 2] = [122, 123];
 const BLUTTI_DASH_RIGHT_SPRITES: [i32; 4] = [96, 97, 98, 99];
 const BLUTTI_DASH_LEFT_SPRITES: [i32; 4] = [100, 101, 102, 103];
+const BLUTTI_DEATH_SPRITES: [i32; 4] = [124, 125, 126, 127];
 
 const LEVELS: [&str; 5] = ["level1", "level2", "level3", "level4", "level5"];
 
@@ -663,7 +664,7 @@ impl Default for Blutti {
 
 impl Drawable for Blutti {
     fn draw(&self) {
-        if self.is_alive() {
+        if !self.animation.finished {
             let tile = self.animation.current_sprite();
             draw_tile(tile, self.position());
         }
@@ -717,7 +718,7 @@ impl Updateable for Blutti {
             self.dash_timer += 1;
         }
         if self.movement_x != 0 && !self.is_standing_on(TileCollider::Slippery) {
-            self.stop_movement_x();
+            self.start_idling();
         }
         if self.is_standing() {
             self.movement_y = 0;
@@ -816,16 +817,8 @@ impl Blutti {
         Animation::looping(BLUTTI_CLIMB_RIGHT_SPRITES, 10)
     }
 
-    fn stop_movement_x(&mut self) {
-        self.movement_x = 0;
-        self.animation = match self.direction {
-            Direction::Left => Self::animation_idle_left(),
-            Direction::Right => Self::animation_idle_right(),
-        };
-    }
-
-    fn stop_movement_y(&mut self) {
-        self.movement_y = 0;
+    fn animation_death() -> Animation {
+        Animation::once(BLUTTI_DEATH_SPRITES.into(), 10)
     }
 
     fn move_left(&mut self) {
@@ -858,16 +851,6 @@ impl Blutti {
         }
     }
 
-    fn add_climb_animation(&mut self) {
-        if self.movement_y == 0 {
-            if self.direction == Direction::Right {
-                self.animation = Self::animation_climb_right();
-            } else {
-                self.animation = Self::animation_climb_left();
-            }
-        }
-    }
-
     fn start_jump(&mut self) {
         if self.jump_timer == 0 && self.is_standing() {
             play_sound("sound_jump");
@@ -880,44 +863,17 @@ impl Blutti {
         }
     }
 
-    fn add_jump_animation(&self) {
-        match self.direction {
-            Direction::Left => self.add_jump_particle(BLUTTI_JUMP_LEFT_SPRITES),
-            Direction::Right => self.add_jump_particle(BLUTTI_JUMP_RIGHT_SPRITES),
-        }
-    }
-
-    fn add_jump_particle(&self, sprites: [i32; 4]) {
-        let anim = Animation::once(sprites.into(), 5);
-        let particle = Particle::stationary(self.position_left_foot(), anim);
-        let state = get_state();
-        state.level.particles.push(particle);
-    }
-
-    fn add_dash_animation(&self) {
-        match self.direction {
-            Direction::Left => self.add_dash_particle(BLUTTI_DASH_LEFT_SPRITES, TILE_WIDTH),
-            Direction::Right => self.add_dash_particle(BLUTTI_DASH_RIGHT_SPRITES, -TILE_WIDTH),
-        }
-    }
-
-    fn add_dash_particle(&self, sprites: [i32; 4], offset_x: i32) {
-        let anim = Animation::once(sprites.into(), 5);
-        let position = Point {
-            x: self.position.x + offset_x,
-            y: self.position.y,
-        };
-        let particle = Particle::following(position, anim, offset_x);
-        let state = get_state();
-        state.level.particles.push(particle);
-    }
-
     fn start_dash(&mut self) {
         if self.dash_timer == 0 {
             play_sound("sound_dash");
             self.add_dash_animation();
             self.dash_timer = Self::DASH_TIME;
         }
+    }
+
+    fn start_idling(&mut self) {
+        self.movement_x = 0;
+        self.add_idle_animation();
     }
 
     fn handle_effects(&mut self) {
@@ -982,9 +938,10 @@ impl Blutti {
     fn die(&mut self) {
         let state = get_state();
         state.level.reset();
+        self.add_death_animation();
         self.add_lives(-1);
         add_progress(get_me(), BADGE_DEATHS, 1);
-        self.reset();
+        self.stop_movement();
         self.died = true;
         play_sound("sound_death");
     }
@@ -994,14 +951,24 @@ impl Blutti {
         add_progress(get_me(), BADGE_LEVELS, 1);
     }
 
+    fn stop_movement(&mut self) {
+        self.jump_timer = 0;
+        self.dash_timer = 0;
+        self.fall_timer = 0;
+        self.movement_x = 0;
+        self.movement_y = 0;
+    }
+
     fn reset(&mut self) {
+        self.died = false;
         self.direction = Direction::Right;
         self.position = self.start_position;
         self.jump_timer = 0;
         self.dash_timer = 0;
         self.fall_timer = 0;
-        self.stop_movement_x();
-        self.stop_movement_y();
+        self.movement_x = 0;
+        self.movement_y = 0;
+        self.start_idling();
         self.current_tile = 0;
     }
 
@@ -1014,6 +981,58 @@ impl Blutti {
 
     fn is_alive(&self) -> bool {
         self.lives > 0
+    }
+
+    fn add_idle_animation(&mut self) {
+        self.animation = match self.direction {
+            Direction::Left => Self::animation_idle_left(),
+            Direction::Right => Self::animation_idle_right(),
+        }
+    }
+
+    fn add_death_animation(&mut self) {
+        self.animation = Self::animation_death()
+    }
+
+    fn add_climb_animation(&mut self) {
+        if self.movement_y == 0 {
+            self.animation = match self.direction {
+                Direction::Right => Self::animation_climb_right(),
+                Direction::Left => Self::animation_climb_left(),
+            }
+        }
+    }
+
+    fn add_jump_animation(&self) {
+        match self.direction {
+            Direction::Left => self.add_jump_particle(BLUTTI_JUMP_LEFT_SPRITES),
+            Direction::Right => self.add_jump_particle(BLUTTI_JUMP_RIGHT_SPRITES),
+        }
+    }
+
+    fn add_dash_animation(&self) {
+        match self.direction {
+            Direction::Left => self.add_dash_particle(BLUTTI_DASH_LEFT_SPRITES, TILE_WIDTH),
+            Direction::Right => self.add_dash_particle(BLUTTI_DASH_RIGHT_SPRITES, -TILE_WIDTH),
+        }
+    }
+
+    fn add_jump_particle(&self, sprites: [i32; 4]) {
+        let anim = Animation::once(sprites.into(), 5);
+        let particle = Particle::stationary(self.position_left_foot(), anim);
+        let state = get_state();
+        state.level.particles.push(particle);
+    }
+
+    fn add_dash_particle(&self, sprites: [i32; 4], offset_x: i32) {
+        let anim = Animation::once(sprites.into(), 5);
+        let position = Point {
+            x: self.position.x + offset_x,
+            y: self.position.y,
+        };
+        let particle = Particle::following(position, anim, offset_x);
+        let state = get_state();
+        state.level.particles.push(particle);
     }
 }
 
@@ -1384,6 +1403,7 @@ fn render_title() {
 fn render_died() {
     let state = get_state();
     state.level.draw();
+    state.blutti.draw();
     render_ui();
     display_centered_message(None, &["You died!", "Press <Y> to restart level"]);
 }
@@ -1391,6 +1411,7 @@ fn render_died() {
 fn render_gameover(won: bool) {
     let state = get_state();
     state.level.draw();
+    state.blutti.draw();
     render_ui();
     if won {
         display_centered_message(None, &["You win!", "Press <Y> to start next level!"]);
@@ -1519,8 +1540,9 @@ extern "C" fn update() {
             }
         }
         GameState::Died => {
+            state.blutti.animation.update();
             if just_pressed.n {
-                state.blutti.died = false;
+                state.blutti.reset();
                 state.game_state = GameState::Playing;
             }
         }
@@ -1558,6 +1580,7 @@ extern "C" fn update() {
             }
         }
         GameState::GameOver(won) => {
+            state.blutti.animation.update();
             if just_pressed.n {
                 if won {
                     restart(state.blutti.current_level + 1, won);
