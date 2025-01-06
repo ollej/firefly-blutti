@@ -34,6 +34,7 @@ const BLUTTI_CLIMB_LEFT_SPRITES: [i32; 2] = [122, 123];
 const BLUTTI_DASH_RIGHT_SPRITES: [i32; 4] = [96, 97, 98, 99];
 const BLUTTI_DASH_LEFT_SPRITES: [i32; 4] = [100, 101, 102, 103];
 const BLUTTI_DEATH_SPRITES: [i32; 4] = [124, 125, 126, 127];
+const COLLECTION_SPRITES: [i32; 4] = [104, 105, 106, 107];
 
 const LEVELS: [&str; 5] = ["level1", "level2", "level3", "level4", "level5"];
 
@@ -821,6 +822,10 @@ impl Blutti {
         Animation::once(BLUTTI_DEATH_SPRITES.into(), 10)
     }
 
+    fn animation_collection() -> Animation {
+        Animation::once(COLLECTION_SPRITES.into(), 10)
+    }
+
     fn move_left(&mut self) {
         self.direction = Direction::Left;
         self.animation = Self::animation_left();
@@ -878,11 +883,12 @@ impl Blutti {
 
     fn handle_effects(&mut self) {
         let state = get_state();
-        for collision in state
+        if let Some(collision) = state
             .level
             .all_collisions_at_rect(self.position)
-            .iter()
+            .into_iter()
             .flatten()
+            .last()
         {
             match collision.tile_collider {
                 TileCollider::Star => self.collect_star(collision),
@@ -895,20 +901,25 @@ impl Blutti {
         state.blutti.current_tile = get_tile_index(self.position) as i32;
     }
 
-    fn collect_star(&mut self, collision: &Collision) {
-        let state = get_state();
-        state.level.remove_tile(collision.position);
+    fn collect_star(&mut self, collision: Collision) {
+        self.handle_collection(collision);
         self.add_points(1);
         self.stars += 1;
         add_progress(get_me(), BADGE_STARS, 1);
         play_sound("sound_coin");
     }
 
-    fn collect_extra_life(&mut self, collision: &Collision) {
-        let state = get_state();
-        state.level.remove_tile(collision.position);
+    fn collect_extra_life(&mut self, collision: Collision) {
+        self.handle_collection(collision);
         self.add_lives(1);
         play_sound("sound_powerup");
+    }
+
+    fn handle_collection(&mut self, collision: Collision) {
+        let state = get_state();
+        state.level.remove_tile(collision.position);
+        let particle_position = get_origin_point_of_position(collision.position);
+        self.add_collection_particle(particle_position);
     }
 
     fn exit(&mut self) {
@@ -1017,13 +1028,6 @@ impl Blutti {
         }
     }
 
-    fn add_jump_particle(&self, sprites: [i32; 4]) {
-        let anim = Animation::once(sprites.into(), 5);
-        let particle = Particle::stationary(self.position_left_foot(), anim);
-        let state = get_state();
-        state.level.particles.push(particle);
-    }
-
     fn add_dash_particle(&self, sprites: [i32; 4], offset_x: i32) {
         let anim = Animation::once(sprites.into(), 5);
         let position = Point {
@@ -1031,6 +1035,21 @@ impl Blutti {
             y: self.position.y,
         };
         let particle = Particle::following(position, anim, offset_x);
+        let state = get_state();
+        state.level.particles.push(particle);
+    }
+
+    fn add_jump_particle(&self, sprites: [i32; 4]) {
+        self.add_particle(self.position_left_foot(), sprites.into());
+    }
+
+    fn add_collection_particle(&self, position: Point) {
+        self.add_particle(position, COLLECTION_SPRITES.into());
+    }
+
+    fn add_particle(&self, position: Point, sprites: Vec<i32>) {
+        let anim = Animation::once(sprites, 5);
+        let particle = Particle::stationary(position, anim);
         let state = get_state();
         state.level.particles.push(particle);
     }
@@ -1310,6 +1329,13 @@ fn random_value(max: i32) -> i32 {
     math::floor(scale(u32::MIN, u32::MAX, rnd) * max as f32) as i32
 }
 
+fn get_origin_point_of_position(position: Point) -> Point {
+    Point {
+        x: position.x / TILE_WIDTH * TILE_WIDTH,
+        y: position.y / TILE_HEIGHT * TILE_HEIGHT,
+    }
+}
+
 fn get_tile_index(point: Point) -> usize {
     let tile_x = point.x / TILE_WIDTH;
     let tile_y = point.y / TILE_WIDTH;
@@ -1411,11 +1437,11 @@ fn render_died() {
 fn render_gameover(won: bool) {
     let state = get_state();
     state.level.draw();
-    state.blutti.draw();
     render_ui();
     if won {
         display_centered_message(None, &["You win!", "Press <Y> to start next level!"]);
     } else {
+        state.blutti.draw();
         display_centered_message(None, &["Game Over!", "Press <Y> to start again!"]);
     }
 }
