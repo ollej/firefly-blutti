@@ -34,6 +34,8 @@ const BLUTTI_CLIMB_LEFT_SPRITES: [i32; 2] = [122, 123];
 const BLUTTI_DASH_RIGHT_SPRITES: [i32; 4] = [96, 97, 98, 99];
 const BLUTTI_DASH_LEFT_SPRITES: [i32; 4] = [100, 101, 102, 103];
 const BLUTTI_DEATH_SPRITES: [i32; 4] = [124, 125, 126, 127];
+const BLUTTI_EXIT_RIGHT_SPRITES: [i32; 4] = [92, 93, 94, 95];
+const BLUTTI_EXIT_LEFT_SPRITES: [i32; 4] = [108, 109, 110, 111];
 const COLLECTION_SPRITES: [i32; 4] = [104, 105, 106, 107];
 
 const LEVELS: [&str; 5] = ["level1", "level2", "level3", "level4", "level5"];
@@ -658,7 +660,7 @@ impl Default for Blutti {
             finished_level: false,
             current_level: 0,
             current_tile: 0,
-            animation: Self::animation_idle_right(),
+            animation: Animation::animation_idle_right(),
         }
     }
 }
@@ -794,41 +796,9 @@ impl Blutti {
         }
     }
 
-    fn animation_idle_left() -> Animation {
-        Animation::looping(BLUTTI_IDLE_LEFT_SPRITES, 10)
-    }
-
-    fn animation_idle_right() -> Animation {
-        Animation::looping(BLUTTI_IDLE_RIGHT_SPRITES, 10)
-    }
-
-    fn animation_left() -> Animation {
-        Animation::looping(BLUTTI_LEFT_SPRITES, 10)
-    }
-
-    fn animation_right() -> Animation {
-        Animation::looping(BLUTTI_RIGHT_SPRITES, 10)
-    }
-
-    fn animation_climb_left() -> Animation {
-        Animation::looping(BLUTTI_CLIMB_LEFT_SPRITES, 10)
-    }
-
-    fn animation_climb_right() -> Animation {
-        Animation::looping(BLUTTI_CLIMB_RIGHT_SPRITES, 10)
-    }
-
-    fn animation_death() -> Animation {
-        Animation::once(BLUTTI_DEATH_SPRITES.into(), 10)
-    }
-
-    fn animation_collection() -> Animation {
-        Animation::once(COLLECTION_SPRITES.into(), 10)
-    }
-
     fn move_left(&mut self) {
         self.direction = Direction::Left;
-        self.animation = Self::animation_left();
+        self.animation = Animation::animation_left();
         if !(self.movement_x > 0 && self.is_standing_on(TileCollider::Slippery)) {
             self.movement_x = -Self::SPEED;
         }
@@ -836,7 +806,7 @@ impl Blutti {
 
     fn move_right(&mut self) {
         self.direction = Direction::Right;
-        self.animation = Self::animation_right();
+        self.animation = Animation::animation_right();
         if !(self.movement_x < 0 && self.is_standing_on(TileCollider::Slippery)) {
             self.movement_x = Self::SPEED;
         }
@@ -926,7 +896,6 @@ impl Blutti {
         let state = get_state();
         if self.stars >= state.level.stars {
             self.finish_level();
-            play_sound("sound_exit");
         } else {
             let tile_pos = get_tile_index(self.position) as i32;
             if tile_pos != state.blutti.current_tile {
@@ -958,7 +927,9 @@ impl Blutti {
     }
 
     fn finish_level(&mut self) {
+        play_sound("sound_exit");
         self.finished_level = true;
+        self.add_exit_animation();
         add_progress(get_me(), BADGE_LEVELS, 1);
     }
 
@@ -996,20 +967,27 @@ impl Blutti {
 
     fn add_idle_animation(&mut self) {
         self.animation = match self.direction {
-            Direction::Left => Self::animation_idle_left(),
-            Direction::Right => Self::animation_idle_right(),
+            Direction::Left => Animation::animation_idle_left(),
+            Direction::Right => Animation::animation_idle_right(),
         }
     }
 
     fn add_death_animation(&mut self) {
-        self.animation = Self::animation_death()
+        self.animation = Animation::animation_death()
+    }
+
+    fn add_exit_animation(&mut self) {
+        self.animation = match self.direction {
+            Direction::Left => Animation::animation_exit_left(),
+            Direction::Right => Animation::animation_exit_right(),
+        }
     }
 
     fn add_climb_animation(&mut self) {
         if self.movement_y == 0 {
             self.animation = match self.direction {
-                Direction::Right => Self::animation_climb_right(),
-                Direction::Left => Self::animation_climb_left(),
+                Direction::Right => Animation::animation_climb_right(),
+                Direction::Left => Animation::animation_climb_left(),
             }
         }
     }
@@ -1270,6 +1248,42 @@ impl Animation {
         }
     }
 
+    fn animation_idle_left() -> Animation {
+        Animation::looping(BLUTTI_IDLE_LEFT_SPRITES, 10)
+    }
+
+    fn animation_idle_right() -> Animation {
+        Animation::looping(BLUTTI_IDLE_RIGHT_SPRITES, 10)
+    }
+
+    fn animation_left() -> Animation {
+        Animation::looping(BLUTTI_LEFT_SPRITES, 10)
+    }
+
+    fn animation_right() -> Animation {
+        Animation::looping(BLUTTI_RIGHT_SPRITES, 10)
+    }
+
+    fn animation_climb_left() -> Animation {
+        Animation::looping(BLUTTI_CLIMB_LEFT_SPRITES, 10)
+    }
+
+    fn animation_climb_right() -> Animation {
+        Animation::looping(BLUTTI_CLIMB_RIGHT_SPRITES, 10)
+    }
+
+    fn animation_death() -> Animation {
+        Animation::once(BLUTTI_DEATH_SPRITES.into(), 5)
+    }
+
+    fn animation_exit_left() -> Animation {
+        Animation::once(BLUTTI_EXIT_LEFT_SPRITES.into(), 5)
+    }
+
+    fn animation_exit_right() -> Animation {
+        Animation::once(BLUTTI_EXIT_RIGHT_SPRITES.into(), 5)
+    }
+
     fn once(sprites: Vec<i32>, time_per_frame: i32) -> Self {
         Self::new(sprites, time_per_frame, false)
     }
@@ -1437,11 +1451,11 @@ fn render_died() {
 fn render_gameover(won: bool) {
     let state = get_state();
     state.level.draw();
+    state.blutti.draw();
     render_ui();
     if won {
         display_centered_message(None, &["You win!", "Press <Y> to start next level!"]);
     } else {
-        state.blutti.draw();
         display_centered_message(None, &["Game Over!", "Press <Y> to start again!"]);
     }
 }
