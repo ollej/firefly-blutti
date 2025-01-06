@@ -27,10 +27,12 @@ const BLUTTI_RIGHT_SPRITES: [i32; 2] = [114, 115];
 const BLUTTI_LEFT_SPRITES: [i32; 2] = [112, 113];
 const BLUTTI_IDLE_RIGHT_SPRITES: [i32; 2] = [118, 119];
 const BLUTTI_IDLE_LEFT_SPRITES: [i32; 2] = [116, 117];
-const JUMP_RIGHT_SPRITES: [i32; 4] = [80, 81, 82, 83];
-const JUMP_LEFT_SPRITES: [i32; 4] = [84, 85, 86, 87];
-const DASH_RIGHT_SPRITES: [i32; 4] = [96, 97, 98, 99];
-const DASH_LEFT_SPRITES: [i32; 4] = [100, 101, 102, 103];
+const BLUTTI_JUMP_RIGHT_SPRITES: [i32; 4] = [80, 81, 82, 83];
+const BLUTTI_JUMP_LEFT_SPRITES: [i32; 4] = [84, 85, 86, 87];
+const BLUTTI_CLIMB_RIGHT_SPRITES: [i32; 2] = [120, 121];
+const BLUTTI_CLIMB_LEFT_SPRITES: [i32; 2] = [122, 123];
+const BLUTTI_DASH_RIGHT_SPRITES: [i32; 4] = [96, 97, 98, 99];
+const BLUTTI_DASH_LEFT_SPRITES: [i32; 4] = [100, 101, 102, 103];
 
 const LEVELS: [&str; 5] = ["level1", "level2", "level3", "level4", "level5"];
 
@@ -806,12 +808,24 @@ impl Blutti {
         Animation::looping(BLUTTI_RIGHT_SPRITES, 10)
     }
 
+    fn animation_climb_left() -> Animation {
+        Animation::looping(BLUTTI_CLIMB_LEFT_SPRITES, 10)
+    }
+
+    fn animation_climb_right() -> Animation {
+        Animation::looping(BLUTTI_CLIMB_RIGHT_SPRITES, 10)
+    }
+
     fn stop_movement_x(&mut self) {
         self.movement_x = 0;
         self.animation = match self.direction {
             Direction::Left => Self::animation_idle_left(),
             Direction::Right => Self::animation_idle_right(),
         };
+    }
+
+    fn stop_movement_y(&mut self) {
+        self.movement_y = 0;
     }
 
     fn move_left(&mut self) {
@@ -831,11 +845,27 @@ impl Blutti {
     }
 
     fn move_up(&mut self) {
-        self.movement_y = -Self::SPEED;
+        if self.is_on_ladder() {
+            self.add_climb_animation();
+            self.movement_y = -Self::SPEED;
+        }
     }
 
     fn move_down(&mut self) {
-        self.movement_y = Self::SPEED;
+        if self.is_on_ladder() {
+            self.add_climb_animation();
+            self.movement_y = Self::SPEED;
+        }
+    }
+
+    fn add_climb_animation(&mut self) {
+        if self.movement_y == 0 {
+            if self.direction == Direction::Right {
+                self.animation = Self::animation_climb_right();
+            } else {
+                self.animation = Self::animation_climb_left();
+            }
+        }
     }
 
     fn start_jump(&mut self) {
@@ -852,8 +882,8 @@ impl Blutti {
 
     fn add_jump_animation(&self) {
         match self.direction {
-            Direction::Left => self.add_jump_particle(JUMP_LEFT_SPRITES),
-            Direction::Right => self.add_jump_particle(JUMP_RIGHT_SPRITES),
+            Direction::Left => self.add_jump_particle(BLUTTI_JUMP_LEFT_SPRITES),
+            Direction::Right => self.add_jump_particle(BLUTTI_JUMP_RIGHT_SPRITES),
         }
     }
 
@@ -866,8 +896,8 @@ impl Blutti {
 
     fn add_dash_animation(&self) {
         match self.direction {
-            Direction::Left => self.add_dash_particle(DASH_LEFT_SPRITES, TILE_WIDTH),
-            Direction::Right => self.add_dash_particle(DASH_RIGHT_SPRITES, -TILE_WIDTH),
+            Direction::Left => self.add_dash_particle(BLUTTI_DASH_LEFT_SPRITES, TILE_WIDTH),
+            Direction::Right => self.add_dash_particle(BLUTTI_DASH_RIGHT_SPRITES, -TILE_WIDTH),
         }
     }
 
@@ -965,12 +995,13 @@ impl Blutti {
     }
 
     fn reset(&mut self) {
+        self.direction = Direction::Right;
         self.position = self.start_position;
         self.jump_timer = 0;
         self.dash_timer = 0;
         self.fall_timer = 0;
-        self.movement_x = 0;
-        self.movement_y = 0;
+        self.stop_movement_x();
+        self.stop_movement_y();
         self.current_tile = 0;
     }
 
