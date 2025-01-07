@@ -1,13 +1,27 @@
 #!/usr/bin/env sh
 
-set -euo pipefail
-
 GAME_NAME="olle.blutti"
 LEVELS=5
 OUTPUT_DIR="resources/screenshots"
 
-mkdir -p "$OUTPUT_DIR"
+# Install screenshot command in virtualenv if necessary
+if [ ! -d ".venv" ]
+then
+    echo "Virtual env not found, creating a new one..."
+    python3 -m venv .venv
+fi
 source .venv/bin/activate
+pip3 show package_name 1>/dev/null
+if [ $? == 0 ]; then
+    echo "Screenshot package already installed."
+else
+    echo "Installing screenshot package..."
+    python3 -m pip --require-virtualenv install screenshot
+fi
+
+set -euo pipefail
+
+mkdir -p "$OUTPUT_DIR"
 echo "Starting emulator..."
 firefly-emulator --id olle.blutti &
 EMULATOR_PID=$!
