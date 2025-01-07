@@ -56,13 +56,13 @@
                         {
                          "name":"movement",
                          "type":"int",
-                         "value":-1
+                         "value":1
                         }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":8,
-                 "x":184,
+                 "x":80,
                  "y":144
                 }, 
                 {
