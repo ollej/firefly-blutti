@@ -797,23 +797,39 @@ impl Updateable for Blutti {
                 }
             }
             PlayerState::StopClimbing => (0.2, 0.0),
-            PlayerState::Dashing
-            | PlayerState::Running
-            | PlayerState::Idle
-            | PlayerState::StopRunning => (0.0, 0.0),
+            PlayerState::Dashing => (0.0, 0.0),
+            PlayerState::Running | PlayerState::Idle | PlayerState::StopRunning => {
+                if self.is_standing() {
+                    (0.0, 0.0)
+                } else {
+                    (0.8, 2.0) // Gravity
+                }
+            }
         };
-        if self.state == PlayerState::StopClimbing {
-            if self.direction_y == DirectionY::Up {
-                self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
-            } else {
-                self.velocity.y = (self.velocity.y - acceleration).max(target_velocity);
+        match self.state {
+            PlayerState::Climbing => {
+                if self.direction_y == DirectionY::Up {
+                    self.velocity.y = (self.velocity.y - acceleration).max(-target_velocity);
+                } else {
+                    self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
+                }
             }
-        } else {
-            if self.direction_y == DirectionY::Up {
-                self.velocity.y = (self.velocity.y - acceleration).max(-target_velocity);
-            } else {
+            PlayerState::StopClimbing => {
+                if self.direction_y == DirectionY::Up {
+                    self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
+                } else {
+                    self.velocity.y = (self.velocity.y - acceleration).max(target_velocity);
+                }
+            }
+            PlayerState::Jumping => {
+                self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
+                // TODO: double gravity after apex
+            }
+            PlayerState::Running | PlayerState::Idle | PlayerState::StopRunning => {
+                // Gravity
                 self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
             }
+            PlayerState::Dashing => (),
         }
 
         // Move X position
