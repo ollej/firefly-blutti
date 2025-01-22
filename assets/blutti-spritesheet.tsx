@@ -3,8 +3,10 @@
  <image source="spritesheet.png" width="128" height="128"/>
  <tile id="0">
   <animation>
-   <frame tileid="128" duration="166"/>
-   <frame tileid="129" duration="166"/>
+   <frame tileid="108" duration="166"/>
+   <frame tileid="109" duration="166"/>
+   <frame tileid="110" duration="166"/>
+   <frame tileid="111" duration="166"/>
   </animation>
  </tile>
  <tile id="21">

@@ -13,6 +13,7 @@ const TILE_WIDTH: i32 = 8;
 const TILE_HEIGHT: i32 = 8;
 const SPRITES_H: i32 = 16;
 const TILES_H: i32 = 30;
+const DELTA_TIME: f32 = 1000.0 / 60.0;
 const HALF_FONT_WIDTH: i32 = 2;
 const FONT_BASE_LINE: i32 = 4;
 const LINE_HEIGHT: i32 = 8;
@@ -590,14 +591,21 @@ trait Updateable {
         }
     }
 
-    fn position_left_foot(&self) -> Point {
+    fn position_top_right(&self) -> Point {
+        Point {
+            x: self.position().x + TILE_WIDTH - 1,
+            y: self.position().y,
+        }
+    }
+
+    fn position_bottom_left(&self) -> Point {
         Point {
             x: self.position().x,
             y: self.position().y + TILE_HEIGHT - 1,
         }
     }
 
-    fn position_right_foot(&self) -> Point {
+    fn position_bottom_right(&self) -> Point {
         Point {
             x: self.position().x + TILE_WIDTH - 1,
             y: self.position().y + TILE_HEIGHT - 1,
@@ -621,6 +629,26 @@ enum Direction {
     Right,
 }
 
+#[derive(PartialEq)]
+enum PlayerState {
+    Idle,
+    Jumping,
+    Dashing,
+    Running,
+    Climbing,
+}
+
+struct Vec2 {
+    x: f32,
+    y: f32,
+}
+
+impl Vec2 {
+    fn zero() -> Self {
+        Self { x: 0.0, y: 0.0 }
+    }
+}
+
 struct Blutti {
     position: Point,
     start_position: Point,
@@ -630,6 +658,9 @@ struct Blutti {
     movement_x: i32,
     movement_y: i32,
     direction: Direction,
+    state: PlayerState,
+    velocity: Vec2,
+    remainder: Vec2,
     points: i32,
     stars: i32,
     lives: i32,
@@ -653,6 +684,9 @@ impl Default for Blutti {
             movement_x: 0,
             movement_y: 0,
             direction: Direction::Right,
+            state: PlayerState::Idle,
+            velocity: Vec2::zero(),
+            remainder: Vec2::zero(),
             points: 0,
             stars: 0,
             lives: 3,
@@ -716,93 +750,176 @@ impl Updateable for Blutti {
 
     fn update(&mut self) {
         self.animation.update();
-        let mut new_x = self.position.x;
-        let mut new_y = self.position.y;
 
-        new_x += self.movement_x;
-        if self.is_on_ladder() {
-            new_y += self.movement_y;
-        }
-        if self.is_standing_on(TileCollider::Conveyor) {
-            new_x += Self::CONVEYOR_SPEED;
-        }
-
-        if self.dash_timer > 0 && self.movement_x != 0 {
-            new_x = self.position.x + Self::DASH_SPEED * self.movement_x;
-        }
-        if self.jump_timer > 0 {
-            new_y -= Self::JUMP_SPEED;
-            self.jump_timer -= 1;
-        }
-        if self.jump_timer == 0 && self.dash_timer <= 0 {
-            if self.is_standing() {
-                if self.fall_timer > Self::MAX_FALL_HEIGHT {
-                    self.die();
-                    return;
-                } else if self.fall_timer > 0 {
-                    self.fall_timer = 0;
-                }
-            } else {
-                new_y += Self::GRAVITY;
-                self.fall_timer += 1;
-            }
-        }
-
-        if self.dash_timer == 1 {
-            self.dash_timer = -Self::DASH_WAIT_TIME;
-        } else if self.dash_timer > 1 {
-            self.dash_timer -= 1;
-        } else if self.dash_timer < 0 {
-            self.dash_timer += 1;
-        }
-        if self.movement_x != 0 && !self.is_standing_on(TileCollider::Slippery) {
-            self.start_idling();
-        }
-        if self.is_standing() {
-            self.movement_y = 0;
-        }
-
-        let new_position = Point {
-            x: new_x.clamp(Level::MIN.x, Level::MAX.x),
-            y: new_y.clamp(Level::MIN.y, Level::MAX.y),
+        let acceleration = match self.state {
+            PlayerState::Running => 0.5,
+            PlayerState::Jumping => 0.4,
+            PlayerState::Climbing => 0.2,
+            PlayerState::Dashing => 1.2,
+            PlayerState::Idle => 0.0,
         };
+        if self.direction == Direction::Left {
+            self.velocity.x = (self.velocity.x - acceleration).max(-Self::MAX_VELOCITY);
+        } else {
+            self.velocity.x = (self.velocity.x + acceleration).min(Self::MAX_VELOCITY);
+        }
 
-        if self.position.x != new_position.x {
-            let test_x = if new_position.x > self.position.x {
-                new_position.x + TILE_WIDTH - 1
+        // pos += vel * dt + 1/2*dt*dt
+        // Vel += acc*dt
+        let acceleration = match self.state {
+            PlayerState::Jumping => 1.0,
+            PlayerState::Climbing => 1.0,
+            PlayerState::Dashing | PlayerState::Running | PlayerState::Idle => 0.0,
+        };
+        self.velocity.y = (self.velocity.y + acceleration).min(Self::MAX_VELOCITY);
+
+        // Move X position
+        self.remainder.x += self.velocity.x;
+        let amount = math::floor(self.remainder.x + 0.5);
+        self.remainder.x -= amount;
+        let step = if amount > 0. {
+            1
+        } else if amount < 0. {
+            -1
+        } else {
+            0
+        };
+        for _ in 0..amount.abs() as i32 {
+            let mut test_pos = if step > 0 {
+                self.position_top_right()
             } else {
-                new_position.x
+                self.position()
             };
-            if self.is_tile_free(Point {
-                x: test_x,
-                y: self.position.y,
-            }) {
-                self.position.x = new_position.x;
+            test_pos.x += step;
+            if self.is_tile_free(test_pos)
+                && test_pos.x >= Level::MIN.x
+                && test_pos.x < Level::MAX.x
+            {
+                self.position.x += step;
+            } else {
+                self.stop_movement();
+                break;
             }
         }
-        if self.position.y != new_position.y {
-            let test_y = if new_position.y > self.position.y {
-                new_position.y + TILE_HEIGHT - 1
+
+        // Move y position
+        self.remainder.y += self.velocity.y;
+        let amount = math::floor(self.remainder.y + 0.5);
+        self.remainder.y -= amount;
+        let step = if amount > 0. {
+            1
+        } else if amount < 0. {
+            -1
+        } else {
+            0
+        };
+        for _ in 0..amount.abs() as i32 {
+            let mut test_pos = if step > 0 {
+                self.position_bottom_left()
             } else {
-                new_position.y
+                self.position()
             };
-            if self.is_tile_free(Point {
-                x: self.position.x,
-                y: test_y,
-            }) {
-                self.position.y = new_position.y;
-                //log_debug(str_format!(str32, "new y: {}", new_position.y).as_str());
+            test_pos.y += step;
+            if self.is_tile_free(test_pos)
+                && test_pos.y >= Level::MIN.y
+                && test_pos.y < Level::MAX.y
+            {
+                self.position.y += step;
+            } else {
+                self.stop_movement();
+                break;
             }
         }
+
+        /*
+            let mut new_x = self.position.x;
+            let mut new_y = self.position.y;
+
+            new_x += self.movement_x;
+            if self.is_on_ladder() {
+                new_y += self.movement_y;
+            }
+            if self.is_standing_on(TileCollider::Conveyor) {
+                new_x += Self::CONVEYOR_SPEED;
+            }
+
+            if self.dash_timer > 0 && self.movement_x != 0 {
+                new_x = self.position.x + Self::DASH_VELOCITY * self.movement_x;
+            }
+            if self.jump_timer > 0 {
+                new_y -= Self::JUMP_VELOCITY;
+                self.jump_timer -= 1;
+            }
+            if self.jump_timer == 0 && self.dash_timer <= 0 {
+                if self.is_standing() {
+                    if self.fall_timer > Self::MAX_FALL_HEIGHT {
+                        self.die();
+                        return;
+                    } else if self.fall_timer > 0 {
+                        self.fall_timer = 0;
+                    }
+                } else {
+                    new_y += Self::GRAVITY;
+                    self.fall_timer += 1;
+                }
+            }
+
+            if self.dash_timer == 1 {
+                self.dash_timer = -Self::DASH_WAIT_TIME;
+            } else if self.dash_timer > 1 {
+                self.dash_timer -= 1;
+            } else if self.dash_timer < 0 {
+                self.dash_timer += 1;
+            }
+            if self.movement_x != 0 && !self.is_standing_on(TileCollider::Slippery) {
+                self.start_idling();
+            }
+            if self.is_standing() {
+                self.movement_y = 0;
+            }
+
+            let new_position = Point {
+                x: new_x.clamp(Level::MIN.x, Level::MAX.x),
+                y: new_y.clamp(Level::MIN.y, Level::MAX.y),
+            };
+
+            if self.position.x != new_position.x {
+                let test_x = if new_position.x > self.position.x {
+                    new_position.x + TILE_WIDTH - 1
+                } else {
+                    new_position.x
+                };
+                if self.is_tile_free(Point {
+                    x: test_x,
+                    y: self.position.y,
+                }) {
+                    self.position.x = new_position.x;
+                }
+            }
+            if self.position.y != new_position.y {
+                let test_y = if new_position.y > self.position.y {
+                    new_position.y + TILE_HEIGHT - 1
+                } else {
+                    new_position.y
+                };
+                if self.is_tile_free(Point {
+                    x: self.position.x,
+                    y: test_y,
+                }) {
+                    self.position.y = new_position.y;
+                    //log_debug(str_format!(str32, "new y: {}", new_position.y).as_str());
+                }
+            }
+        */
     }
 }
 
 impl Blutti {
-    const JUMP_TIME: i32 = 8;
-    const JUMP_SPEED: i32 = 2;
-    const DASH_TIME: i32 = 8;
+    const RUNNING_ACCELERATION: f32 = 0.6;
+    const MAX_VELOCITY: f32 = 2.0;
+    const JUMP_VELOCITY: i32 = 5;
+    const DASH_VELOCITY: i32 = 8;
     const DASH_WAIT_TIME: i32 = 32;
-    const DASH_SPEED: i32 = 3;
     const CONVEYOR_SPEED: i32 = 2;
     const GRAVITY: i32 = 2;
     const MAX_FALL_HEIGHT: i32 = 30;
@@ -835,57 +952,57 @@ impl Blutti {
     }
 
     fn move_left(&mut self, speed: i32) {
-        self.direction = Direction::Left;
-        self.animation = Animation::animation_left();
-        if !(self.movement_x > 0 && self.is_standing_on(TileCollider::Slippery)) {
-            self.movement_x = -speed;
+        if self.direction != Direction::Left {
+            self.direction = Direction::Left;
+        }
+        if self.state != PlayerState::Running && self.is_standing() {
+            self.add_running_animation();
+            self.state = PlayerState::Running;
         }
     }
 
     fn move_right(&mut self, speed: i32) {
-        self.direction = Direction::Right;
-        self.animation = Animation::animation_right();
-        if !(self.movement_x < 0 && self.is_standing_on(TileCollider::Slippery)) {
-            self.movement_x = speed;
+        if self.direction != Direction::Right {
+            self.direction = Direction::Right;
+        }
+        if self.state != PlayerState::Running && self.is_standing() {
+            self.add_running_animation();
+            self.state = PlayerState::Running;
         }
     }
 
     fn move_up(&mut self, speed: i32) {
         if self.is_on_ladder() {
+            self.state = PlayerState::Climbing;
             self.add_climb_animation();
-            self.movement_y = -speed;
         }
     }
 
     fn move_down(&mut self, speed: i32) {
         if self.is_on_ladder() {
+            self.state = PlayerState::Climbing;
             self.add_climb_animation();
-            self.movement_y = speed;
         }
     }
 
     fn start_jump(&mut self) {
-        if self.jump_timer == 0 && self.is_standing() {
+        if self.is_standing() {
             play_sound("sound_jump");
+            self.state = PlayerState::Jumping;
             self.add_jump_animation();
-            self.jump_timer = if self.is_standing_on(TileCollider::Slippery) {
-                Self::JUMP_TIME / 2
-            } else {
-                Self::JUMP_TIME
-            }
         }
     }
 
     fn start_dash(&mut self) {
-        if self.dash_timer == 0 {
-            play_sound("sound_dash");
+        if self.state == PlayerState::Jumping {
+            self.state = PlayerState::Dashing;
             self.add_dash_animation();
-            self.dash_timer = Self::DASH_TIME;
+            play_sound("sound_dash");
         }
     }
 
     fn start_idling(&mut self) {
-        self.movement_x = 0;
+        self.state = PlayerState::Idle;
         self.add_idle_animation();
     }
 
@@ -959,10 +1076,10 @@ impl Blutti {
         }
         let state = get_state();
         state.level.reset();
+        self.stop_movement();
         self.add_death_animation();
         self.add_lives(-1);
         add_progress(get_me(), BADGE_DEATHS, 1);
-        self.stop_movement();
         self.died = true;
         play_sound("sound_death");
     }
@@ -980,26 +1097,24 @@ impl Blutti {
         self.fall_timer = 0;
         self.movement_x = 0;
         self.movement_y = 0;
+        self.remainder = Vec2::zero();
+        self.velocity = Vec2::zero();
+        self.start_idling();
     }
 
     fn reset(&mut self) {
         self.died = false;
         self.direction = Direction::Right;
         self.position = self.start_position;
-        self.jump_timer = 0;
-        self.dash_timer = 0;
-        self.fall_timer = 0;
-        self.movement_x = 0;
-        self.movement_y = 0;
-        self.start_idling();
+        self.stop_movement();
         self.current_tile = 0;
     }
 
     fn is_on_ladder(&self) -> bool {
         self.collision(self.position_below_left_foot()) == TileCollider::Climbable
             || self.collision(self.position_below_right_foot()) == TileCollider::Climbable
-            || self.collision(self.position_left_foot()) == TileCollider::Climbable
-            || self.collision(self.position_right_foot()) == TileCollider::Climbable
+            || self.collision(self.position_bottom_left()) == TileCollider::Climbable
+            || self.collision(self.position_bottom_right()) == TileCollider::Climbable
     }
 
     fn is_alive(&self) -> bool {
@@ -1010,6 +1125,13 @@ impl Blutti {
         self.animation = match self.direction {
             Direction::Left => Animation::animation_idle_left(),
             Direction::Right => Animation::animation_idle_right(),
+        }
+    }
+
+    fn add_running_animation(&mut self) {
+        self.animation = match self.direction {
+            Direction::Left => Animation::animation_running_left(),
+            Direction::Right => Animation::animation_running_right(),
         }
     }
 
@@ -1059,7 +1181,7 @@ impl Blutti {
     }
 
     fn add_jump_particle(&self, sprites: [i32; 4]) {
-        self.add_particle(self.position_left_foot(), sprites.into());
+        self.add_particle(self.position_bottom_left(), sprites.into());
     }
 
     fn add_collection_particle(&self, position: Point) {
@@ -1290,11 +1412,11 @@ impl Animation {
         Animation::looping(BLUTTI_IDLE_RIGHT_SPRITES, 10)
     }
 
-    fn animation_left() -> Animation {
+    fn animation_running_left() -> Animation {
         Animation::looping(BLUTTI_LEFT_SPRITES, 10)
     }
 
-    fn animation_right() -> Animation {
+    fn animation_running_right() -> Animation {
         Animation::looping(BLUTTI_RIGHT_SPRITES, 10)
     }
 
@@ -1621,15 +1743,19 @@ extern "C" fn update() {
         GameState::Playing => {
             let pad = read_pad(Peer::COMBINED);
             if let Some(pad) = pad {
-                if pad.x < -100 {
-                    state.blutti.move_left(axis_to_speed(pad.x));
-                } else if pad.x > 100 {
-                    state.blutti.move_right(axis_to_speed(pad.x));
-                }
                 if pad.y > 100 {
                     state.blutti.move_up(axis_to_speed(pad.y));
                 } else if pad.y < -100 {
                     state.blutti.move_down(axis_to_speed(pad.y));
+                } else {
+                    state.blutti.start_idling();
+                }
+                if pad.x < -100 {
+                    state.blutti.move_left(axis_to_speed(pad.x));
+                } else if pad.x > 100 {
+                    state.blutti.move_right(axis_to_speed(pad.x));
+                } else {
+                    state.blutti.start_idling();
                 }
             }
             if just_pressed.s {
