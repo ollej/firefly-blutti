@@ -39,7 +39,7 @@ const BLUTTI_EXIT_RIGHT_SPRITES: [i32; 4] = [92, 93, 94, 95];
 const BLUTTI_EXIT_LEFT_SPRITES: [i32; 4] = [108, 109, 110, 111];
 const COLLECTION_SPRITES: [i32; 4] = [104, 105, 106, 107];
 
-const LEVELS: [&str; 5] = ["level1", "level2", "level3", "level4", "level5"];
+const LEVELS: [&str; 6] = ["level0", "level1", "level2", "level3", "level4", "level5"];
 
 const CREDITS: [&str; 8] = [
     "Credits:",
@@ -638,6 +638,7 @@ enum PlayerState {
     Dashing,
     Running,
     Climbing,
+    Stopping,
 }
 
 struct Vec2 {
@@ -716,17 +717,30 @@ impl Updateable for Blutti {
     fn update(&mut self) {
         self.animation.update();
 
-        let acceleration = match self.state {
-            PlayerState::Running => 0.5,
-            PlayerState::Jumping => 0.4,
-            PlayerState::Climbing => 0.2,
-            PlayerState::Dashing => 1.2,
-            PlayerState::Idle => 0.0,
+        let (acceleration, target_velocity) = match self.state {
+            PlayerState::Running => (0.5, Self::MAX_VELOCITY),
+            PlayerState::Jumping => (0.4, Self::MAX_VELOCITY),
+            PlayerState::Climbing => (0.2, Self::MAX_VELOCITY),
+            PlayerState::Dashing => (1.2, Self::MAX_VELOCITY),
+            PlayerState::Idle => (0.0, 0.0),
+            PlayerState::Stopping => (0.3, 0.0),
         };
-        if self.direction == Direction::Left {
-            self.velocity.x = (self.velocity.x - acceleration).max(-Self::MAX_VELOCITY);
+
+        if self.state == PlayerState::Stopping {
+            if self.direction == Direction::Left {
+                self.velocity.x = (self.velocity.x + acceleration).min(target_velocity);
+            } else {
+                self.velocity.x = (self.velocity.x - acceleration).max(target_velocity);
+            }
+            if self.velocity.x == 0.0 {
+                self.start_idling();
+            }
         } else {
-            self.velocity.x = (self.velocity.x + acceleration).min(Self::MAX_VELOCITY);
+            if self.direction == Direction::Left {
+                self.velocity.x = (self.velocity.x - acceleration).max(-target_velocity);
+            } else {
+                self.velocity.x = (self.velocity.x + acceleration).min(target_velocity);
+            }
         }
 
         // pos += vel * dt + 1/2*dt*dt
@@ -734,7 +748,10 @@ impl Updateable for Blutti {
         let acceleration = match self.state {
             PlayerState::Jumping => 1.0,
             PlayerState::Climbing => 1.0,
-            PlayerState::Dashing | PlayerState::Running | PlayerState::Idle => 0.0,
+            PlayerState::Dashing
+            | PlayerState::Running
+            | PlayerState::Idle
+            | PlayerState::Stopping => 0.0,
         };
         self.velocity.y = (self.velocity.y + acceleration).min(Self::MAX_VELOCITY);
 
@@ -913,23 +930,23 @@ impl Blutti {
     }
 
     fn move_left(&mut self) {
+        // Change direction
         if self.direction != Direction::Left {
             self.direction = Direction::Left;
-        }
-        if self.state != PlayerState::Running && self.is_standing() {
+            // TOFO: Add particle for direction change
             self.add_running_animation();
-            self.state = PlayerState::Running;
         }
+        self.start_running();
     }
 
     fn move_right(&mut self) {
+        // Change direction
         if self.direction != Direction::Right {
             self.direction = Direction::Right;
-        }
-        if self.state != PlayerState::Running && self.is_standing() {
+            // TOFO: Add particle for direction change
             self.add_running_animation();
-            self.state = PlayerState::Running;
         }
+        self.start_running();
     }
 
     fn move_up(&mut self) {
@@ -943,6 +960,20 @@ impl Blutti {
         if self.is_on_ladder() {
             self.state = PlayerState::Climbing;
             self.add_climb_animation();
+        }
+    }
+
+    fn stop(&mut self) {
+        if self.state == PlayerState::Running {
+            self.state = PlayerState::Stopping;
+            //log_debug(str_format!(str32, "stopping").as_str());
+        }
+    }
+
+    fn start_running(&mut self) {
+        if self.state != PlayerState::Running && self.is_standing() {
+            self.add_running_animation();
+            self.state = PlayerState::Running;
         }
     }
 
@@ -1715,16 +1746,14 @@ extern "C" fn update() {
                     state.blutti.move_up();
                 } else if dpad.down {
                     state.blutti.move_down();
-                } else {
-                    state.blutti.start_idling();
                 }
                 if dpad.left {
                     state.blutti.move_left();
                 } else if dpad.right {
                     state.blutti.move_right();
-                } else {
-                    state.blutti.start_idling();
                 }
+            } else {
+                state.blutti.stop();
             }
             if just_pressed.s {
                 state.blutti.start_jump();
