@@ -624,9 +624,15 @@ trait Updateable {
 }
 
 #[derive(PartialEq, Debug)]
-enum Direction {
+enum DirectionX {
     Left,
     Right,
+}
+
+#[derive(PartialEq)]
+enum DirectionY {
+    Up,
+    Down,
 }
 
 #[derive(PartialEq)]
@@ -636,7 +642,8 @@ enum PlayerState {
     Dashing,
     Running,
     Climbing,
-    Stopping,
+    StopRunning,
+    StopClimbing,
 }
 
 struct Vec2 {
@@ -656,9 +663,8 @@ struct Blutti {
     jump_timer: i32,
     dash_timer: i32,
     fall_timer: i32,
-    movement_x: i32,
-    movement_y: i32,
-    direction: Direction,
+    direction_x: DirectionX,
+    direction_y: DirectionY,
     state: PlayerState,
     velocity: Vec2,
     remainder: Vec2,
@@ -682,9 +688,8 @@ impl Default for Blutti {
             jump_timer: 0,
             dash_timer: 0,
             fall_timer: 0,
-            movement_x: 0,
-            movement_y: 0,
-            direction: Direction::Right,
+            direction_x: DirectionX::Right,
+            direction_y: DirectionY::Up,
             state: PlayerState::Idle,
             velocity: Vec2::zero(),
             remainder: Vec2::zero(),
@@ -755,14 +760,15 @@ impl Updateable for Blutti {
         let (acceleration, target_velocity) = match self.state {
             PlayerState::Running => (0.5, Self::MAX_VELOCITY),
             PlayerState::Jumping => (0.4, Self::MAX_VELOCITY),
-            PlayerState::Climbing => (0.2, Self::MAX_VELOCITY),
+            PlayerState::Climbing => (0.0, 0.0),
             PlayerState::Dashing => (1.2, Self::MAX_VELOCITY),
             PlayerState::Idle => (0.0, 0.0),
-            PlayerState::Stopping => (0.3, 0.0),
+            PlayerState::StopRunning => (0.3, 0.0),
+            PlayerState::StopClimbing => (0.0, 0.0),
         };
 
-        if self.state == PlayerState::Stopping {
-            if self.direction == Direction::Left {
+        if self.state == PlayerState::StopRunning {
+            if self.direction_x == DirectionX::Left {
                 self.velocity.x = (self.velocity.x + acceleration).min(target_velocity);
             } else {
                 self.velocity.x = (self.velocity.x - acceleration).max(target_velocity);
@@ -771,7 +777,7 @@ impl Updateable for Blutti {
                 self.start_idling();
             }
         } else {
-            if self.direction == Direction::Left {
+            if self.direction_x == DirectionX::Left {
                 self.velocity.x = (self.velocity.x - acceleration).max(-target_velocity);
             } else {
                 self.velocity.x = (self.velocity.x + acceleration).min(target_velocity);
@@ -780,15 +786,35 @@ impl Updateable for Blutti {
 
         // pos += vel * dt + 1/2*dt*dt
         // Vel += acc*dt
-        let acceleration = match self.state {
-            PlayerState::Jumping => 1.0,
-            PlayerState::Climbing => 1.0,
+        let (acceleration, target_velocity) = match self.state {
+            PlayerState::Jumping => (1.0, 2.0),
+            PlayerState::Climbing => {
+                if self.is_on_ladder() {
+                    (0.4, 1.0)
+                } else {
+                    self.stop_movement();
+                    (0.0, 0.0)
+                }
+            }
+            PlayerState::StopClimbing => (0.2, 0.0),
             PlayerState::Dashing
             | PlayerState::Running
             | PlayerState::Idle
-            | PlayerState::Stopping => 0.0,
+            | PlayerState::StopRunning => (0.0, 0.0),
         };
-        self.velocity.y = (self.velocity.y + acceleration).min(Self::MAX_VELOCITY);
+        if self.state == PlayerState::StopClimbing {
+            if self.direction_y == DirectionY::Up {
+                self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
+            } else {
+                self.velocity.y = (self.velocity.y - acceleration).max(target_velocity);
+            }
+        } else {
+            if self.direction_y == DirectionY::Up {
+                self.velocity.y = (self.velocity.y - acceleration).max(-target_velocity);
+            } else {
+                self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
+            }
+        }
 
         // Move X position
         self.remainder.x += self.velocity.x;
@@ -970,8 +996,8 @@ impl Blutti {
 
     fn move_left(&mut self, speed: i32) {
         // Change direction
-        if self.direction != Direction::Left {
-            self.direction = Direction::Left;
+        if self.direction_x != DirectionX::Left {
+            self.direction_x = DirectionX::Left;
             // TODO: Add particle for direction change
             self.add_running_animation();
         }
@@ -980,8 +1006,8 @@ impl Blutti {
 
     fn move_right(&mut self, speed: i32) {
         // Change direction
-        if self.direction != Direction::Right {
-            self.direction = Direction::Right;
+        if self.direction_x != DirectionX::Right {
+            self.direction_x = DirectionX::Right;
             // TODO: Add particle for direction change
             self.add_running_animation();
         }
@@ -989,23 +1015,28 @@ impl Blutti {
     }
 
     fn move_up(&mut self, speed: i32) {
-        if self.is_on_ladder() {
-            self.state = PlayerState::Climbing;
-            self.add_climb_animation();
+        // Change direction
+        if self.direction_y != DirectionY::Up {
+            self.direction_y = DirectionY::Up;
+            self.add_climbing_animation();
         }
+        self.start_climbing();
     }
 
     fn move_down(&mut self, speed: i32) {
-        if self.is_on_ladder() {
-            self.state = PlayerState::Climbing;
-            self.add_climb_animation();
+        // Change direction
+        if self.direction_y != DirectionY::Down {
+            self.direction_y = DirectionY::Down;
+            self.add_climbing_animation();
         }
+        self.start_climbing();
     }
 
     fn stop(&mut self) {
-        if self.state == PlayerState::Running {
-            self.state = PlayerState::Stopping;
-            //log_debug(str_format!(str32, "stopping").as_str());
+        match self.state {
+            PlayerState::Running => self.state = PlayerState::StopRunning,
+            PlayerState::Climbing => self.state = PlayerState::StopClimbing,
+            _ => (),
         }
     }
 
@@ -1013,6 +1044,14 @@ impl Blutti {
         if self.state != PlayerState::Running && self.is_standing() {
             self.add_running_animation();
             self.state = PlayerState::Running;
+        }
+    }
+
+    fn start_climbing(&mut self) {
+        if self.is_on_ladder() && self.state != PlayerState::Climbing {
+            self.state = PlayerState::Climbing;
+            self.add_climbing_animation();
+            //log_debug("start climbing");
         }
     }
 
@@ -1126,8 +1165,6 @@ impl Blutti {
         self.jump_timer = 0;
         self.dash_timer = 0;
         self.fall_timer = 0;
-        self.movement_x = 0;
-        self.movement_y = 0;
         self.remainder = Vec2::zero();
         self.velocity = Vec2::zero();
         self.start_idling();
@@ -1135,17 +1172,27 @@ impl Blutti {
 
     fn reset(&mut self) {
         self.died = false;
-        self.direction = Direction::Right;
+        self.direction_x = DirectionX::Right;
         self.position = self.start_position;
         self.stop_movement();
         self.current_tile = 0;
     }
 
     fn is_on_ladder(&self) -> bool {
+        match self.direction_y {
+            DirectionY::Up => self.is_on_ladder_up(),
+            DirectionY::Down => self.is_on_ladder_down(),
+        }
+    }
+
+    fn is_on_ladder_up(&self) -> bool {
+        self.collision(self.position_bottom_left()) == TileCollider::Climbable
+            || self.collision(self.position_bottom_right()) == TileCollider::Climbable
+    }
+
+    fn is_on_ladder_down(&self) -> bool {
         self.collision(self.position_below_left_foot()) == TileCollider::Climbable
             || self.collision(self.position_below_right_foot()) == TileCollider::Climbable
-            || self.collision(self.position_bottom_left()) == TileCollider::Climbable
-            || self.collision(self.position_bottom_right()) == TileCollider::Climbable
     }
 
     fn is_alive(&self) -> bool {
@@ -1153,16 +1200,16 @@ impl Blutti {
     }
 
     fn add_idle_animation(&mut self) {
-        self.animation = match self.direction {
-            Direction::Left => Animation::animation_idle_left(),
-            Direction::Right => Animation::animation_idle_right(),
+        self.animation = match self.direction_x {
+            DirectionX::Left => Animation::animation_idle_left(),
+            DirectionX::Right => Animation::animation_idle_right(),
         }
     }
 
     fn add_running_animation(&mut self) {
-        self.animation = match self.direction {
-            Direction::Left => Animation::animation_running_left(),
-            Direction::Right => Animation::animation_running_right(),
+        self.animation = match self.direction_x {
+            DirectionX::Left => Animation::animation_running_left(),
+            DirectionX::Right => Animation::animation_running_right(),
         }
     }
 
@@ -1171,32 +1218,32 @@ impl Blutti {
     }
 
     fn add_exit_animation(&mut self) {
-        self.animation = match self.direction {
-            Direction::Left => Animation::animation_exit_left(),
-            Direction::Right => Animation::animation_exit_right(),
+        self.animation = match self.direction_x {
+            DirectionX::Left => Animation::animation_exit_left(),
+            DirectionX::Right => Animation::animation_exit_right(),
         }
     }
 
-    fn add_climb_animation(&mut self) {
-        if self.movement_y == 0 {
-            self.animation = match self.direction {
-                Direction::Right => Animation::animation_climb_right(),
-                Direction::Left => Animation::animation_climb_left(),
+    fn add_climbing_animation(&mut self) {
+        if self.velocity.y == 0.0 {
+            self.animation = match self.direction_x {
+                DirectionX::Right => Animation::animation_climb_right(),
+                DirectionX::Left => Animation::animation_climb_left(),
             }
         }
     }
 
     fn add_jump_animation(&self) {
-        match self.direction {
-            Direction::Left => self.add_jump_particle(BLUTTI_JUMP_LEFT_SPRITES),
-            Direction::Right => self.add_jump_particle(BLUTTI_JUMP_RIGHT_SPRITES),
+        match self.direction_x {
+            DirectionX::Left => self.add_jump_particle(BLUTTI_JUMP_LEFT_SPRITES),
+            DirectionX::Right => self.add_jump_particle(BLUTTI_JUMP_RIGHT_SPRITES),
         }
     }
 
     fn add_dash_animation(&self) {
-        match self.direction {
-            Direction::Left => self.add_dash_particle(BLUTTI_DASH_LEFT_SPRITES, TILE_WIDTH),
-            Direction::Right => self.add_dash_particle(BLUTTI_DASH_RIGHT_SPRITES, -TILE_WIDTH),
+        match self.direction_x {
+            DirectionX::Left => self.add_dash_particle(BLUTTI_DASH_LEFT_SPRITES, TILE_WIDTH),
+            DirectionX::Right => self.add_dash_particle(BLUTTI_DASH_RIGHT_SPRITES, -TILE_WIDTH),
         }
     }
 
