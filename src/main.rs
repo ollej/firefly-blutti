@@ -629,13 +629,13 @@ enum DirectionX {
     Right,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 enum DirectionY {
     Up,
     Down,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 enum PlayerState {
     Idle,
     Jumping,
@@ -722,9 +722,9 @@ impl Drawable for Blutti {
 
     fn draw_debug(&self) {
         let mut textpos = self.position().clone();
-        //textpos.y -= 4;
-        //display_text(str_format!(str32, "{:?}", self.state).as_str(), textpos);
         textpos.y -= 4;
+        display_text(str_format!(str32, "{:?}", self.state).as_str(), textpos);
+        textpos.y -= 8;
         display_text(
             str_format!(str32, "Y {}", self.position().y).as_str(),
             textpos,
@@ -734,18 +734,16 @@ impl Drawable for Blutti {
             str_format!(str32, "X {}", self.position().x).as_str(),
             textpos,
         );
-        /*
         textpos.y -= 8;
         display_text(
-            str_format!(str32, "VY {}", self.movement_y).as_str(),
+            str_format!(str32, "VY {:.2}", self.velocity.x).as_str(),
             textpos,
         );
         textpos.y -= 8;
         display_text(
-            str_format!(str32, "VX {}", self.movement_x).as_str(),
+            str_format!(str32, "VY {:.2}", self.velocity.y).as_str(),
             textpos,
         );
-        */
     }
 }
 
@@ -1050,6 +1048,10 @@ impl Blutti {
             PlayerState::Climbing => self.state = PlayerState::StopClimbing,
             _ => (),
         }
+    }
+
+    fn toggle_debug(&mut self) {
+        self.debug = !self.debug
     }
 
     fn start_running(&mut self) {
