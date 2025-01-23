@@ -850,10 +850,7 @@ impl Updateable for Blutti {
                 self.position()
             };
             test_pos.x += step;
-            if self.is_tile_free(test_pos)
-                && test_pos.x >= Level::MIN.x
-                && test_pos.x < Level::MAX.x
-            {
+            if test_pos.x >= 0 && test_pos.x < WIDTH && self.is_tile_free(test_pos) {
                 self.position.x += step;
             } else {
                 self.stop_movement();
@@ -879,10 +876,7 @@ impl Updateable for Blutti {
                 self.position()
             };
             test_pos.y += step;
-            if self.is_tile_free(test_pos)
-                && test_pos.y >= Level::MIN.y
-                && test_pos.y < Level::MAX.y
-            {
+            if test_pos.y >= 0 && test_pos.y < HEIGHT && self.is_tile_free(test_pos) {
                 self.position.y += step;
             } else {
                 self.stop_movement();
