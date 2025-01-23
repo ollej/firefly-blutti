@@ -808,10 +808,12 @@ impl Updateable for Blutti {
         };
         match self.state {
             PlayerState::Climbing => {
-                if self.direction_y == DirectionY::Up {
-                    self.velocity.y = (self.velocity.y - acceleration).max(-target_velocity);
-                } else {
-                    self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
+                if self.is_on_ladder() {
+                    if self.direction_y == DirectionY::Up {
+                        self.velocity.y = (self.velocity.y - acceleration).max(-target_velocity);
+                    } else {
+                        self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
+                    }
                 }
             }
             PlayerState::StopClimbing => {
@@ -1177,7 +1179,12 @@ impl Blutti {
         self.fall_timer = 0;
         self.remainder = Vec2::zero();
         self.velocity = Vec2::zero();
-        self.start_idling();
+        match self.state {
+            PlayerState::Climbing | PlayerState::StopClimbing => {
+                self.state = PlayerState::StopClimbing;
+            }
+            _ => self.start_idling(),
+        }
     }
 
     fn reset(&mut self) {
