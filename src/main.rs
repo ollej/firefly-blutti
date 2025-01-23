@@ -577,17 +577,31 @@ trait Updateable {
         !occupied
     }
 
-    fn position_below_left_foot(&self) -> Point {
+    fn position_below_bottom_left(&self) -> Point {
         Point {
             x: self.position().x,
             y: self.position().y + TILE_HEIGHT,
         }
     }
 
-    fn position_below_right_foot(&self) -> Point {
+    fn position_below_bottom_middle(&self) -> Point {
+        Point {
+            x: self.position().x,
+            y: self.position().y + TILE_HEIGHT,
+        }
+    }
+
+    fn position_below_bottom_right(&self) -> Point {
         Point {
             x: self.position().x + TILE_WIDTH - 1,
             y: self.position().y + TILE_HEIGHT,
+        }
+    }
+
+    fn position_top_middle(&self) -> Point {
+        Point {
+            x: self.position().x + TILE_WIDTH / 2,
+            y: self.position().y,
         }
     }
 
@@ -605,6 +619,13 @@ trait Updateable {
         }
     }
 
+    fn position_bottom_middle(&self) -> Point {
+        Point {
+            x: self.position().x + TILE_WIDTH / 2,
+            y: self.position().y + TILE_HEIGHT - 1,
+        }
+    }
+
     fn position_bottom_right(&self) -> Point {
         Point {
             x: self.position().x + TILE_WIDTH - 1,
@@ -613,13 +634,13 @@ trait Updateable {
     }
 
     fn is_standing(&self) -> bool {
-        !(self.is_tile_empty(self.position_below_left_foot())
-            && self.is_tile_empty(self.position_below_right_foot()))
+        !(self.is_tile_empty(self.position_below_bottom_left())
+            && self.is_tile_empty(self.position_below_bottom_right()))
     }
 
     fn is_standing_on(&self, collision: TileCollider) -> bool {
-        self.collision(self.position_below_left_foot()) == collision
-            || self.collision(self.position_below_right_foot()) == collision
+        self.collision(self.position_below_bottom_left()) == collision
+            || self.collision(self.position_below_bottom_right()) == collision
     }
 }
 
@@ -784,37 +805,38 @@ impl Updateable for Blutti {
 
         // pos += vel * dt + 1/2*dt*dt
         // Vel += acc*dt
+        let on_ladder = self.is_on_ladder();
         let (acceleration, target_velocity) = match self.state {
             PlayerState::Jumping => (1.0, 2.0),
+            PlayerState::Climbing if on_ladder => (0.4, 1.0),
             PlayerState::Climbing => {
-                if self.is_on_ladder() {
-                    (0.4, 1.0)
-                } else {
-                    self.stop_movement();
-                    (0.0, 0.0)
-                }
+                self.stop_movement();
+                (0.0, 0.0)
             }
-            PlayerState::StopClimbing => (0.2, 0.0),
+            PlayerState::StopClimbing if on_ladder => (0.2, 0.0),
+            PlayerState::StopClimbing => {
+                self.stop_movement();
+                (0.0, 0.0)
+            }
             PlayerState::Dashing => (0.0, 0.0),
-            PlayerState::Running | PlayerState::Idle | PlayerState::StopRunning => {
+            _ => {
                 if self.is_standing() {
                     (0.0, 0.0)
                 } else {
-                    (0.8, 2.0) // Gravity
+                    (0.8, 2.5) // Gravity
                 }
             }
         };
+
         match self.state {
-            PlayerState::Climbing => {
-                if self.is_on_ladder() {
-                    if self.direction_y == DirectionY::Up {
-                        self.velocity.y = (self.velocity.y - acceleration).max(-target_velocity);
-                    } else {
-                        self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
-                    }
+            PlayerState::Climbing if self.is_on_ladder() => {
+                if self.direction_y == DirectionY::Up {
+                    self.velocity.y = (self.velocity.y - acceleration).max(-target_velocity);
+                } else {
+                    self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
                 }
             }
-            PlayerState::StopClimbing => {
+            PlayerState::StopClimbing if self.is_on_ladder() => {
                 if self.direction_y == DirectionY::Up {
                     self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
                 } else {
@@ -825,11 +847,11 @@ impl Updateable for Blutti {
                 self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
                 // TODO: double gravity after apex
             }
-            PlayerState::Running | PlayerState::Idle | PlayerState::StopRunning => {
+            PlayerState::Dashing => (),
+            _ => {
                 // Gravity
                 self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
             }
-            PlayerState::Dashing => (),
         }
 
         // Move X position
@@ -1181,11 +1203,10 @@ impl Blutti {
         self.fall_timer = 0;
         self.remainder = Vec2::zero();
         self.velocity = Vec2::zero();
-        match self.state {
-            PlayerState::Climbing | PlayerState::StopClimbing => {
-                self.state = PlayerState::StopClimbing;
-            }
-            _ => self.start_idling(),
+        if self.is_on_ladder() {
+            self.state = PlayerState::StopClimbing;
+        } else {
+            self.start_idling();
         }
     }
 
@@ -1210,8 +1231,8 @@ impl Blutti {
     }
 
     fn is_on_ladder_down(&self) -> bool {
-        self.collision(self.position_below_left_foot()) == TileCollider::Climbable
-            || self.collision(self.position_below_right_foot()) == TileCollider::Climbable
+        self.collision(self.position_below_bottom_left()) == TileCollider::Climbable
+            || self.collision(self.position_below_bottom_right()) == TileCollider::Climbable
     }
 
     fn is_alive(&self) -> bool {
