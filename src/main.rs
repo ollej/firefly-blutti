@@ -625,19 +625,19 @@ trait Updateable {
     }
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 enum DirectionX {
     Left,
     Right,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 enum DirectionY {
     Up,
     Down,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 enum PlayerState {
     Idle,
     Jumping,
@@ -678,6 +678,7 @@ struct Blutti {
     current_level: i32,
     current_tile: i32,
     animation: Animation,
+    debug: bool,
 }
 
 impl Default for Blutti {
@@ -701,6 +702,7 @@ impl Default for Blutti {
             current_level: 0,
             current_tile: 0,
             animation: Animation::animation_idle_right(),
+            debug: false,
         }
     }
 }
@@ -710,6 +712,33 @@ impl Drawable for Blutti {
         if !self.animation.finished {
             let tile = self.animation.current_sprite();
             draw_tile(tile, self.position());
+        }
+
+        // Player debug
+        if self.debug {
+            let mut textpos = self.position().clone();
+            textpos.y -= 4;
+            display_text(str_format!(str32, "{:?}", self.state).as_str(), textpos);
+            textpos.y -= 8;
+            display_text(
+                str_format!(str32, "Y {}", self.position().y).as_str(),
+                textpos,
+            );
+            textpos.y -= 8;
+            display_text(
+                str_format!(str32, "X {}", self.position().x).as_str(),
+                textpos,
+            );
+            textpos.y -= 8;
+            display_text(
+                str_format!(str32, "VY {:.2}", self.velocity.y).as_str(),
+                textpos,
+            );
+            textpos.y -= 8;
+            display_text(
+                str_format!(str32, "VX {:.2}", self.velocity.x).as_str(),
+                textpos,
+            );
         }
     }
 }
@@ -1011,6 +1040,10 @@ impl Blutti {
             PlayerState::Climbing => self.state = PlayerState::StopClimbing,
             _ => (),
         }
+    }
+
+    fn toggle_debug(&mut self) {
+        self.debug = !self.debug
     }
 
     fn start_running(&mut self) {
@@ -1824,6 +1857,9 @@ extern "C" fn update() {
             }
             if just_pressed.w {
                 state.blutti.start_dash();
+            }
+            if just_pressed.e {
+                state.blutti.toggle_debug();
             }
             state.blutti.update();
             state.level.update();
