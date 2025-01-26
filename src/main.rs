@@ -318,14 +318,26 @@ const COLLISION: [TileCollider; 256] = [
 
 trait PointMath {
     fn top_right(&self) -> Point;
+    fn top_middle(&self) -> Point;
     fn bottom_left(&self) -> Point;
+    fn bottom_middle(&self) -> Point;
     fn bottom_right(&self) -> Point;
+    fn below_bottom_left(&self) -> Point;
+    fn below_bottom_middle(&self) -> Point;
+    fn below_bottom_right(&self) -> Point;
 }
 
 impl PointMath for Point {
     fn top_right(&self) -> Point {
         Point {
             x: self.x + TILE_WIDTH - 1,
+            y: self.y,
+        }
+    }
+
+    fn top_middle(&self) -> Point {
+        Point {
+            x: self.x + TILE_WIDTH / 2,
             y: self.y,
         }
     }
@@ -337,10 +349,38 @@ impl PointMath for Point {
         }
     }
 
+    fn bottom_middle(&self) -> Point {
+        Point {
+            x: self.x + TILE_WIDTH / 2,
+            y: self.y + TILE_HEIGHT - 1,
+        }
+    }
+
     fn bottom_right(&self) -> Point {
         Point {
             x: self.x + TILE_WIDTH - 1,
             y: self.y + TILE_HEIGHT - 1,
+        }
+    }
+
+    fn below_bottom_left(&self) -> Point {
+        Point {
+            x: self.x,
+            y: self.y + TILE_HEIGHT,
+        }
+    }
+
+    fn below_bottom_middle(&self) -> Point {
+        Point {
+            x: self.x,
+            y: self.y + TILE_HEIGHT,
+        }
+    }
+
+    fn below_bottom_right(&self) -> Point {
+        Point {
+            x: self.x + TILE_WIDTH - 1,
+            y: self.y + TILE_HEIGHT,
         }
     }
 }
@@ -577,70 +617,21 @@ trait Updateable {
         !occupied
     }
 
-    fn position_below_bottom_left(&self) -> Point {
-        Point {
-            x: self.position().x,
-            y: self.position().y + TILE_HEIGHT,
-        }
-    }
-
-    fn position_below_bottom_middle(&self) -> Point {
-        Point {
-            x: self.position().x,
-            y: self.position().y + TILE_HEIGHT,
-        }
-    }
-
-    fn position_below_bottom_right(&self) -> Point {
-        Point {
-            x: self.position().x + TILE_WIDTH - 1,
-            y: self.position().y + TILE_HEIGHT,
-        }
-    }
-
-    fn position_top_middle(&self) -> Point {
-        Point {
-            x: self.position().x + TILE_WIDTH / 2,
-            y: self.position().y,
-        }
-    }
-
-    fn position_top_right(&self) -> Point {
-        Point {
-            x: self.position().x + TILE_WIDTH - 1,
-            y: self.position().y,
-        }
-    }
-
-    fn position_bottom_left(&self) -> Point {
-        Point {
-            x: self.position().x,
-            y: self.position().y + TILE_HEIGHT - 1,
-        }
-    }
-
-    fn position_bottom_middle(&self) -> Point {
-        Point {
-            x: self.position().x + TILE_WIDTH / 2,
-            y: self.position().y + TILE_HEIGHT - 1,
-        }
-    }
-
-    fn position_bottom_right(&self) -> Point {
-        Point {
-            x: self.position().x + TILE_WIDTH - 1,
-            y: self.position().y + TILE_HEIGHT - 1,
-        }
+    fn collision_at(&self, position: Point) -> bool {
+        !self.is_tile_free(position)
+            && !self.is_tile_free(position.top_right())
+            && !self.is_tile_free(position.bottom_left())
+            && !self.is_tile_free(position.bottom_right())
     }
 
     fn is_standing(&self) -> bool {
-        !(self.is_tile_empty(self.position_below_bottom_left())
-            && self.is_tile_empty(self.position_below_bottom_right()))
+        !(self.is_tile_empty(self.position().below_bottom_left())
+            && self.is_tile_empty(self.position().below_bottom_right()))
     }
 
     fn is_standing_on(&self, collision: TileCollider) -> bool {
-        self.collision(self.position_below_bottom_left()) == collision
-            || self.collision(self.position_below_bottom_right()) == collision
+        self.collision(self.position().below_bottom_left()) == collision
+            || self.collision(self.position().below_bottom_right()) == collision
     }
 }
 
@@ -866,13 +857,9 @@ impl Updateable for Blutti {
             0
         };
         for _ in 0..amount.abs() as i32 {
-            let mut test_pos = if step > 0 {
-                self.position_top_right()
-            } else {
-                self.position()
-            };
+            let mut test_pos = self.position();
             test_pos.x += step;
-            if test_pos.x >= 0 && test_pos.x < WIDTH && self.is_tile_free(test_pos) {
+            if test_pos.x >= 0 && test_pos.x < WIDTH && !self.collision_at(test_pos) {
                 self.position.x += step;
             } else {
                 self.stop_movement();
@@ -892,13 +879,9 @@ impl Updateable for Blutti {
             0
         };
         for _ in 0..amount.abs() as i32 {
-            let mut test_pos = if step > 0 {
-                self.position_bottom_left()
-            } else {
-                self.position()
-            };
+            let mut test_pos = self.position();
             test_pos.y += step;
-            if test_pos.y >= 0 && test_pos.y < HEIGHT && self.is_tile_free(test_pos) {
+            if test_pos.y >= 0 && test_pos.y < HEIGHT && !self.collision_at(test_pos) {
                 self.position.y += step;
             } else {
                 self.stop_movement();
@@ -1226,13 +1209,13 @@ impl Blutti {
     }
 
     fn is_on_ladder_up(&self) -> bool {
-        self.collision(self.position_bottom_left()) == TileCollider::Climbable
-            || self.collision(self.position_bottom_right()) == TileCollider::Climbable
+        self.collision(self.position.bottom_left()) == TileCollider::Climbable
+            || self.collision(self.position.bottom_right()) == TileCollider::Climbable
     }
 
     fn is_on_ladder_down(&self) -> bool {
-        self.collision(self.position_below_bottom_left()) == TileCollider::Climbable
-            || self.collision(self.position_below_bottom_right()) == TileCollider::Climbable
+        self.collision(self.position.below_bottom_left()) == TileCollider::Climbable
+            || self.collision(self.position.below_bottom_right()) == TileCollider::Climbable
     }
 
     fn is_alive(&self) -> bool {
@@ -1297,7 +1280,7 @@ impl Blutti {
     }
 
     fn add_jump_particle(&self, sprites: [i32; 4]) {
-        self.add_particle(self.position_bottom_left(), sprites.into());
+        self.add_particle(self.position.bottom_left(), sprites.into());
     }
 
     fn add_collection_particle(&self, position: Point) {
