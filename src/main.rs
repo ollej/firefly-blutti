@@ -1112,12 +1112,16 @@ impl Blutti {
     }
 
     fn start_running(&mut self) {
-        if self.is_on_ladder() && self.state != PlayerState::ClimbingSideways {
-            self.velocity.y = 0.0;
-            self.state = PlayerState::ClimbingSideways;
-        } else if self.is_standing() && self.state != PlayerState::Running {
-            self.add_running_animation();
-            self.state = PlayerState::Running;
+        if self.is_on_ladder() {
+            if self.state != PlayerState::ClimbingSideways {
+                self.velocity.y = 0.0;
+                self.state = PlayerState::ClimbingSideways;
+            }
+        } else if self.is_standing() {
+            if self.state != PlayerState::Running {
+                self.add_running_animation();
+                self.state = PlayerState::Running;
+            }
         }
     }
 
