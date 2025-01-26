@@ -828,9 +828,6 @@ impl Updateable for Blutti {
                 } else {
                     self.velocity.x = (self.velocity.x - acceleration).max(target_velocity);
                 }
-                if self.velocity.x == 0.0 {
-                    self.start_idling();
-                }
             }
             _ => {
                 if self.direction_x == DirectionX::Left {
@@ -846,7 +843,7 @@ impl Updateable for Blutti {
         let (acceleration, target_velocity) = match self.state {
             PlayerState::Jumping => (1.0, 2.0),
             PlayerState::Climbing if on_ladder => (0.4, 1.0),
-            PlayerState::ClimbingStop if on_ladder => (0.2, 0.0),
+            PlayerState::ClimbingStop => (0.2, 0.0),
             PlayerState::Dashing => (0.0, 0.0),
             _ if is_standing => (0.0, 0.0),
             _ => (0.8, 2.5), // Gravity
@@ -1136,9 +1133,9 @@ impl Blutti {
     fn start_idling(&mut self) {
         match self.state {
             PlayerState::Climbing
+            | PlayerState::ClimbingStop
             | PlayerState::ClimbingSideways
-            | PlayerState::ClimbingSidewaysStop
-            | PlayerState::ClimbingStop => {
+            | PlayerState::ClimbingSidewaysStop => {
                 self.state = PlayerState::ClimbingIdle;
             }
             PlayerState::Idle | PlayerState::ClimbingIdle => (),
@@ -1241,13 +1238,7 @@ impl Blutti {
         self.fall_timer = 0;
         self.remainder = Vec2::zero();
         self.velocity = Vec2::zero();
-        match self.state {
-            PlayerState::Climbing | PlayerState::ClimbingIdle => {
-                self.state = PlayerState::ClimbingStop
-            }
-            PlayerState::ClimbingStop => (),
-            _ => self.start_idling(),
-        }
+        self.start_idling();
     }
 
     fn reset(&mut self) {
