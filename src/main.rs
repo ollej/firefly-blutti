@@ -325,6 +325,8 @@ trait PointMath {
     fn below_bottom_left(&self) -> Point;
     fn below_bottom_middle(&self) -> Point;
     fn below_bottom_right(&self) -> Point;
+    fn addx(&self, addend: i32) -> Point;
+    fn addy(&self, addend: i32) -> Point;
 }
 
 impl PointMath for Point {
@@ -381,6 +383,20 @@ impl PointMath for Point {
         Point {
             x: self.x + TILE_WIDTH - 1,
             y: self.y + TILE_HEIGHT,
+        }
+    }
+
+    fn addx(&self, addend: i32) -> Point {
+        Point {
+            x: self.x + addend,
+            y: self.y,
+        }
+    }
+
+    fn addy(&self, addend: i32) -> Point {
+        Point {
+            x: self.x,
+            y: self.y + addend,
         }
     }
 }
@@ -618,10 +634,10 @@ trait Updateable {
     }
 
     fn collision_at(&self, position: Point) -> bool {
-        !self.is_tile_free(position)
-            && !self.is_tile_free(position.top_right())
-            && !self.is_tile_free(position.bottom_left())
-            && !self.is_tile_free(position.bottom_right())
+        !(self.is_tile_free(position)
+            && self.is_tile_free(position.top_right())
+            && self.is_tile_free(position.bottom_left())
+            && self.is_tile_free(position.bottom_right()))
     }
 
     fn is_standing(&self) -> bool {
@@ -764,6 +780,22 @@ impl Updateable for Blutti {
         self.position
     }
 
+    fn collision_at(&self, position: Point) -> bool {
+        match self.state {
+            PlayerState::Climbing | PlayerState::StopClimbing => {
+                !(self.is_tile_free(position.addx(3))
+                    && self.is_tile_free(position.top_right().addx(-3))
+                    && self.is_tile_free(position.bottom_left().addx(3))
+                    && self.is_tile_free(position.bottom_right().addx(-3)))
+            }
+            _ => {
+                !(self.is_tile_free(position)
+                    && self.is_tile_free(position.top_right())
+                    && self.is_tile_free(position.bottom_left())
+                    && self.is_tile_free(position.bottom_right()))
+            }
+        }
+    }
     fn update(&mut self) {
         self.animation.update();
 
