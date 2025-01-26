@@ -26,8 +26,8 @@ const BLUTTI_IDLE_RIGHT_SPRITES: [i32; 2] = [118, 119];
 const BLUTTI_IDLE_LEFT_SPRITES: [i32; 2] = [116, 117];
 const BLUTTI_JUMP_RIGHT_SPRITES: [i32; 4] = [80, 81, 82, 83];
 const BLUTTI_JUMP_LEFT_SPRITES: [i32; 4] = [84, 85, 86, 87];
-const BLUTTI_CLIMB_RIGHT_SPRITES: [i32; 2] = [120, 121];
-const BLUTTI_CLIMB_LEFT_SPRITES: [i32; 2] = [122, 123];
+const BLUTTI_CLIMB_RIGHT_SPRITES: [i32; 2] = [122, 123];
+const BLUTTI_CLIMB_LEFT_SPRITES: [i32; 2] = [120, 121];
 const BLUTTI_DASH_RIGHT_SPRITES: [i32; 4] = [96, 97, 98, 99];
 const BLUTTI_DASH_LEFT_SPRITES: [i32; 4] = [100, 101, 102, 103];
 const BLUTTI_DEATH_SPRITES: [i32; 4] = [124, 125, 126, 127];
@@ -1050,7 +1050,7 @@ impl Blutti {
         // Change direction
         if self.direction_y != DirectionY::Up {
             self.direction_y = DirectionY::Up;
-            self.add_climbing_animation();
+            //self.add_climbing_animation();
         }
         self.start_climbing();
     }
@@ -1059,7 +1059,7 @@ impl Blutti {
         // Change direction
         if self.direction_y != DirectionY::Down {
             self.direction_y = DirectionY::Down;
-            self.add_climbing_animation();
+            //self.add_climbing_animation();
         }
         self.start_climbing();
     }
@@ -1265,11 +1265,9 @@ impl Blutti {
     }
 
     fn add_climbing_animation(&mut self) {
-        if self.velocity.y == 0.0 {
-            self.animation = match self.direction_x {
-                DirectionX::Right => Animation::animation_climb_right(),
-                DirectionX::Left => Animation::animation_climb_left(),
-            }
+        self.animation = match self.direction_x {
+            DirectionX::Right => Animation::animation_climb_right(),
+            DirectionX::Left => Animation::animation_climb_left(),
         }
     }
 
