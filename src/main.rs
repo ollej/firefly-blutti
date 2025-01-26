@@ -788,22 +788,23 @@ impl Updateable for Blutti {
     }
 
     fn collision_at(&self, position: Point) -> bool {
-        match self.state {
-            PlayerState::Climbing
-            | PlayerState::ClimbingSideways
-            | PlayerState::ClimbingSidewaysStop
-            | PlayerState::ClimbingStop => {
+        if self.is_climbing() {
+            if self.direction_x == DirectionX::Left {
                 !(self.is_tile_free(position.addx(3))
-                    && self.is_tile_free(position.top_right().addx(-3))
+                    && self.is_tile_free(position.top_right().addx(-4))
                     && self.is_tile_free(position.bottom_left().addx(3))
+                    && self.is_tile_free(position.bottom_right().addx(-4)))
+            } else {
+                !(self.is_tile_free(position.addx(4))
+                    && self.is_tile_free(position.top_right().addx(-3))
+                    && self.is_tile_free(position.bottom_left().addx(4))
                     && self.is_tile_free(position.bottom_right().addx(-3)))
             }
-            _ => {
-                !(self.is_tile_free(position)
-                    && self.is_tile_free(position.top_right())
-                    && self.is_tile_free(position.bottom_left())
-                    && self.is_tile_free(position.bottom_right()))
-            }
+        } else {
+            !(self.is_tile_free(position)
+                && self.is_tile_free(position.top_right())
+                && self.is_tile_free(position.bottom_left())
+                && self.is_tile_free(position.bottom_right()))
         }
     }
     fn update(&mut self) {
@@ -814,10 +815,9 @@ impl Updateable for Blutti {
             PlayerState::Jumping => (0.4, Self::MAX_VELOCITY),
             PlayerState::Dashing => (1.2, Self::MAX_VELOCITY),
             PlayerState::StopRunning => (0.3, 0.0),
-            PlayerState::ClimbingSideways if self.is_on_ladder_bottom() => (0.3, 1.5),
+            PlayerState::ClimbingSideways => (0.3, 1.5),
             PlayerState::ClimbingSidewaysStop => (0.3, 0.0),
-            PlayerState::ClimbingSideways
-            | PlayerState::Climbing
+            PlayerState::Climbing
             | PlayerState::ClimbingStop
             | PlayerState::Idle
             | PlayerState::ClimbingIdle => (0.0, 0.0),
