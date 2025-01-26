@@ -807,6 +807,27 @@ impl Updateable for Blutti {
                 && self.is_tile_free(position.bottom_right()))
         }
     }
+
+    fn is_standing(&self) -> bool {
+        if self.direction_x == DirectionX::Left {
+            !(self.is_tile_empty(self.position().below_bottom_left())
+                && self.is_tile_empty(self.position().below_bottom_right().addx(-3)))
+        } else {
+            !(self.is_tile_empty(self.position().below_bottom_left().addx(3))
+                && self.is_tile_empty(self.position().below_bottom_right()))
+        }
+    }
+
+    fn is_standing_on(&self, collision: TileCollider) -> bool {
+        if self.direction_x == DirectionX::Left {
+            self.collision(self.position().below_bottom_left()) == collision
+                || self.collision(self.position().below_bottom_right().addx(-3)) == collision
+        } else {
+            self.collision(self.position().below_bottom_left().addx(3)) == collision
+                || self.collision(self.position().below_bottom_right()) == collision
+        }
+    }
+
     fn update(&mut self) {
         self.animation.update();
 
@@ -1292,13 +1313,24 @@ impl Blutti {
     }
 
     fn is_on_ladder_bottom(&self) -> bool {
-        self.collision(self.position.bottom_left()) == TileCollider::Climbable
-            || self.collision(self.position.bottom_right()) == TileCollider::Climbable
+        if self.direction_x == DirectionX::Left {
+            self.collision(self.position.bottom_left()) == TileCollider::Climbable
+                || self.collision(self.position.bottom_right().addx(-3)) == TileCollider::Climbable
+        } else {
+            self.collision(self.position.bottom_left().addx(3)) == TileCollider::Climbable
+                || self.collision(self.position.bottom_right()) == TileCollider::Climbable
+        }
     }
 
     fn is_on_ladder_below(&self) -> bool {
-        self.collision(self.position.below_bottom_left()) == TileCollider::Climbable
-            || self.collision(self.position.below_bottom_right()) == TileCollider::Climbable
+        if self.direction_x == DirectionX::Left {
+            self.collision(self.position.below_bottom_left()) == TileCollider::Climbable
+                || self.collision(self.position.below_bottom_right().addx(-3))
+                    == TileCollider::Climbable
+        } else {
+            self.collision(self.position.below_bottom_left().addx(3)) == TileCollider::Climbable
+                || self.collision(self.position.below_bottom_right()) == TileCollider::Climbable
+        }
     }
 
     fn is_alive(&self) -> bool {
