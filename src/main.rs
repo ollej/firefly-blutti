@@ -882,6 +882,8 @@ impl Updateable for Blutti {
                 // Gravity
                 if !(self.is_on_ladder_below() || self.is_standing()) {
                     self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
+                } else {
+                    self.velocity.y = 0.0;
                 }
             }
         }
@@ -1120,7 +1122,7 @@ impl Blutti {
     }
 
     fn start_climbing(&mut self) {
-        if self.is_on_ladder() && self.state != PlayerState::Climbing {
+        if self.can_climb() && self.state != PlayerState::Climbing {
             self.velocity.x = 0.0;
             if !self.is_climbing() {
                 self.add_climbing_animation();
@@ -1274,11 +1276,15 @@ impl Blutti {
         self.current_tile = 0;
     }
 
-    fn is_on_ladder(&self) -> bool {
+    fn can_climb(&self) -> bool {
         match self.direction_y {
             DirectionY::Up => self.is_on_ladder_bottom(),
             DirectionY::Down => self.is_on_ladder_below(),
         }
+    }
+
+    fn is_on_ladder(&self) -> bool {
+        self.is_on_ladder_bottom()
     }
 
     fn is_on_ladder_bottom(&self) -> bool {
