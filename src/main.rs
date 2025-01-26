@@ -805,7 +805,7 @@ impl Updateable for Blutti {
     fn update(&mut self) {
         self.animation.update();
 
-        let on_ladder = self.is_on_ladder();
+        let on_ladder = self.is_on_ladder_bottom();
         let is_standing = self.is_standing();
         let (acceleration, target_velocity) = match self.state {
             PlayerState::Running => (0.5, Self::MAX_VELOCITY),
@@ -840,6 +840,7 @@ impl Updateable for Blutti {
 
         // pos += vel * dt + 1/2*dt*dt
         // Vel += acc*dt
+        let on_ladder = self.is_on_ladder();
         let (acceleration, target_velocity) = match self.state {
             PlayerState::Jumping => (1.0, 2.0),
             PlayerState::Climbing if on_ladder => (0.4, 1.0),
@@ -1108,9 +1109,22 @@ impl Blutti {
     fn start_climbing(&mut self) {
         if self.is_on_ladder() && self.state != PlayerState::Climbing {
             self.velocity.x = 0.0;
+            if !self.is_climbing() {
+                self.add_climbing_animation();
+            }
             self.state = PlayerState::Climbing;
-            self.add_climbing_animation();
             //log_debug("start climbing");
+        }
+    }
+
+    fn is_climbing(&self) -> bool {
+        match self.state {
+            PlayerState::Climbing
+            | PlayerState::ClimbingStop
+            | PlayerState::ClimbingIdle
+            | PlayerState::ClimbingSideways
+            | PlayerState::ClimbingSidewaysStop => true,
+            _ => false,
         }
     }
 
@@ -1252,17 +1266,17 @@ impl Blutti {
 
     fn is_on_ladder(&self) -> bool {
         match self.direction_y {
-            DirectionY::Up => self.is_on_ladder_up(),
-            DirectionY::Down => self.is_on_ladder_down(),
+            DirectionY::Up => self.is_on_ladder_bottom(),
+            DirectionY::Down => self.is_on_ladder_below(),
         }
     }
 
-    fn is_on_ladder_up(&self) -> bool {
+    fn is_on_ladder_bottom(&self) -> bool {
         self.collision(self.position.bottom_left()) == TileCollider::Climbable
             || self.collision(self.position.bottom_right()) == TileCollider::Climbable
     }
 
-    fn is_on_ladder_down(&self) -> bool {
+    fn is_on_ladder_below(&self) -> bool {
         self.collision(self.position.below_bottom_left()) == TileCollider::Climbable
             || self.collision(self.position.below_bottom_right()) == TileCollider::Climbable
     }
