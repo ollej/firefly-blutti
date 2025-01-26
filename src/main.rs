@@ -686,6 +686,10 @@ impl Vec2 {
     fn zero() -> Self {
         Self { x: 0.0, y: 0.0 }
     }
+
+    fn is_zero(&self) -> bool {
+        self.x.abs() == 0.0 && self.y.abs() == 0.0
+    }
 }
 
 struct Blutti {
@@ -805,14 +809,12 @@ impl Updateable for Blutti {
     fn update(&mut self) {
         self.animation.update();
 
-        let on_ladder = self.is_on_ladder_bottom();
-        let is_standing = self.is_standing();
         let (acceleration, target_velocity) = match self.state {
             PlayerState::Running => (0.5, Self::MAX_VELOCITY),
             PlayerState::Jumping => (0.4, Self::MAX_VELOCITY),
             PlayerState::Dashing => (1.2, Self::MAX_VELOCITY),
             PlayerState::StopRunning => (0.3, 0.0),
-            PlayerState::ClimbingSideways if on_ladder => (0.3, 1.5),
+            PlayerState::ClimbingSideways if self.is_on_ladder_bottom() => (0.3, 1.5),
             PlayerState::ClimbingSidewaysStop => (0.3, 0.0),
             PlayerState::ClimbingSideways
             | PlayerState::Climbing
@@ -840,7 +842,6 @@ impl Updateable for Blutti {
 
         // pos += vel * dt + 1/2*dt*dt
         // Vel += acc*dt
-        let on_ladder = self.is_on_ladder();
         let (acceleration, target_velocity) = match self.state {
             PlayerState::Jumping => (1.0, 2.0),
             PlayerState::Climbing => (0.4, 1.0),
@@ -879,7 +880,7 @@ impl Updateable for Blutti {
             PlayerState::Dashing => (),
             _ => {
                 // Gravity
-                if !(self.is_on_ladder_below() || is_standing) {
+                if !(self.is_on_ladder_below() || self.is_standing()) {
                     self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
                 }
             }
@@ -929,8 +930,10 @@ impl Updateable for Blutti {
             }
         }
 
-        if self.velocity.x == 0.0 && self.velocity.y == 0.0
-            || self.is_climbing() && !self.is_on_ladder()
+        let on_ladder = self.is_on_ladder();
+        if self.velocity.is_zero()
+            || self.is_climbing() && !on_ladder
+            || self.state == PlayerState::Idle && on_ladder
         {
             self.start_idling();
         }
@@ -1155,15 +1158,12 @@ impl Blutti {
     }
 
     fn start_idling(&mut self) {
-        match self.state {
-            PlayerState::Climbing
-            | PlayerState::ClimbingStop
-            | PlayerState::ClimbingSideways
-            | PlayerState::ClimbingSidewaysStop => {
+        if self.is_on_ladder() {
+            if self.state != PlayerState::ClimbingIdle {
                 self.state = PlayerState::ClimbingIdle;
             }
-            PlayerState::Idle | PlayerState::ClimbingIdle => (),
-            _ => {
+        } else {
+            if self.state != PlayerState::Idle {
                 self.state = PlayerState::Idle;
                 self.add_idle_animation();
             }
