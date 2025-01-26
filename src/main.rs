@@ -843,11 +843,12 @@ impl Updateable for Blutti {
         let on_ladder = self.is_on_ladder();
         let (acceleration, target_velocity) = match self.state {
             PlayerState::Jumping => (1.0, 2.0),
-            PlayerState::Climbing if on_ladder => (0.4, 1.0),
-            PlayerState::ClimbingStop if on_ladder => (0.2, 0.0),
-            PlayerState::ClimbingIdle if on_ladder => (0.0, 0.0),
+            PlayerState::Climbing => (0.4, 1.0),
+            PlayerState::ClimbingStop => (0.2, 0.0),
+            PlayerState::ClimbingIdle
+            | PlayerState::ClimbingSideways
+            | PlayerState::ClimbingSidewaysStop => (0.0, 0.0),
             PlayerState::Dashing => (0.0, 0.0),
-            _ if is_standing => (0.0, 0.0),
             _ => (0.8, 2.5), // Gravity
         };
 
@@ -856,25 +857,31 @@ impl Updateable for Blutti {
                 self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
                 // TODO: double gravity after apex
             }
-            PlayerState::Climbing if on_ladder => {
+            PlayerState::Climbing => {
                 if self.direction_y == DirectionY::Up {
                     self.velocity.y = (self.velocity.y - acceleration).max(-target_velocity);
                 } else {
                     self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
                 }
             }
-            PlayerState::ClimbingStop if on_ladder => {
+            PlayerState::ClimbingStop => {
                 if self.direction_y == DirectionY::Up {
                     self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
                 } else {
                     self.velocity.y = (self.velocity.y - acceleration).max(target_velocity);
                 }
             }
-            PlayerState::ClimbingIdle if on_ladder => (),
+            PlayerState::ClimbingIdle
+            | PlayerState::ClimbingSideways
+            | PlayerState::ClimbingSidewaysStop => {
+                self.velocity.y = 0.0;
+            }
             PlayerState::Dashing => (),
             _ => {
                 // Gravity
-                self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
+                if !(self.is_on_ladder_below() || is_standing) {
+                    self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
+                }
             }
         }
 
