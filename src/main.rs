@@ -844,13 +844,18 @@ impl Updateable for Blutti {
         let (acceleration, target_velocity) = match self.state {
             PlayerState::Jumping => (1.0, 2.0),
             PlayerState::Climbing if on_ladder => (0.4, 1.0),
-            PlayerState::ClimbingStop => (0.2, 0.0),
+            PlayerState::ClimbingStop if on_ladder => (0.2, 0.0),
+            PlayerState::ClimbingIdle if on_ladder => (0.0, 0.0),
             PlayerState::Dashing => (0.0, 0.0),
             _ if is_standing => (0.0, 0.0),
             _ => (0.8, 2.5), // Gravity
         };
 
         match self.state {
+            PlayerState::Jumping => {
+                self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
+                // TODO: double gravity after apex
+            }
             PlayerState::Climbing if on_ladder => {
                 if self.direction_y == DirectionY::Up {
                     self.velocity.y = (self.velocity.y - acceleration).max(-target_velocity);
@@ -866,19 +871,11 @@ impl Updateable for Blutti {
                 }
             }
             PlayerState::ClimbingIdle if on_ladder => (),
-            PlayerState::Jumping => {
-                self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
-                // TODO: double gravity after apex
-            }
             PlayerState::Dashing => (),
             _ => {
                 // Gravity
                 self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
             }
-        }
-
-        if self.velocity.x == 0.0 && self.velocity.y == 0.0 {
-            self.start_idling();
         }
 
         // Move X position
@@ -923,6 +920,12 @@ impl Updateable for Blutti {
                 self.stop_movement();
                 break;
             }
+        }
+
+        if self.velocity.x == 0.0 && self.velocity.y == 0.0
+            || self.is_climbing() && !self.is_on_ladder()
+        {
+            self.start_idling();
         }
 
         /*
