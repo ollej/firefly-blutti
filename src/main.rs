@@ -669,9 +669,12 @@ enum PlayerState {
     Jumping,
     Dashing,
     Running,
-    Climbing,
     StopRunning,
-    StopClimbing,
+    Climbing,
+    ClimbingStop,
+    ClimbingSideways,
+    ClimbingSidewaysStop,
+    ClimbingIdle,
 }
 
 struct Vec2 {
@@ -782,7 +785,10 @@ impl Updateable for Blutti {
 
     fn collision_at(&self, position: Point) -> bool {
         match self.state {
-            PlayerState::Climbing | PlayerState::StopClimbing => {
+            PlayerState::Climbing
+            | PlayerState::ClimbingSideways
+            | PlayerState::ClimbingSidewaysStop
+            | PlayerState::ClimbingStop => {
                 !(self.is_tile_free(position.addx(3))
                     && self.is_tile_free(position.top_right().addx(-3))
                     && self.is_tile_free(position.bottom_left().addx(3))
@@ -799,73 +805,69 @@ impl Updateable for Blutti {
     fn update(&mut self) {
         self.animation.update();
 
+        let on_ladder = self.is_on_ladder();
+        let is_standing = self.is_standing();
         let (acceleration, target_velocity) = match self.state {
             PlayerState::Running => (0.5, Self::MAX_VELOCITY),
             PlayerState::Jumping => (0.4, Self::MAX_VELOCITY),
-            PlayerState::Climbing => (0.0, 0.0),
             PlayerState::Dashing => (1.2, Self::MAX_VELOCITY),
-            PlayerState::Idle => (0.0, 0.0),
             PlayerState::StopRunning => (0.3, 0.0),
-            PlayerState::StopClimbing => (0.0, 0.0),
+            PlayerState::ClimbingSideways if on_ladder => (0.3, 1.5),
+            PlayerState::ClimbingSidewaysStop => (0.3, 0.0),
+            PlayerState::ClimbingSideways
+            | PlayerState::Climbing
+            | PlayerState::ClimbingStop
+            | PlayerState::Idle
+            | PlayerState::ClimbingIdle => (0.0, 0.0),
         };
 
-        if self.state == PlayerState::StopRunning {
-            if self.direction_x == DirectionX::Left {
-                self.velocity.x = (self.velocity.x + acceleration).min(target_velocity);
-            } else {
-                self.velocity.x = (self.velocity.x - acceleration).max(target_velocity);
+        match self.state {
+            PlayerState::StopRunning | PlayerState::ClimbingSidewaysStop => {
+                if self.direction_x == DirectionX::Left {
+                    self.velocity.x = (self.velocity.x + acceleration).min(target_velocity);
+                } else {
+                    self.velocity.x = (self.velocity.x - acceleration).max(target_velocity);
+                }
+                if self.velocity.x == 0.0 {
+                    self.start_idling();
+                }
             }
-            if self.velocity.x == 0.0 {
-                self.start_idling();
-            }
-        } else {
-            if self.direction_x == DirectionX::Left {
-                self.velocity.x = (self.velocity.x - acceleration).max(-target_velocity);
-            } else {
-                self.velocity.x = (self.velocity.x + acceleration).min(target_velocity);
+            _ => {
+                if self.direction_x == DirectionX::Left {
+                    self.velocity.x = (self.velocity.x - acceleration).max(-target_velocity);
+                } else {
+                    self.velocity.x = (self.velocity.x + acceleration).min(target_velocity);
+                }
             }
         }
 
         // pos += vel * dt + 1/2*dt*dt
         // Vel += acc*dt
-        let on_ladder = self.is_on_ladder();
         let (acceleration, target_velocity) = match self.state {
             PlayerState::Jumping => (1.0, 2.0),
             PlayerState::Climbing if on_ladder => (0.4, 1.0),
-            PlayerState::Climbing => {
-                self.stop_movement();
-                (0.0, 0.0)
-            }
-            PlayerState::StopClimbing if on_ladder => (0.2, 0.0),
-            PlayerState::StopClimbing => {
-                self.stop_movement();
-                (0.0, 0.0)
-            }
+            PlayerState::ClimbingStop if on_ladder => (0.2, 0.0),
             PlayerState::Dashing => (0.0, 0.0),
-            _ => {
-                if self.is_standing() {
-                    (0.0, 0.0)
-                } else {
-                    (0.8, 2.5) // Gravity
-                }
-            }
+            _ if is_standing => (0.0, 0.0),
+            _ => (0.8, 2.5), // Gravity
         };
 
         match self.state {
-            PlayerState::Climbing if self.is_on_ladder() => {
+            PlayerState::Climbing if on_ladder => {
                 if self.direction_y == DirectionY::Up {
                     self.velocity.y = (self.velocity.y - acceleration).max(-target_velocity);
                 } else {
                     self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
                 }
             }
-            PlayerState::StopClimbing if self.is_on_ladder() => {
+            PlayerState::ClimbingStop if on_ladder => {
                 if self.direction_y == DirectionY::Up {
                     self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
                 } else {
                     self.velocity.y = (self.velocity.y - acceleration).max(target_velocity);
                 }
             }
+            PlayerState::ClimbingIdle if on_ladder => (),
             PlayerState::Jumping => {
                 self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
                 // TODO: double gravity after apex
@@ -875,6 +877,10 @@ impl Updateable for Blutti {
                 // Gravity
                 self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
             }
+        }
+
+        if self.velocity.x == 0.0 && self.velocity.y == 0.0 {
+            self.start_idling();
         }
 
         // Move X position
@@ -1082,7 +1088,8 @@ impl Blutti {
     fn stop(&mut self) {
         match self.state {
             PlayerState::Running => self.state = PlayerState::StopRunning,
-            PlayerState::Climbing => self.state = PlayerState::StopClimbing,
+            PlayerState::Climbing => self.state = PlayerState::ClimbingStop,
+            PlayerState::ClimbingSideways => self.state = PlayerState::ClimbingSidewaysStop,
             _ => (),
         }
     }
@@ -1092,7 +1099,10 @@ impl Blutti {
     }
 
     fn start_running(&mut self) {
-        if self.state != PlayerState::Running && self.is_standing() {
+        if self.is_on_ladder() && self.state != PlayerState::ClimbingSideways {
+            self.velocity.y = 0.0;
+            self.state = PlayerState::ClimbingSideways;
+        } else if self.is_standing() && self.state != PlayerState::Running {
             self.add_running_animation();
             self.state = PlayerState::Running;
         }
@@ -1100,6 +1110,7 @@ impl Blutti {
 
     fn start_climbing(&mut self) {
         if self.is_on_ladder() && self.state != PlayerState::Climbing {
+            self.velocity.x = 0.0;
             self.state = PlayerState::Climbing;
             self.add_climbing_animation();
             //log_debug("start climbing");
@@ -1123,8 +1134,19 @@ impl Blutti {
     }
 
     fn start_idling(&mut self) {
-        self.state = PlayerState::Idle;
-        self.add_idle_animation();
+        match self.state {
+            PlayerState::Climbing
+            | PlayerState::ClimbingSideways
+            | PlayerState::ClimbingSidewaysStop
+            | PlayerState::ClimbingStop => {
+                self.state = PlayerState::ClimbingIdle;
+            }
+            PlayerState::Idle | PlayerState::ClimbingIdle => (),
+            _ => {
+                self.state = PlayerState::Idle;
+                self.add_idle_animation();
+            }
+        }
     }
 
     fn handle_effects(&mut self) {
@@ -1198,6 +1220,7 @@ impl Blutti {
         let state = get_state();
         state.level.reset();
         self.stop_movement();
+        self.state = PlayerState::Idle;
         self.add_death_animation();
         self.add_lives(-1);
         add_progress(get_me(), BADGE_DEATHS, 1);
@@ -1218,10 +1241,12 @@ impl Blutti {
         self.fall_timer = 0;
         self.remainder = Vec2::zero();
         self.velocity = Vec2::zero();
-        if self.is_on_ladder() {
-            self.state = PlayerState::StopClimbing;
-        } else {
-            self.start_idling();
+        match self.state {
+            PlayerState::Climbing | PlayerState::ClimbingIdle => {
+                self.state = PlayerState::ClimbingStop
+            }
+            PlayerState::ClimbingStop => (),
+            _ => self.start_idling(),
         }
     }
 
@@ -1230,6 +1255,7 @@ impl Blutti {
         self.direction_x = DirectionX::Right;
         self.position = self.start_position;
         self.stop_movement();
+        self.state = PlayerState::Idle;
         self.current_tile = 0;
     }
 
