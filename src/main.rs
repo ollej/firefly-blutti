@@ -801,10 +801,17 @@ impl Updateable for Blutti {
                     && self.is_tile_free(position.bottom_right().addx(-3)))
             }
         } else {
-            !(self.is_tile_free(position)
-                && self.is_tile_free(position.top_right())
-                && self.is_tile_free(position.bottom_left())
-                && self.is_tile_free(position.bottom_right()))
+            if self.direction_x == DirectionX::Left {
+                !(self.is_tile_free(position)
+                    && self.is_tile_free(position.top_right().addx(-3))
+                    && self.is_tile_free(position.bottom_left())
+                    && self.is_tile_free(position.bottom_right().addx(-3)))
+            } else {
+                !(self.is_tile_free(position.addx(3))
+                    && self.is_tile_free(position.top_right())
+                    && self.is_tile_free(position.bottom_left().addx(3))
+                    && self.is_tile_free(position.bottom_right()))
+            }
         }
     }
 
@@ -901,10 +908,10 @@ impl Updateable for Blutti {
             PlayerState::Dashing => (),
             _ => {
                 // Gravity
-                if !(self.is_on_ladder_below() || self.is_standing()) {
-                    self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
-                } else {
+                if self.is_on_ladder_below() || self.is_standing() {
                     self.velocity.y = 0.0;
+                } else {
+                    self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
                 }
             }
         }
