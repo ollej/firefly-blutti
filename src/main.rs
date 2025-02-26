@@ -840,7 +840,7 @@ impl Updateable for Blutti {
 
         let (acceleration, target_velocity) = match self.state {
             PlayerState::Running => (0.5, Self::MAX_VELOCITY),
-            PlayerState::Jumping => (0.4, Self::MAX_VELOCITY),
+            PlayerState::Jumping => (0.0, 0.0),
             PlayerState::Dashing => (1.2, Self::MAX_VELOCITY),
             PlayerState::StopRunning => (0.3, 0.0),
             PlayerState::ClimbingSideways => (0.3, 1.5),
@@ -883,7 +883,7 @@ impl Updateable for Blutti {
 
         match self.state {
             PlayerState::Jumping => {
-                self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
+                self.velocity.y = (self.velocity.y - acceleration).max(-target_velocity);
                 // TODO: double gravity after apex
             }
             PlayerState::Climbing => {
