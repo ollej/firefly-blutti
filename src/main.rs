@@ -1435,7 +1435,6 @@ fn restart(mut level: i32, won: bool) -> i32 {
 
 fn render_title() {
     let state = get_state();
-    clear_screen(Color::Black);
     draw_image(&state.title.as_image(), Point { x: 0, y: 0 });
     display_centered_message(Some(Color::White), &["Press <Y> to start!"]);
 }
@@ -1540,7 +1539,7 @@ extern "C" fn boot() {
     let state = State {
         blutti: Blutti::with_start_position(level.start_position),
         spritesheet: load_file_buf("spritesheet").unwrap(),
-        title: load_file_buf("title").unwrap(),
+        title: load_file_buf("_splash").unwrap(),
         font: load_file_buf("font").unwrap(),
         fx,
         theme,
