@@ -567,10 +567,11 @@ trait Updateable {
     }
 
     fn is_tile_free(&self, position: Point) -> bool {
-        !matches!(
+        let occupied = matches!(
             self.collision(position),
             TileCollider::Full | TileCollider::Slippery | TileCollider::Conveyor
-        )
+        );
+        !occupied
     }
 
     fn position_below_left_foot(&self) -> Point {
@@ -1115,9 +1116,8 @@ impl Drawable for Particle {
     }
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Default)]
 #[serde(from = "MonsterSerde")]
-#[derive(Default)]
 struct Monster {
     #[serde(with = "PointDef")]
     position: Point,
