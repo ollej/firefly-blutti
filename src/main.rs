@@ -6,18 +6,14 @@ extern crate alloc;
 use alloc::vec::Vec;
 use core::cell::OnceCell;
 use firefly_rust::*;
-use fixedstr::{str256, str32, str_format};
+use fixedstr::{str32, str_format};
 use serde::Deserialize;
-use serde_json;
 
 const TILE_WIDTH: i32 = 8;
 const TILE_HEIGHT: i32 = 8;
 const SPRITES_H: i32 = 16;
-const SPRITES_V: i32 = 16;
 const TILES_H: i32 = 30;
-const TILES_V: i32 = 20;
 const HALF_FONT_WIDTH: i32 = 2;
-const FONT_HEIGHT: i32 = 6;
 const FONT_BASE_LINE: i32 = 4;
 const LINE_HEIGHT: i32 = 8;
 const BADGE_STARS: Badge = Badge(1);
@@ -392,7 +388,6 @@ enum ColorDef {
 type Sprite = i32;
 
 struct Collision {
-    sprite: i32,
     tile_collider: TileCollider,
     position: Point,
 }
@@ -489,7 +484,6 @@ impl Level {
         let sprite = self.sprite_at_position(position);
         if sprite >= 0 {
             Some(Collision {
-                sprite,
                 tile_collider: COLLISION[sprite as usize],
                 position,
             })
@@ -528,6 +522,7 @@ struct State {
 }
 
 fn get_state() -> &'static mut State {
+    #[allow(static_mut_refs)]
     unsafe { STATE.get_mut() }.unwrap()
 }
 
@@ -572,10 +567,10 @@ trait Updateable {
     }
 
     fn is_tile_free(&self, position: Point) -> bool {
-        match self.collision(position) {
-            TileCollider::Full | TileCollider::Slippery | TileCollider::Conveyor => false,
-            _ => true,
-        }
+        !matches!(
+            self.collision(position),
+            TileCollider::Full | TileCollider::Slippery | TileCollider::Conveyor
+        )
     }
 
     fn position_below_left_foot(&self) -> Point {
@@ -1122,6 +1117,7 @@ impl Drawable for Particle {
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(from = "MonsterSerde")]
+#[derive(Default)]
 struct Monster {
     #[serde(with = "PointDef")]
     position: Point,
@@ -1165,17 +1161,6 @@ impl Monster {
     }
 }
 
-impl Default for Monster {
-    fn default() -> Self {
-        Self {
-            position: Point::default(),
-            sprite: 0,
-            movement: 0,
-            animation: Animation::default(),
-        }
-    }
-}
-
 impl Drawable for Monster {
     fn draw(&self) {
         draw_tile(self.animation.current_sprite(), self.position());
@@ -1192,8 +1177,8 @@ impl Updateable for Monster {
         } else {
             new_x
         };
-        if new_x >= Level::MIN.x
-            && new_x < Level::MAX.x
+        let level_boundaries = Level::MIN.x..Level::MAX.x;
+        if level_boundaries.contains(&new_x)
             && self.is_tile_free(Point {
                 x: test_x,
                 y: self.position.y,
@@ -1421,9 +1406,7 @@ fn restart(mut level: i32, won: bool) -> i32 {
     }
     state.level = Level::load_level(level);
     if won {
-        state.blutti = state
-            .blutti
-            .at_new_level(state.level.start_position, level as i32);
+        state.blutti = state.blutti.at_new_level(state.level.start_position, level);
         state.game_state = GameState::Playing;
     } else {
         state.blutti = Blutti::with_start_position(state.level.start_position);
@@ -1548,6 +1531,7 @@ extern "C" fn boot() {
         game_state: GameState::Title,
         buttons: Buttons::default(),
     };
+    #[allow(static_mut_refs)]
     unsafe { STATE.set(state) }.ok().unwrap();
     add_menu_item(1, "Credits");
     add_menu_item(2, "Restart");
