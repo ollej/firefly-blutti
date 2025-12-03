@@ -681,7 +681,7 @@ impl Updateable for Blutti {
         let mut new_y = self.position.y;
 
         if self.is_on_ladder() {
-            new_x += self.movement_x.clamp(-1, 1);
+            new_x += self.movement_x;
             new_y += self.movement_y;
         } else {
             new_x += self.movement_x;
@@ -761,7 +761,6 @@ impl Updateable for Blutti {
 }
 
 impl Blutti {
-    const SPEED: i32 = 2;
     const JUMP_TIME: i32 = 8;
     const JUMP_SPEED: i32 = 2;
     const DASH_TIME: i32 = 8;
@@ -794,33 +793,33 @@ impl Blutti {
         }
     }
 
-    fn move_left(&mut self) {
+    fn move_left(&mut self, speed: i32) {
         self.direction = Direction::Left;
         self.animation = Animation::animation_left();
         if !(self.movement_x > 0 && self.is_standing_on(TileCollider::Slippery)) {
-            self.movement_x = -Self::SPEED;
+            self.movement_x = -speed;
         }
     }
 
-    fn move_right(&mut self) {
+    fn move_right(&mut self, speed: i32) {
         self.direction = Direction::Right;
         self.animation = Animation::animation_right();
         if !(self.movement_x < 0 && self.is_standing_on(TileCollider::Slippery)) {
-            self.movement_x = Self::SPEED;
+            self.movement_x = speed;
         }
     }
 
-    fn move_up(&mut self) {
+    fn move_up(&mut self, speed: i32) {
         if self.is_on_ladder() {
             self.add_climb_animation();
-            self.movement_y = -Self::SPEED;
+            self.movement_y = -speed;
         }
     }
 
-    fn move_down(&mut self) {
+    fn move_down(&mut self, speed: i32) {
         if self.is_on_ladder() {
             self.add_climb_animation();
-            self.movement_y = Self::SPEED;
+            self.movement_y = speed;
         }
     }
 
@@ -1574,18 +1573,15 @@ extern "C" fn update() {
         GameState::Playing => {
             let pad = read_pad(Peer::COMBINED);
             if let Some(pad) = pad {
-                let dpad = pad.as_dpad();
-                if dpad.left {
-                    state.blutti.move_left();
+                if pad.x < 100 {
+                    state.blutti.move_left(axis_to_speed(pad.x));
+                } else if pad.x > 100 {
+                    state.blutti.move_right(axis_to_speed(pad.x));
                 }
-                if dpad.right {
-                    state.blutti.move_right();
-                }
-                if dpad.up {
-                    state.blutti.move_up();
-                }
-                if dpad.down {
-                    state.blutti.move_down();
+                if pad.y > 100 {
+                    state.blutti.move_up(axis_to_speed(pad.y));
+                } else if pad.y < 100 {
+                    state.blutti.move_down(axis_to_speed(pad.y));
                 }
             }
             if just_pressed.s {
@@ -1614,6 +1610,15 @@ extern "C" fn update() {
                 }
             }
         }
+    }
+}
+
+#[inline]
+fn axis_to_speed(x: i32) -> i32 {
+    if x.abs() > 400 {
+        2
+    } else {
+        1
     }
 }
 
