@@ -680,11 +680,9 @@ impl Updateable for Blutti {
         let mut new_x = self.position.x;
         let mut new_y = self.position.y;
 
+        new_x += self.movement_x;
         if self.is_on_ladder() {
-            new_x += self.movement_x;
             new_y += self.movement_y;
-        } else {
-            new_x += self.movement_x;
         }
         if self.is_standing_on(TileCollider::Conveyor) {
             new_x += Self::CONVEYOR_SPEED;
