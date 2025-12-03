@@ -1596,7 +1596,7 @@ extern "C" fn update() {
         }
         GameState::GameOver(won) => {
             state.blutti.animation.update();
-            if just_pressed.n {
+            if just_pressed.e {
                 if won {
                     restart(state.blutti.current_level + 1, won);
                 } else {
