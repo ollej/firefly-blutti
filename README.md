@@ -12,23 +12,23 @@ Developed with the Rust programming language.
 Collect enough stars to open up the exit door, each level requires a different
 number of stars. Beware of monsters.
 
-- Press "A" (south button) to jump
-- Press "X" (west button) to dash
+- Press "S" to jump
+- Press "W" to dash
 
 ## Firefly Zero
 
 Firefly Zero is a modern handheld game console with effortless multiplayer. It's fun to play, alone or with friends, and easy to program.
 
-https://fireflyzero.com/
+<https://fireflyzero.com/>
 
 ## Installation
 
-Install the Firefly Emulator and the Firefly CLI according to [these instructions](https://docs.fireflyzero.com/user/installation/). 
+Install the Firefly Emulator and the Firefly CLI according to [these instructions](https://docs.fireflyzero.com/user/installation/).
 
 Then you can install Blutti with the following command:
 
-```
-firefly_cli import olle.blutti 
+```bash
+firefly_cli import olle.blutti
 ```
 
 After that you can start `firefly-emulator` which will launch the game.

@@ -44,15 +44,15 @@ const CREDITS: [&str; 8] = [
     "Music: Zane Little Music",
     "SFX: @Shades, Luke.RUSTLTD, sauer2",
     "",
-    "Press <Y> to go back to game",
+    "Press (E) to go back to game",
 ];
 
 const INFO: [&str; 5] = [
     "Controls:",
-    "Press <A> to jump",
-    "Press <X> to dash",
+    "Press (S) to jump",
+    "Press (W) to dash",
     "",
-    "Press <Y> to go back to game",
+    "Press (E) to go back to game",
 ];
 
 const COLLISION: [TileCollider; 256] = [
@@ -443,10 +443,10 @@ impl Level {
 
     fn draw(&mut self) {
         clear_screen(self.background_color);
-        for (i, &tile) in self.tiles.iter().enumerate() {
+        for (&tile, i) in self.tiles.iter().zip(0..) {
             let point = Point {
-                x: ((i as i32 % TILES_H) * TILE_WIDTH),
-                y: ((i as i32 / TILES_H) * TILE_HEIGHT),
+                x: ((i % TILES_H) * TILE_WIDTH),
+                y: ((i / TILES_H) * TILE_HEIGHT),
             };
             if tile > 0 {
                 draw_tile(tile - 1, point);
@@ -467,13 +467,9 @@ impl Level {
         self.monsters = self.original_monsters.clone();
     }
 
-    fn sprite_at_pos(&self, tile_pos: usize) -> Sprite {
-        self.tiles[tile_pos] - 1
-    }
-
     fn sprite_at_position(&self, point: Point) -> Sprite {
         let tile_pos = get_tile_index(point);
-        self.sprite_at_pos(tile_pos)
+        self.tiles[tile_pos as usize] - 1
     }
 
     fn collision_at_position(&self, position: Point) -> Option<Collision> {
@@ -503,7 +499,7 @@ impl Level {
 
     fn remove_tile(&mut self, position: Point) {
         let tile_pos = get_tile_index(position);
-        self.tiles[tile_pos] = 0;
+        self.tiles[tile_pos as usize] = 0;
     }
 }
 
@@ -864,7 +860,7 @@ impl Blutti {
                 _ => (),
             }
         }
-        state.blutti.current_tile = get_tile_index(self.position) as i32;
+        state.blutti.current_tile = get_tile_index(self.position);
     }
 
     fn collect_star(&mut self, collision: Collision) {
@@ -893,7 +889,7 @@ impl Blutti {
         if self.stars >= state.level.stars {
             self.finish_level();
         } else {
-            let tile_pos = get_tile_index(self.position) as i32;
+            let tile_pos = get_tile_index(self.position);
             if tile_pos != state.blutti.current_tile {
                 play_sound("sound_wrong");
                 state.blutti.current_tile = tile_pos;
@@ -1335,11 +1331,11 @@ fn get_origin_point_of_position(position: Point) -> Point {
     }
 }
 
-fn get_tile_index(point: Point) -> usize {
+fn get_tile_index(point: Point) -> i32 {
     let tile_x = point.x / TILE_WIDTH;
     let tile_y = point.y / TILE_WIDTH;
     //log_debug(str_format!(str256, "tile_x: {} tile_y: {}", tile_x, tile_y).as_str());
-    (tile_y * TILES_H + tile_x) as usize
+    tile_y * TILES_H + tile_x
 }
 
 fn draw_tile(sprite: i32, point: Point) {
@@ -1419,7 +1415,7 @@ fn restart(mut level: i32, won: bool) -> i32 {
 fn render_title() {
     let state = get_state();
     draw_image(&state.title.as_image(), Point { x: 0, y: 0 });
-    display_centered_message(Some(Color::White), &["Press <Y> to start!"]);
+    display_centered_message(Some(Color::White), &["Press (E) to start!"]);
 }
 
 fn render_died() {
@@ -1427,7 +1423,7 @@ fn render_died() {
     state.level.draw();
     state.blutti.draw();
     render_ui();
-    display_centered_message(None, &["You died!", "Press <Y> to restart level"]);
+    display_centered_message(None, &["You died!", "Press (E) to restart level"]);
 }
 
 fn render_gameover(won: bool) {
@@ -1436,9 +1432,9 @@ fn render_gameover(won: bool) {
     state.blutti.draw();
     render_ui();
     if won {
-        display_centered_message(None, &["You win!", "Press <Y> to start next level!"]);
+        display_centered_message(None, &["You win!", "Press (E) to start next level!"]);
     } else {
-        display_centered_message(None, &["Game Over!", "Press <Y> to start again!"]);
+        display_centered_message(None, &["Game Over!", "Press (E) to start again!"]);
     }
 }
 
@@ -1548,23 +1544,23 @@ extern "C" fn update() {
 
     match state.game_state {
         GameState::Title => {
-            if just_pressed.n {
+            if just_pressed.any() {
                 state.game_state = GameState::Playing;
             }
         }
         GameState::Credits => {
-            if just_pressed.n {
+            if just_pressed.any() {
                 state.game_state = GameState::Title;
             }
         }
         GameState::Info => {
-            if just_pressed.n {
+            if just_pressed.any() {
                 state.game_state = GameState::Title;
             }
         }
         GameState::Died => {
             state.blutti.animation.update();
-            if just_pressed.n {
+            if just_pressed.any() {
                 state.blutti.reset();
                 state.game_state = GameState::Playing;
             }
