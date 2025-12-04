@@ -470,7 +470,10 @@ impl Level {
     fn sprite_at_position(&self, point: Point) -> Sprite {
         let tile_pos = get_tile_index(point);
         let maybe_sprite = self.tiles.get(tile_pos as usize);
-        maybe_sprite.unwrap_or(&1) - 1
+        // The default sprite should be a sprite with TileCollider::Full
+        // in the COLLISION list. Otherwise, if the Blutti is standing
+        // on the bottom edge of the screen, it will be considered falling.
+        maybe_sprite.unwrap_or(&4) - 1
     }
 
     fn collision_at_position(&self, position: Point) -> Option<Collision> {
