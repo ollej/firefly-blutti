@@ -1476,22 +1476,17 @@ fn render_playing() {
     render_ui();
 }
 
-fn add_lives(lives: i32) -> i32 {
-    let state = get_state();
-    state.blutti.add_lives(lives)
-}
-
-fn add_points(points: i32) -> i32 {
-    let state = get_state();
-    state.blutti.add_points(points)
-}
-
 #[no_mangle]
 extern "C" fn cheat(cmd: i32, val: i32) -> i32 {
+    let state = get_state();
     match cmd {
         1 => restart(val - 1, true) + 1,
-        2 => add_lives(val),
-        3 => add_points(val),
+        2 => state.blutti.add_lives(val),
+        3 => state.blutti.add_points(val),
+        4 => {
+            state.blutti.die();
+            1
+        }
         _ => 0,
     }
 }
@@ -1567,14 +1562,14 @@ extern "C" fn update() {
         GameState::Playing => {
             let pad = read_pad(Peer::COMBINED);
             if let Some(pad) = pad {
-                if pad.x < 100 {
+                if pad.x < -100 {
                     state.blutti.move_left(axis_to_speed(pad.x));
                 } else if pad.x > 100 {
                     state.blutti.move_right(axis_to_speed(pad.x));
                 }
                 if pad.y > 100 {
                     state.blutti.move_up(axis_to_speed(pad.y));
-                } else if pad.y < 100 {
+                } else if pad.y < -100 {
                     state.blutti.move_down(axis_to_speed(pad.y));
                 }
             }
