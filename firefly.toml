@@ -30,3 +30,5 @@ sound_theme = { path = "assets/hallowquest.wav" }
 set-level = 1
 add-lives = 2
 add-points = 3
+die = 4
+iddqd = 5
