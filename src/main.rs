@@ -469,7 +469,8 @@ impl Level {
 
     fn sprite_at_position(&self, point: Point) -> Sprite {
         let tile_pos = get_tile_index(point);
-        self.tiles[tile_pos as usize] - 1
+        let maybe_sprite = self.tiles.get(tile_pos as usize);
+        maybe_sprite.unwrap_or(&1) - 1
     }
 
     fn collision_at_position(&self, position: Point) -> Option<Collision> {
@@ -627,6 +628,7 @@ struct Blutti {
     points: i32,
     stars: i32,
     lives: i32,
+    iddqd: bool,
     died: bool,
     finished_level: bool,
     current_level: i32,
@@ -648,6 +650,7 @@ impl Default for Blutti {
             points: 0,
             stars: 0,
             lives: 3,
+            iddqd: false,
             died: false,
             finished_level: false,
             current_level: 0,
@@ -907,6 +910,9 @@ impl Blutti {
     }
 
     fn die(&mut self) {
+        if self.iddqd {
+            return;
+        }
         let state = get_state();
         state.level.reset();
         self.add_death_animation();
@@ -1485,6 +1491,10 @@ extern "C" fn cheat(cmd: i32, val: i32) -> i32 {
         3 => state.blutti.add_points(val),
         4 => {
             state.blutti.die();
+            1
+        }
+        5 => {
+            state.blutti.iddqd = val > 0;
             1
         }
         _ => 0,
