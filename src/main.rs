@@ -469,7 +469,11 @@ impl Level {
 
     fn sprite_at_position(&self, point: Point) -> Sprite {
         let tile_pos = get_tile_index(point);
-        self.tiles[tile_pos as usize] - 1
+        let maybe_sprite = self.tiles.get(tile_pos as usize);
+        // The default sprite should be a sprite with TileCollider::Full
+        // in the COLLISION list. Otherwise, if the Blutti is standing
+        // on the bottom edge of the screen, it will be considered falling.
+        maybe_sprite.unwrap_or(&4) - 1
     }
 
     fn collision_at_position(&self, position: Point) -> Option<Collision> {
@@ -627,6 +631,7 @@ struct Blutti {
     points: i32,
     stars: i32,
     lives: i32,
+    iddqd: bool,
     died: bool,
     finished_level: bool,
     current_level: i32,
@@ -648,6 +653,7 @@ impl Default for Blutti {
             points: 0,
             stars: 0,
             lives: 3,
+            iddqd: false,
             died: false,
             finished_level: false,
             current_level: 0,
@@ -907,6 +913,9 @@ impl Blutti {
     }
 
     fn die(&mut self) {
+        if self.iddqd {
+            return;
+        }
         let state = get_state();
         state.level.reset();
         self.add_death_animation();
@@ -1476,22 +1485,21 @@ fn render_playing() {
     render_ui();
 }
 
-fn add_lives(lives: i32) -> i32 {
-    let state = get_state();
-    state.blutti.add_lives(lives)
-}
-
-fn add_points(points: i32) -> i32 {
-    let state = get_state();
-    state.blutti.add_points(points)
-}
-
 #[no_mangle]
 extern "C" fn cheat(cmd: i32, val: i32) -> i32 {
+    let state = get_state();
     match cmd {
         1 => restart(val - 1, true) + 1,
-        2 => add_lives(val),
-        3 => add_points(val),
+        2 => state.blutti.add_lives(val),
+        3 => state.blutti.add_points(val),
+        4 => {
+            state.blutti.die();
+            1
+        }
+        5 => {
+            state.blutti.iddqd = val > 0;
+            1
+        }
         _ => 0,
     }
 }
@@ -1567,14 +1575,14 @@ extern "C" fn update() {
         GameState::Playing => {
             let pad = read_pad(Peer::COMBINED);
             if let Some(pad) = pad {
-                if pad.x < 100 {
+                if pad.x < -100 {
                     state.blutti.move_left(axis_to_speed(pad.x));
                 } else if pad.x > 100 {
                     state.blutti.move_right(axis_to_speed(pad.x));
                 }
                 if pad.y > 100 {
                     state.blutti.move_up(axis_to_speed(pad.y));
-                } else if pad.y < 100 {
+                } else if pad.y < -100 {
                     state.blutti.move_down(axis_to_speed(pad.y));
                 }
             }
