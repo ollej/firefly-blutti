@@ -33,6 +33,35 @@ firefly_cli import olle.blutti
 
 After that you can start `firefly-emulator` which will launch the game.
 
+## Cheats
+
+There are cheats available to help with debugging.
+
+### Change level
+```bash
+firefly_cli set-level <level>
+```
+
+### Add lives
+```bash
+firefly_cli add-lives <number of lives>
+```
+
+### Add points
+```bash
+firefly_cli add-points <number of points>
+```
+
+### Kill Bluti
+```bash
+firefly_cli die
+```
+
+### IDDQD / Immortality
+```bash
+firefly_cli iddqd
+```
+
 ## Create maps
 
 Use [Tiled](https://www.mapeditor.org/) mapeditor to create maps. Load the
