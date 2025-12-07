@@ -39,27 +39,27 @@ There are cheats available to help with debugging.
 
 ### Change level
 ```bash
-firefly_cli set-level <level>
+firefly_cli runtime cheat set-level <level>
 ```
 
 ### Add lives
 ```bash
-firefly_cli add-lives <number of lives>
+firefly_cli runtime cheat add-lives <number of lives>
 ```
 
 ### Add points
 ```bash
-firefly_cli add-points <number of points>
+firefly_cli runtime cheat add-points <number of points>
 ```
 
-### Kill Bluti
+### Kill Blutti
 ```bash
-firefly_cli die
+firefly_cli runtime cheat die 1
 ```
 
 ### IDDQD / Immortality
 ```bash
-firefly_cli iddqd
+firefly_cli runtime cheat iddqd 1
 ```
 
 ## Create maps
