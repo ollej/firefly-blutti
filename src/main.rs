@@ -327,6 +327,7 @@ trait PointMath {
     fn below_bottom_right(&self) -> Point;
     fn addx(&self, addend: i32) -> Point;
     fn addy(&self, addend: i32) -> Point;
+    fn is_in_screen(&self) -> bool;
 }
 
 impl PointMath for Point {
@@ -398,6 +399,10 @@ impl PointMath for Point {
             x: self.x,
             y: self.y + addend,
         }
+    }
+
+    fn is_in_screen(&self) -> bool {
+        self.x >= 0 && self.x < WIDTH && self.y >= 0 && self.y < HEIGHT
     }
 }
 
@@ -763,6 +768,11 @@ impl Drawable for Blutti {
         display_text(str_format!(str32, "{:?}", self.state).as_str(), textpos);
         textpos.y -= 8;
         display_text(
+            str_format!(str32, "OnLadder {}", self.is_on_ladder()).as_str(),
+            textpos,
+        );
+        textpos.y -= 8;
+        display_text(
             str_format!(str32, "Y {}", self.position().y).as_str(),
             textpos,
         );
@@ -906,15 +916,6 @@ impl Updateable for Blutti {
                 // TODO: double gravity after apex
             }
             PlayerState::Climbing => {
-                log_debug(
-                    str_format!(
-                        str32,
-                        "climbing accel: {} target_velocity: {}",
-                        acceleration,
-                        target_velocity
-                    )
-                    .as_str(),
-                );
                 if self.direction_y == DirectionY::Up {
                     self.velocity.y = (self.velocity.y - acceleration).max(-target_velocity);
                 } else {
@@ -956,10 +957,19 @@ impl Updateable for Blutti {
             0
         };
         for _ in 0..amount.abs() as i32 {
-            let mut test_pos = self.position();
-            test_pos.x += step;
-            if test_pos.x >= 0 && test_pos.x < WIDTH && !self.collision_at(test_pos) {
-                self.position.x += step;
+            let test_pos = self.position().addx(step);
+            let nudge_pos = test_pos.addy(-1);
+            if test_pos.is_in_screen() {
+                if !self.collision_at(test_pos) {
+                    self.position.x += step;
+                } else if nudge_pos.is_in_screen() && !self.collision_at(nudge_pos) {
+                    // There was a collision, let's nudge up
+                    self.position.y -= 1;
+                    self.position.x += step;
+                } else {
+                    self.stop_movement();
+                    break;
+                }
             } else {
                 self.stop_movement();
                 break;
@@ -978,8 +988,7 @@ impl Updateable for Blutti {
             0
         };
         for _ in 0..amount.abs() as i32 {
-            let mut test_pos = self.position();
-            test_pos.y += step;
+            let test_pos = self.position().addy(step);
             if test_pos.y >= 0 && test_pos.y < HEIGHT && !self.collision_at(test_pos) {
                 self.position.y += step;
             } else {
@@ -1188,7 +1197,6 @@ impl Blutti {
                 self.add_climbing_animation();
             }
             self.state = PlayerState::Climbing;
-            log_debug("start climbing");
         }
     }
 
