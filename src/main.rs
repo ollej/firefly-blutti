@@ -769,11 +769,6 @@ impl Drawable for Blutti {
         display_text(str_format!(str32, "{:?}", self.state).as_str(), textpos);
         textpos.y -= 8;
         display_text(
-            str_format!(str32, "OnLadder {}", self.is_on_ladder()).as_str(),
-            textpos,
-        );
-        textpos.y -= 8;
-        display_text(
             str_format!(str32, "Y {}", self.position().y).as_str(),
             textpos,
         );
@@ -790,6 +785,11 @@ impl Drawable for Blutti {
         textpos.y -= 8;
         display_text(
             str_format!(str32, "VY {:.2}", self.velocity.y).as_str(),
+            textpos,
+        );
+        textpos.y -= 8;
+        display_text(
+            str_format!(str32, "OnLadder {}", self.is_on_ladder()).as_str(),
             textpos,
         );
         textpos.y -= 8;
@@ -1254,6 +1254,7 @@ impl Blutti {
         if self.is_on_ladder() {
             if self.state != PlayerState::ClimbingIdle {
                 self.state = PlayerState::ClimbingIdle;
+                self.add_climbing_animation();
             }
         } else {
             if self.state != PlayerState::Idle {
@@ -1353,6 +1354,7 @@ impl Blutti {
         self.jump_timer = 0;
         self.dash_timer = 0;
         self.fall_timer = 0;
+        self.movement_modifier = 1.0;
         self.remainder = Vec2::zero();
         self.velocity = Vec2::zero();
         self.start_idling();
@@ -1361,9 +1363,10 @@ impl Blutti {
     fn reset(&mut self) {
         self.died = false;
         self.direction_x = DirectionX::Right;
+        self.direction_y = DirectionY::Up;
         self.position = self.start_position;
         self.stop_movement();
-        self.state = PlayerState::Idle;
+        self.add_idle_animation();
         self.current_tile = 0;
     }
 
