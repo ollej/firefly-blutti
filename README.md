@@ -38,6 +38,9 @@ After that you can start `firefly-emulator` which will launch the game.
 There are cheats available to help with debugging.
 
 ### Change level
+
+Use `set-level 0` to load a secret debug level.
+
 ```bash
 firefly_cli runtime cheat set-level <level>
 ```

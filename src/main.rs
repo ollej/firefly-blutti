@@ -34,7 +34,8 @@ const BLUTTI_EXIT_RIGHT_SPRITES: [i32; 4] = [92, 93, 94, 95];
 const BLUTTI_EXIT_LEFT_SPRITES: [i32; 4] = [108, 109, 110, 111];
 const COLLECTION_SPRITES: [i32; 4] = [104, 105, 106, 107];
 
-const LEVELS: [&str; 5] = ["level1", "level2", "level3", "level4", "level5"];
+// Level 0 is a debug level
+const LEVELS: [&str; 6] = ["level0", "level1", "level2", "level3", "level4", "level5"];
 
 const CREDITS: [&str; 8] = [
     "Credits:",
@@ -656,7 +657,7 @@ impl Default for Blutti {
             iddqd: false,
             died: false,
             finished_level: false,
-            current_level: 0,
+            current_level: 1,
             current_tile: 0,
             animation: Animation::animation_idle_right(),
         }
@@ -1406,7 +1407,8 @@ fn display_left_message(lines: &[&str]) {
 fn restart(mut level: i32, won: bool) -> i32 {
     let state = get_state();
     if level >= LEVELS.len() as i32 {
-        level = 0;
+        // Restart at level 1, as level 0 is a debug level
+        level = 1;
     }
     state.level = Level::load_level(level);
     if won {
@@ -1489,7 +1491,7 @@ fn render_playing() {
 extern "C" fn cheat(cmd: i32, val: i32) -> i32 {
     let state = get_state();
     match cmd {
-        1 => restart(val - 1, true) + 1,
+        1 => restart(val, true),
         2 => state.blutti.add_lives(val),
         3 => state.blutti.add_points(val),
         4 => {
@@ -1510,7 +1512,7 @@ extern "C" fn handle_menu(menu_item: u8) {
     match menu_item {
         1 => state.game_state = GameState::Credits,
         2 => {
-            restart(0, false);
+            restart(1, false);
         }
         3 => state.game_state = GameState::Info,
         _ => (),
@@ -1521,7 +1523,7 @@ extern "C" fn handle_menu(menu_item: u8) {
 extern "C" fn boot() {
     let fx = audio::OUT.add_gain(1.0);
     let theme = audio::OUT.add_gain(0.5);
-    let level = Level::load_level(0);
+    let level = Level::load_level(1);
     let state = State {
         blutti: Blutti::with_start_position(level.start_position),
         spritesheet: load_file_buf("spritesheet").unwrap(),
@@ -1608,7 +1610,7 @@ extern "C" fn update() {
                 if won {
                     restart(state.blutti.current_level + 1, won);
                 } else {
-                    restart(0, won);
+                    restart(1, won);
                 }
             }
         }

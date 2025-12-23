@@ -7,6 +7,7 @@ app_name = "Blutti"
 _splash = { path = "assets/blutti-title.png" }
 spritesheet = { path = "assets/spritesheet.png" }
 font = { path = "assets/eg_4x6.fff" }
+level0 = { path = "assets/level0.json", copy = true }
 level1 = { path = "assets/level1.json", copy = true }
 level2 = { path = "assets/level2.json", copy = true }
 level3 = { path = "assets/level3.json", copy = true }
