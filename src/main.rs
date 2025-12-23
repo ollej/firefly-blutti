@@ -866,7 +866,7 @@ impl Updateable for Blutti {
         // Horizontal movement
         let (mut acceleration, mut target_velocity) = match self.state {
             PlayerState::Running => (Self::RUNNING_ACCELERATION, self.target_velocity),
-            PlayerState::Jumping => (0.0, 0.0),
+            PlayerState::Jumping => (Self::RUNNING_ACCELERATION, self.target_velocity),
             PlayerState::Dashing => (Self::DASH_ACCELERATION, Self::DASH_VELOCITY),
             PlayerState::StopRunning => (0.3, 0.0),
             PlayerState::ClimbingSideways => (0.3, 1.5),
@@ -875,7 +875,7 @@ impl Updateable for Blutti {
             | PlayerState::ClimbingStop
             | PlayerState::Idle
             | PlayerState::ClimbingIdle => (0.0, 0.0),
-            PlayerState::Falling => (Self::FALLING_ACCELERATION, self.target_velocity),
+            PlayerState::Falling => (Self::FALLING_X_ACCELERATION, self.target_velocity),
         };
         acceleration *= self.movement_modifier;
         target_velocity *= self.movement_modifier;
@@ -898,11 +898,14 @@ impl Updateable for Blutti {
         }
 
         // Vertical movement
-
-        // pos += vel * dt + 1/2*dt*dt
-        // Vel += acc*dt
         let (mut acceleration, mut target_velocity) = match self.state {
-            PlayerState::Jumping => (1.0, 2.0),
+            PlayerState::Jumping => {
+                if self.jump_timer > Self::JUMP_TIME {
+                    (2.0, 5.0)
+                } else {
+                    (-1.5, -2.0)
+                }
+            }
             PlayerState::Climbing => (0.4, 1.0),
             PlayerState::ClimbingStop => (0.2, 0.0),
             PlayerState::ClimbingIdle
@@ -912,15 +915,22 @@ impl Updateable for Blutti {
             | PlayerState::Running
             | PlayerState::StopRunning
             | PlayerState::Idle => (0.0, 0.0),
-            PlayerState::Falling => (0.8, 2.5), // Gravity
+            PlayerState::Falling => (Self::GRAVITY_ACCELERATION, Self::GRAVITY_MAX), // Gravity
         };
         acceleration *= self.movement_modifier;
         target_velocity *= self.movement_modifier;
 
         match self.state {
             PlayerState::Jumping => {
-                self.velocity.y = (self.velocity.y - acceleration).max(-target_velocity);
+                // pos += vel * dt + 1/2*dt*dt
+                // Vel += acc*dt
+                if acceleration < 0.0 {
+                    self.velocity.y = (self.velocity.y + acceleration).max(target_velocity);
+                } else {
+                    self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
+                }
                 // TODO: double gravity after apex
+                self.jump_timer += 1;
             }
             PlayerState::Climbing => {
                 if self.direction_y == DirectionY::Up {
@@ -936,19 +946,20 @@ impl Updateable for Blutti {
                     self.velocity.y = (self.velocity.y - acceleration).max(target_velocity);
                 }
             }
-            PlayerState::ClimbingIdle
+            PlayerState::Idle
+            | PlayerState::Running
+            | PlayerState::StopRunning
+            | PlayerState::ClimbingIdle
             | PlayerState::ClimbingSideways
             | PlayerState::ClimbingSidewaysStop => {
                 self.velocity.y = 0.0;
             }
             PlayerState::Dashing => (),
-            _ => {
+            PlayerState::Falling => {
                 // Gravity
-                if self.is_on_ladder_below() || self.is_standing() {
-                    self.velocity.y = 0.0;
-                } else {
-                    self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
-                }
+                self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
+                self.fall_timer += 1;
+                self.target_velocity = 0.0;
             }
         }
 
@@ -1006,32 +1017,31 @@ impl Updateable for Blutti {
 
         // Update states
         let on_ladder = self.is_on_ladder();
-        if self.velocity.is_zero()
+        if self.velocity.is_zero() && !self.is_idling() && self.state != PlayerState::Jumping
             || self.is_climbing() && !on_ladder
             || self.state == PlayerState::Idle && on_ladder
         {
-            self.start_idling();
+            log_debug(str_format!(str32, "stop movement from {:?}", self.state).as_str());
+            self.stop_movement();
         }
 
-        if self.state == PlayerState::Falling {
-            self.fall_timer += 1;
-        }
         if self.is_standing() {
             // Death from fall height
             if self.fall_timer > Self::MAX_FALL_HEIGHT {
                 self.die();
             }
             self.fall_timer = 0;
-            self.start_idling();
-        } else {
+        } else if self.state != PlayerState::Jumping && self.state != PlayerState::Falling {
+            log_debug(str_format!(str32, "state {:?} > Falling", self.state).as_str());
+            self.state = PlayerState::Falling
+        }
+        if self.state == PlayerState::Jumping && self.jump_timer > Self::JUMP_TIME * 2 {
+            log_debug(str_format!(str32, "jump > falling timer:{}", self.jump_timer).as_str());
             self.state = PlayerState::Falling
         }
         // Death from falling out of screen
         if self.position.y >= (HEIGHT - TILE_HEIGHT) {
             self.die();
-        }
-        if self.state == PlayerState::Falling {
-            self.target_velocity = 0.0;
         }
 
         /*
@@ -1120,9 +1130,14 @@ impl Updateable for Blutti {
 impl Blutti {
     const RUNNING_ACCELERATION: f32 = 0.5;
     const MAX_VELOCITY: f32 = 2.0;
-    const FALLING_ACCELERATION: f32 = 0.1;
+    const FALLING_X_ACCELERATION: f32 = 0.1;
+    const GRAVITY_MAX: f32 = 2.5;
+    const GRAVITY_ACCELERATION: f32 = 0.8;
     const MAX_FALLING_VELOCITY: f32 = 0.8;
-    const JUMP_VELOCITY: i32 = 5;
+    const JUMP_ACCELERATION: f32 = 2.0;
+    const JUMP_VELOCITY: f32 = 5.0;
+    const JUMP_TIME: i32 = 9;
+    const COYOTE_THRESHOLD: i32 = 5;
     const DASH_VELOCITY: f32 = 8.0;
     const DASH_ACCELERATION: f32 = 1.2;
     const DASH_WAIT_TIME: i32 = 32;
@@ -1253,8 +1268,17 @@ impl Blutti {
         }
     }
 
+    fn is_idling(&self) -> bool {
+        match self.state {
+            PlayerState::Idle | PlayerState::ClimbingIdle => true,
+            _ => false,
+        }
+    }
+
     fn start_jump(&mut self) {
-        if self.is_standing() {
+        if self.is_standing()
+            || self.state == PlayerState::Falling && self.fall_timer < Self::COYOTE_THRESHOLD
+        {
             play_sound("sound_jump");
             self.state = PlayerState::Jumping;
             self.add_jump_animation();
@@ -1374,9 +1398,9 @@ impl Blutti {
         self.dash_timer = 0;
         self.fall_timer = 0;
         self.movement_modifier = 1.0;
+        self.target_velocity = 0.0;
         self.remainder = Vec2::zero();
         self.velocity = Vec2::zero();
-        self.target_velocity = 0.0;
         self.start_idling();
     }
 
