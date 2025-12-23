@@ -704,6 +704,7 @@ struct Blutti {
     jump_timer: i32,
     dash_timer: i32,
     fall_timer: i32,
+    jump_buffer_timer: i32,
     direction_x: DirectionX,
     direction_y: DirectionY,
     state: PlayerState,
@@ -731,6 +732,7 @@ impl Default for Blutti {
             jump_timer: 0,
             dash_timer: 0,
             fall_timer: 0,
+            jump_buffer_timer: 0,
             direction_x: DirectionX::Right,
             direction_y: DirectionY::Up,
             state: PlayerState::Idle,
@@ -787,6 +789,16 @@ impl Drawable for Blutti {
         textpos.y -= 8;
         display_text(
             str_format!(str32, "VY {:.2}", self.velocity.y).as_str(),
+            textpos,
+        );
+        textpos.y -= 8;
+        display_text(
+            str_format!(str32, "JB {:}", self.jump_buffer_timer).as_str(),
+            textpos,
+        );
+        textpos.y -= 8;
+        display_text(
+            str_format!(str32, "FT {:}", self.fall_timer).as_str(),
             textpos,
         );
         textpos.y -= 8;
@@ -1016,6 +1028,10 @@ impl Updateable for Blutti {
         }
 
         // Update states
+        if self.is_standing() && self.jump_buffer_timer > 0 {
+            log_debug("buffer jump!");
+            self.jump();
+        }
         let on_ladder = self.is_on_ladder();
         if self.velocity.is_zero() && !self.is_idling() && self.state != PlayerState::Jumping
             || self.is_climbing() && !on_ladder
@@ -1024,7 +1040,6 @@ impl Updateable for Blutti {
             log_debug(str_format!(str32, "stop movement from {:?}", self.state).as_str());
             self.stop_movement();
         }
-
         if self.is_standing() {
             // Death from fall height
             if self.fall_timer > Self::MAX_FALL_HEIGHT {
@@ -1042,6 +1057,10 @@ impl Updateable for Blutti {
         // Death from falling out of screen
         if self.position.y >= (HEIGHT - TILE_HEIGHT) {
             self.die();
+        }
+        match self.state {
+            PlayerState::Falling | PlayerState::Jumping => self.jump_buffer_timer -= 1,
+            _ => (),
         }
 
         /*
@@ -1137,6 +1156,7 @@ impl Blutti {
     const JUMP_ACCELERATION: f32 = 2.0;
     const JUMP_VELOCITY: f32 = 5.0;
     const JUMP_TIME: i32 = 9;
+    const JUMP_BUFFER: i32 = 2;
     const COYOTE_THRESHOLD: i32 = 5;
     const DASH_VELOCITY: f32 = 8.0;
     const DASH_ACCELERATION: f32 = 1.2;
@@ -1279,10 +1299,18 @@ impl Blutti {
         if self.is_standing()
             || self.state == PlayerState::Falling && self.fall_timer < Self::COYOTE_THRESHOLD
         {
-            play_sound("sound_jump");
-            self.state = PlayerState::Jumping;
-            self.add_jump_animation();
+            self.jump();
+        } else {
+            log_debug("jump bufferering");
+            self.jump_buffer_timer = Self::JUMP_BUFFER;
         }
+    }
+
+    fn jump(&mut self) {
+        play_sound("sound_jump");
+        self.state = PlayerState::Jumping;
+        self.jump_buffer_timer = 0;
+        self.add_jump_animation();
     }
 
     fn start_dash(&mut self) {
