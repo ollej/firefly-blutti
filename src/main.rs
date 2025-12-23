@@ -703,6 +703,7 @@ struct Blutti {
     state: PlayerState,
     velocity: Vec2,
     remainder: Vec2,
+    movement_modifier: f32,
     points: i32,
     stars: i32,
     lives: i32,
@@ -728,6 +729,7 @@ impl Default for Blutti {
             state: PlayerState::Idle,
             velocity: Vec2::zero(),
             remainder: Vec2::zero(),
+            movement_modifier: 1.0,
             points: 0,
             stars: 0,
             lives: 3,
@@ -777,6 +779,16 @@ impl Drawable for Blutti {
         textpos.y -= 8;
         display_text(
             str_format!(str32, "VY {:.2}", self.velocity.y).as_str(),
+            textpos,
+        );
+        textpos.y -= 8;
+        display_text(
+            str_format!(str32, "CanClimb {}", self.can_climb()).as_str(),
+            textpos,
+        );
+        textpos.y -= 8;
+        display_text(
+            str_format!(str32, "Climbing {}", self.is_climbing()).as_str(),
             textpos,
         );
     }
@@ -838,7 +850,8 @@ impl Updateable for Blutti {
     fn update(&mut self) {
         self.animation.update();
 
-        let (acceleration, target_velocity) = match self.state {
+        // Horizontal movement
+        let (mut acceleration, mut target_velocity) = match self.state {
             PlayerState::Running => (0.5, Self::MAX_VELOCITY),
             PlayerState::Jumping => (0.0, 0.0),
             PlayerState::Dashing => (1.2, Self::MAX_VELOCITY),
@@ -850,6 +863,8 @@ impl Updateable for Blutti {
             | PlayerState::Idle
             | PlayerState::ClimbingIdle => (0.0, 0.0),
         };
+        acceleration *= self.movement_modifier;
+        target_velocity *= self.movement_modifier;
 
         match self.state {
             PlayerState::StopRunning | PlayerState::ClimbingSidewaysStop => {
@@ -868,9 +883,11 @@ impl Updateable for Blutti {
             }
         }
 
+        // Vertical movement
+
         // pos += vel * dt + 1/2*dt*dt
         // Vel += acc*dt
-        let (acceleration, target_velocity) = match self.state {
+        let (mut acceleration, mut target_velocity) = match self.state {
             PlayerState::Jumping => (1.0, 2.0),
             PlayerState::Climbing => (0.4, 1.0),
             PlayerState::ClimbingStop => (0.2, 0.0),
@@ -880,6 +897,8 @@ impl Updateable for Blutti {
             PlayerState::Dashing => (0.0, 0.0),
             _ => (0.8, 2.5), // Gravity
         };
+        acceleration *= self.movement_modifier;
+        target_velocity *= self.movement_modifier;
 
         match self.state {
             PlayerState::Jumping => {
@@ -887,6 +906,15 @@ impl Updateable for Blutti {
                 // TODO: double gravity after apex
             }
             PlayerState::Climbing => {
+                log_debug(
+                    str_format!(
+                        str32,
+                        "climbing accel: {} target_velocity: {}",
+                        acceleration,
+                        target_velocity
+                    )
+                    .as_str(),
+                );
                 if self.direction_y == DirectionY::Up {
                     self.velocity.y = (self.velocity.y - acceleration).max(-target_velocity);
                 } else {
@@ -1084,11 +1112,8 @@ impl Blutti {
         }
     }
 
-    fn toggle_debug(&mut self) {
-        self.debug = !self.debug
-    }
-
-    fn move_left(&mut self, speed: i32) {
+    fn move_left(&mut self, speed: f32) {
+        self.movement_modifier = speed;
         // Change direction
         if self.direction_x != DirectionX::Left {
             self.direction_x = DirectionX::Left;
@@ -1098,7 +1123,8 @@ impl Blutti {
         self.start_running();
     }
 
-    fn move_right(&mut self, speed: i32) {
+    fn move_right(&mut self, speed: f32) {
+        self.movement_modifier = speed;
         // Change direction
         if self.direction_x != DirectionX::Right {
             self.direction_x = DirectionX::Right;
@@ -1108,7 +1134,8 @@ impl Blutti {
         self.start_running();
     }
 
-    fn move_up(&mut self, speed: i32) {
+    fn move_up(&mut self, speed: f32) {
+        self.movement_modifier = speed;
         // Change direction
         if self.direction_y != DirectionY::Up {
             self.direction_y = DirectionY::Up;
@@ -1117,7 +1144,8 @@ impl Blutti {
         self.start_climbing();
     }
 
-    fn move_down(&mut self, speed: i32) {
+    fn move_down(&mut self, speed: f32) {
+        self.movement_modifier = speed;
         // Change direction
         if self.direction_y != DirectionY::Down {
             self.direction_y = DirectionY::Down;
@@ -1160,7 +1188,7 @@ impl Blutti {
                 self.add_climbing_animation();
             }
             self.state = PlayerState::Climbing;
-            //log_debug("start climbing");
+            log_debug("start climbing");
         }
     }
 
@@ -1310,16 +1338,12 @@ impl Blutti {
 
     fn can_climb(&self) -> bool {
         match self.direction_y {
-            DirectionY::Up => self.is_on_ladder_bottom(),
+            DirectionY::Up => self.is_on_ladder(),
             DirectionY::Down => self.is_on_ladder_below(),
         }
     }
 
     fn is_on_ladder(&self) -> bool {
-        self.is_on_ladder_bottom()
-    }
-
-    fn is_on_ladder_bottom(&self) -> bool {
         if self.direction_x == DirectionX::Left {
             self.collision(self.position.bottom_left()) == TileCollider::Climbable
                 || self.collision(self.position.bottom_right().addx(-3)) == TileCollider::Climbable
@@ -1968,15 +1992,11 @@ extern "C" fn update() {
                     state.blutti.move_up(axis_to_speed(pad.y));
                 } else if pad.y < -100 {
                     state.blutti.move_down(axis_to_speed(pad.y));
-                } else {
-                    state.blutti.start_idling();
                 }
                 if pad.x < -100 {
                     state.blutti.move_left(axis_to_speed(pad.x));
                 } else if pad.x > 100 {
                     state.blutti.move_right(axis_to_speed(pad.x));
-                } else {
-                    state.blutti.start_idling();
                 }
             } else {
                 state.blutti.stop();
@@ -2014,11 +2034,11 @@ extern "C" fn update() {
 }
 
 #[inline]
-fn axis_to_speed(x: i32) -> i32 {
+fn axis_to_speed(x: i32) -> f32 {
     if x.abs() > 400 {
-        2
+        1.0
     } else {
-        1
+        0.5
     }
 }
 
