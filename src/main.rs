@@ -680,6 +680,7 @@ enum PlayerState {
     ClimbingSideways,
     ClimbingSidewaysStop,
     ClimbingIdle,
+    Falling,
 }
 
 struct Vec2 {
@@ -872,6 +873,7 @@ impl Updateable for Blutti {
             | PlayerState::ClimbingStop
             | PlayerState::Idle
             | PlayerState::ClimbingIdle => (0.0, 0.0),
+            PlayerState::Falling => (0.0, 0.0),
         };
         acceleration *= self.movement_modifier;
         target_velocity *= self.movement_modifier;
@@ -903,9 +905,12 @@ impl Updateable for Blutti {
             PlayerState::ClimbingStop => (0.2, 0.0),
             PlayerState::ClimbingIdle
             | PlayerState::ClimbingSideways
-            | PlayerState::ClimbingSidewaysStop => (0.0, 0.0),
-            PlayerState::Dashing => (0.0, 0.0),
-            _ => (0.8, 2.5), // Gravity
+            | PlayerState::ClimbingSidewaysStop
+            | PlayerState::Dashing
+            | PlayerState::Running
+            | PlayerState::StopRunning
+            | PlayerState::Idle => (0.0, 0.0),
+            PlayerState::Falling => (0.8, 2.5), // Gravity
         };
         acceleration *= self.movement_modifier;
         target_velocity *= self.movement_modifier;
@@ -997,12 +1002,30 @@ impl Updateable for Blutti {
             }
         }
 
+        // Update states
         let on_ladder = self.is_on_ladder();
         if self.velocity.is_zero()
             || self.is_climbing() && !on_ladder
             || self.state == PlayerState::Idle && on_ladder
         {
             self.start_idling();
+        }
+
+        if self.state == PlayerState::Falling {
+            self.fall_timer += 1;
+        }
+        if self.is_standing() {
+            // Death from fall height
+            if self.fall_timer > Self::MAX_FALL_HEIGHT {
+                self.die();
+            }
+            self.fall_timer = 0;
+        } else {
+            self.state = PlayerState::Falling
+        }
+        // Death from falling out of screen
+        if self.position.y >= (HEIGHT - TILE_HEIGHT) {
+            self.die();
         }
 
         /*
