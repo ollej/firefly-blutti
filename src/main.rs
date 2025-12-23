@@ -538,6 +538,7 @@ enum GameState {
 
 trait Drawable {
     fn draw(&self);
+    fn draw_debug(&self);
 }
 
 trait Updateable {
@@ -614,7 +615,7 @@ trait Updateable {
     }
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 enum Direction {
     Left,
     Right,
@@ -638,6 +639,7 @@ struct Blutti {
     current_level: i32,
     current_tile: i32,
     animation: Animation,
+    debug: bool,
 }
 
 impl Default for Blutti {
@@ -660,6 +662,7 @@ impl Default for Blutti {
             current_level: 1,
             current_tile: 0,
             animation: Animation::animation_idle_right(),
+            debug: false,
         }
     }
 }
@@ -670,6 +673,39 @@ impl Drawable for Blutti {
             let tile = self.animation.current_sprite();
             draw_tile(tile, self.position());
         }
+
+        // Player debug
+        if self.debug {
+            self.draw_debug();
+        }
+    }
+
+    fn draw_debug(&self) {
+        let mut textpos = self.position().clone();
+        //textpos.y -= 4;
+        //display_text(str_format!(str32, "{:?}", self.state).as_str(), textpos);
+        textpos.y -= 4;
+        display_text(
+            str_format!(str32, "Y {}", self.position().y).as_str(),
+            textpos,
+        );
+        textpos.y -= 8;
+        display_text(
+            str_format!(str32, "X {}", self.position().x).as_str(),
+            textpos,
+        );
+        /*
+        textpos.y -= 8;
+        display_text(
+            str_format!(str32, "VY {}", self.movement_y).as_str(),
+            textpos,
+        );
+        textpos.y -= 8;
+        display_text(
+            str_format!(str32, "VX {}", self.movement_x).as_str(),
+            textpos,
+        );
+        */
     }
 }
 
@@ -792,6 +828,10 @@ impl Blutti {
             current_level,
             ..Blutti::default()
         }
+    }
+
+    fn toggle_debug(&mut self) {
+        self.debug = !self.debug
     }
 
     fn move_left(&mut self, speed: i32) {
@@ -1119,6 +1159,8 @@ impl Drawable for Particle {
     fn draw(&self) {
         draw_tile(self.animation.current_sprite(), self.position);
     }
+
+    fn draw_debug(&self) {}
 }
 
 #[derive(Clone, Debug, Deserialize, Default)]
@@ -1170,6 +1212,8 @@ impl Drawable for Monster {
     fn draw(&self) {
         draw_tile(self.animation.current_sprite(), self.position());
     }
+
+    fn draw_debug(&self) {}
 }
 
 impl Updateable for Monster {
@@ -1593,6 +1637,9 @@ extern "C" fn update() {
             }
             if just_pressed.w {
                 state.blutti.start_dash();
+            }
+            if just_pressed.e {
+                state.blutti.toggle_debug();
             }
             state.blutti.update();
             state.level.update();
