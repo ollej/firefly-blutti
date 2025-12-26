@@ -948,19 +948,17 @@ impl Updateable for Blutti {
             PlayerState::JumpingStop => {
                 self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
             }
+            PlayerState::Climbing if self.direction_y == DirectionY::Up => {
+                self.velocity.y = (self.velocity.y - acceleration).max(-target_velocity);
+            }
             PlayerState::Climbing => {
-                if self.direction_y == DirectionY::Up {
-                    self.velocity.y = (self.velocity.y - acceleration).max(-target_velocity);
-                } else {
-                    self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
-                }
+                self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
+            }
+            PlayerState::ClimbingStop if self.direction_y == DirectionY::Up => {
+                self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
             }
             PlayerState::ClimbingStop => {
-                if self.direction_y == DirectionY::Up {
-                    self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
-                } else {
-                    self.velocity.y = (self.velocity.y - acceleration).max(target_velocity);
-                }
+                self.velocity.y = (self.velocity.y - acceleration).max(target_velocity);
             }
             PlayerState::Idle
             | PlayerState::Dashing
@@ -974,8 +972,6 @@ impl Updateable for Blutti {
             PlayerState::Falling => {
                 // Gravity
                 self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
-                self.fall_timer += 1;
-                self.target_velocity = 0.0;
             }
         }
 
@@ -1032,6 +1028,10 @@ impl Updateable for Blutti {
         }
 
         // Update states
+        if self.state == PlayerState::Falling {
+            self.fall_timer += 1;
+            self.target_velocity = 0.0;
+        }
         if self.is_standing() && self.jump_buffer_timer > 0 {
             //log_debug("buffer jump!");
             self.jump();
@@ -1319,7 +1319,7 @@ impl Blutti {
         {
             self.jump();
         } else {
-            log_debug("jump bufferering");
+            //log_debug("jump bufferering");
             self.jump_buffer_timer = Self::JUMP_BUFFER;
         }
     }
