@@ -708,6 +708,7 @@ struct Blutti {
     jump_timer: i32,
     dash_timer: i32,
     fall_timer: i32,
+    jump_max_time: i32,
     jump_buffer_timer: i32,
     direction_x: DirectionX,
     direction_y: DirectionY,
@@ -736,6 +737,7 @@ impl Default for Blutti {
             jump_timer: 0,
             dash_timer: 0,
             fall_timer: 0,
+            jump_max_time: 0,
             jump_buffer_timer: 0,
             direction_x: DirectionX::Right,
             direction_y: DirectionY::Up,
@@ -1073,7 +1075,7 @@ impl Updateable for Blutti {
         }
         if self.state == PlayerState::Jumping {
             self.jump_timer += 1;
-            if self.jump_timer > Self::JUMP_TIME {
+            if self.jump_timer > self.jump_max_time {
                 self.state = PlayerState::JumpingStop;
             }
         }
@@ -1289,6 +1291,10 @@ impl Blutti {
     }
 
     fn stop(&mut self) {
+        if self.is_standing_on(TileCollider::Slippery) {
+            return;
+        }
+
         match self.state {
             PlayerState::Running => self.state = PlayerState::RunningStop,
             PlayerState::Climbing => self.state = PlayerState::ClimbingStop,
@@ -1375,6 +1381,12 @@ impl Blutti {
     fn jump(&mut self) {
         play_sound("sound_jump");
         self.state = PlayerState::Jumping;
+        // Jumping when on slippery will decrease jump height
+        self.jump_max_time = if self.is_standing_on(TileCollider::Slippery) {
+            Self::JUMP_TIME / 2
+        } else {
+            Self::JUMP_TIME
+        };
         self.jump_buffer_timer = 0;
         self.add_jump_animation();
     }
