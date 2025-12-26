@@ -1033,7 +1033,7 @@ impl Updateable for Blutti {
 
         // Update states
         if self.is_standing() && self.jump_buffer_timer > 0 {
-            log_debug("buffer jump!");
+            //log_debug("buffer jump!");
             self.jump();
         }
         let on_ladder = self.is_on_ladder();
@@ -1041,7 +1041,7 @@ impl Updateable for Blutti {
             || self.is_climbing() && !on_ladder
             || self.state == PlayerState::Idle && on_ladder
         {
-            log_debug(str_format!(str32, "stop movement from {:?}", self.state).as_str());
+            //log_debug(str_format!(str32, "stop movement from {:?}", self.state).as_str());
             self.stop_movement();
         }
         if self.is_standing() {
@@ -1057,7 +1057,7 @@ impl Updateable for Blutti {
                 | PlayerState::Dashing
                 | PlayerState::Falling => (),
                 _ => {
-                    log_debug(str_format!(str32, "state {:?} > Falling", self.state).as_str());
+                    //log_debug(str_format!(str32, "state {:?} > Falling", self.state).as_str());
                     self.state = PlayerState::Falling
                 }
             }
@@ -1071,7 +1071,7 @@ impl Updateable for Blutti {
         if self.state == PlayerState::JumpingStop {
             self.jump_timer -= 1;
             if self.jump_timer <= 0 {
-                log_debug(str_format!(str32, "jump > falling timer:{}", self.jump_timer).as_str());
+                //log_debug(str_format!(str32, "jump > falling timer:{}", self.jump_timer).as_str());
                 self.state = PlayerState::Falling
             }
         }
@@ -1087,14 +1087,14 @@ impl Updateable for Blutti {
         }
         if self.state == PlayerState::Dashing {
             self.dash_timer -= 1;
-            log_debug(str_format!(str32, "dash_timer: {}", self.dash_timer).as_str());
+            //log_debug(str_format!(str32, "dash_timer: {}", self.dash_timer).as_str());
             if self.dash_timer == 0 {
-                log_debug("stop dashing");
+                //log_debug("stop dashing");
                 self.stop_movement();
                 self.dash_timer = -Self::DASH_WAIT_TIME;
             }
         } else if self.dash_timer < 0 {
-            log_debug(str_format!(str32, "increasing dash_timer: {}", self.dash_timer).as_str());
+            //log_debug(str_format!(str32, "increasing dash_timer: {}", self.dash_timer).as_str());
             self.dash_timer += 1;
         }
 
@@ -1331,12 +1331,18 @@ impl Blutti {
     }
 
     fn start_dash(&mut self) {
-        if self.is_jumping() && self.dash_timer >= 0 {
-            log_debug("start dashing");
-            self.state = PlayerState::Dashing;
-            self.dash_timer = Self::DASH_TIME;
-            self.add_dash_animation();
-            play_sound("sound_dash");
+        if self.dash_timer < 0 {
+            return;
+        }
+        match self.state {
+            PlayerState::Jumping | PlayerState::JumpingStop | PlayerState::Falling => {
+                //log_debug("start dashing");
+                self.state = PlayerState::Dashing;
+                self.dash_timer = Self::DASH_TIME;
+                self.add_dash_animation();
+                play_sound("sound_dash");
+            }
+            _ => (),
         }
     }
 
