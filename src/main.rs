@@ -402,7 +402,10 @@ impl PointMath for Point {
     }
 
     fn is_in_screen(&self) -> bool {
-        self.x >= 0 && self.x < WIDTH && self.y >= 0 && self.y < HEIGHT
+        self.x >= 0
+            && self.x <= (WIDTH - TILE_WIDTH)
+            && self.y >= 0
+            && self.y <= (HEIGHT - TILE_HEIGHT)
     }
 }
 
@@ -770,6 +773,7 @@ impl Drawable for Blutti {
 
     fn draw_debug(&self) {
         let mut textpos = self.position().clone();
+        textpos.x = textpos.x.min(192);
         textpos.y -= 4;
         display_text(str_format!(str32, "{:?}", self.state).as_str(), textpos);
         textpos.y -= 8;
@@ -800,6 +804,11 @@ impl Drawable for Blutti {
         textpos.y -= 8;
         display_text(
             str_format!(str32, "FT {:}", self.fall_timer).as_str(),
+            textpos,
+        );
+        textpos.y -= 8;
+        display_text(
+            str_format!(str32, "DT {:}", self.dash_timer).as_str(),
             textpos,
         );
         textpos.y -= 8;
@@ -954,6 +963,7 @@ impl Updateable for Blutti {
                 }
             }
             PlayerState::Idle
+            | PlayerState::Dashing
             | PlayerState::Running
             | PlayerState::RunningStop
             | PlayerState::ClimbingIdle
@@ -961,7 +971,6 @@ impl Updateable for Blutti {
             | PlayerState::ClimbingSidewaysStop => {
                 self.velocity.y = 0.0;
             }
-            PlayerState::Dashing => (),
             PlayerState::Falling => {
                 // Gravity
                 self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
@@ -1041,9 +1050,17 @@ impl Updateable for Blutti {
                 self.die();
             }
             self.fall_timer = 0;
-        } else if !self.is_jumping() && self.state != PlayerState::Falling {
-            log_debug(str_format!(str32, "state {:?} > Falling", self.state).as_str());
-            self.state = PlayerState::Falling
+        } else {
+            match self.state {
+                PlayerState::Jumping
+                | PlayerState::JumpingStop
+                | PlayerState::Dashing
+                | PlayerState::Falling => (),
+                _ => {
+                    log_debug(str_format!(str32, "state {:?} > Falling", self.state).as_str());
+                    self.state = PlayerState::Falling
+                }
+            }
         }
         if self.state == PlayerState::Jumping {
             self.jump_timer += 1;
@@ -1067,6 +1084,18 @@ impl Updateable for Blutti {
                 self.jump_buffer_timer -= 1
             }
             _ => (),
+        }
+        if self.state == PlayerState::Dashing {
+            self.dash_timer -= 1;
+            log_debug(str_format!(str32, "dash_timer: {}", self.dash_timer).as_str());
+            if self.dash_timer == 0 {
+                log_debug("stop dashing");
+                self.stop_movement();
+                self.dash_timer = -Self::DASH_WAIT_TIME;
+            }
+        } else if self.dash_timer < 0 {
+            log_debug(str_format!(str32, "increasing dash_timer: {}", self.dash_timer).as_str());
+            self.dash_timer += 1;
         }
 
         /*
@@ -1166,6 +1195,7 @@ impl Blutti {
     const COYOTE_THRESHOLD: i32 = 5;
     const DASH_VELOCITY: f32 = 8.0;
     const DASH_ACCELERATION: f32 = 1.2;
+    const DASH_TIME: i32 = 8;
     const DASH_WAIT_TIME: i32 = 32;
     const CONVEYOR_SPEED: i32 = 2;
     const GRAVITY: i32 = 2;
@@ -1301,8 +1331,10 @@ impl Blutti {
     }
 
     fn start_dash(&mut self) {
-        if self.state == PlayerState::Jumping {
+        if self.is_jumping() && self.dash_timer >= 0 {
+            log_debug("start dashing");
             self.state = PlayerState::Dashing;
+            self.dash_timer = Self::DASH_TIME;
             self.add_dash_animation();
             play_sound("sound_dash");
         }
