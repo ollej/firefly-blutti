@@ -904,10 +904,19 @@ impl Updateable for Blutti {
         acceleration *= self.movement_modifier;
         target_velocity *= self.movement_modifier;
 
+        if self.is_standing_on(TileCollider::Conveyor) {
+            acceleration -= Self::CONVEYOR_ACCELERATION;
+            if self.direction_x == DirectionX::Left {
+                target_velocity -= Self::CONVEYOR_SPEED;
+            } else {
+                target_velocity += Self::CONVEYOR_SPEED;
+            }
+        }
+
         match self.state {
             PlayerState::RunningStop | PlayerState::ClimbingSidewaysStop => {
                 if self.direction_x == DirectionX::Left {
-                    self.velocity.x = (self.velocity.x + acceleration).min(target_velocity);
+                    self.velocity.x = (self.velocity.x + acceleration).min(-target_velocity);
                 } else {
                     self.velocity.x = (self.velocity.x - acceleration).max(target_velocity);
                 }
@@ -955,7 +964,7 @@ impl Updateable for Blutti {
                 self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
             }
             PlayerState::ClimbingStop if self.direction_y == DirectionY::Up => {
-                self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
+                self.velocity.y = (self.velocity.y + acceleration).min(-target_velocity);
             }
             PlayerState::ClimbingStop => {
                 self.velocity.y = (self.velocity.y - acceleration).max(target_velocity);
@@ -1199,7 +1208,8 @@ impl Blutti {
     const DASH_ACCELERATION: f32 = 1.2;
     const DASH_TIME: i32 = 8;
     const DASH_WAIT_TIME: i32 = 32;
-    const CONVEYOR_SPEED: i32 = 2;
+    const CONVEYOR_ACCELERATION: f32 = 0.2;
+    const CONVEYOR_SPEED: f32 = 2.0;
     const GRAVITY: i32 = 2;
     const MAX_FALL_HEIGHT: i32 = 30;
     const START_POSITION: Point = Point {
