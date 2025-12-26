@@ -672,9 +672,10 @@ enum DirectionY {
 enum PlayerState {
     Idle,
     Jumping,
+    JumpingStop,
     Dashing,
     Running,
-    StopRunning,
+    RunningStop,
     Climbing,
     ClimbingStop,
     ClimbingSideways,
@@ -878,9 +879,11 @@ impl Updateable for Blutti {
         // Horizontal movement
         let (mut acceleration, mut target_velocity) = match self.state {
             PlayerState::Running => (Self::RUNNING_ACCELERATION, self.target_velocity),
-            PlayerState::Jumping => (Self::RUNNING_ACCELERATION, self.target_velocity),
+            PlayerState::Jumping | PlayerState::JumpingStop => {
+                (Self::RUNNING_ACCELERATION, self.target_velocity)
+            }
             PlayerState::Dashing => (Self::DASH_ACCELERATION, Self::DASH_VELOCITY),
-            PlayerState::StopRunning => (0.3, 0.0),
+            PlayerState::RunningStop => (0.3, 0.0),
             PlayerState::ClimbingSideways => (0.3, 1.5),
             PlayerState::ClimbingSidewaysStop => (0.3, 0.0),
             PlayerState::Climbing
@@ -893,7 +896,7 @@ impl Updateable for Blutti {
         target_velocity *= self.movement_modifier;
 
         match self.state {
-            PlayerState::StopRunning | PlayerState::ClimbingSidewaysStop => {
+            PlayerState::RunningStop | PlayerState::ClimbingSidewaysStop => {
                 if self.direction_x == DirectionX::Left {
                     self.velocity.x = (self.velocity.x + acceleration).min(target_velocity);
                 } else {
@@ -911,13 +914,8 @@ impl Updateable for Blutti {
 
         // Vertical movement
         let (mut acceleration, mut target_velocity) = match self.state {
-            PlayerState::Jumping => {
-                if self.jump_timer > Self::JUMP_TIME {
-                    (2.0, 5.0)
-                } else {
-                    (-1.5, -2.0)
-                }
-            }
+            PlayerState::Jumping => (-1.5, -2.0),
+            PlayerState::JumpingStop => (2.0, 5.0),
             PlayerState::Climbing => (0.4, 1.0),
             PlayerState::ClimbingStop => (0.2, 0.0),
             PlayerState::ClimbingIdle
@@ -925,7 +923,7 @@ impl Updateable for Blutti {
             | PlayerState::ClimbingSidewaysStop
             | PlayerState::Dashing
             | PlayerState::Running
-            | PlayerState::StopRunning
+            | PlayerState::RunningStop
             | PlayerState::Idle => (0.0, 0.0),
             PlayerState::Falling => (Self::GRAVITY_ACCELERATION, Self::GRAVITY_MAX), // Gravity
         };
@@ -936,13 +934,10 @@ impl Updateable for Blutti {
             PlayerState::Jumping => {
                 // pos += vel * dt + 1/2*dt*dt
                 // Vel += acc*dt
-                if acceleration < 0.0 {
-                    self.velocity.y = (self.velocity.y + acceleration).max(target_velocity);
-                } else {
-                    self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
-                }
-                // TODO: double gravity after apex
-                self.jump_timer += 1;
+                self.velocity.y = (self.velocity.y + acceleration).max(target_velocity);
+            }
+            PlayerState::JumpingStop => {
+                self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
             }
             PlayerState::Climbing => {
                 if self.direction_y == DirectionY::Up {
@@ -960,7 +955,7 @@ impl Updateable for Blutti {
             }
             PlayerState::Idle
             | PlayerState::Running
-            | PlayerState::StopRunning
+            | PlayerState::RunningStop
             | PlayerState::ClimbingIdle
             | PlayerState::ClimbingSideways
             | PlayerState::ClimbingSidewaysStop => {
@@ -1033,7 +1028,7 @@ impl Updateable for Blutti {
             self.jump();
         }
         let on_ladder = self.is_on_ladder();
-        if self.velocity.is_zero() && !self.is_idling() && self.state != PlayerState::Jumping
+        if self.velocity.is_zero() && !self.is_idling() && !self.is_jumping()
             || self.is_climbing() && !on_ladder
             || self.state == PlayerState::Idle && on_ladder
         {
@@ -1046,20 +1041,31 @@ impl Updateable for Blutti {
                 self.die();
             }
             self.fall_timer = 0;
-        } else if self.state != PlayerState::Jumping && self.state != PlayerState::Falling {
+        } else if !self.is_jumping() && self.state != PlayerState::Falling {
             log_debug(str_format!(str32, "state {:?} > Falling", self.state).as_str());
             self.state = PlayerState::Falling
         }
-        if self.state == PlayerState::Jumping && self.jump_timer > Self::JUMP_TIME * 2 {
-            log_debug(str_format!(str32, "jump > falling timer:{}", self.jump_timer).as_str());
-            self.state = PlayerState::Falling
+        if self.state == PlayerState::Jumping {
+            self.jump_timer += 1;
+            if self.jump_timer > Self::JUMP_TIME {
+                self.state = PlayerState::JumpingStop;
+            }
+        }
+        if self.state == PlayerState::JumpingStop {
+            self.jump_timer -= 1;
+            if self.jump_timer <= 0 {
+                log_debug(str_format!(str32, "jump > falling timer:{}", self.jump_timer).as_str());
+                self.state = PlayerState::Falling
+            }
         }
         // Death from falling out of screen
         if self.position.y >= (HEIGHT - TILE_HEIGHT) {
             self.die();
         }
         match self.state {
-            PlayerState::Falling | PlayerState::Jumping => self.jump_buffer_timer -= 1,
+            PlayerState::Falling | PlayerState::Jumping | PlayerState::JumpingStop => {
+                self.jump_buffer_timer -= 1
+            }
             _ => (),
         }
 
@@ -1242,7 +1248,7 @@ impl Blutti {
 
     fn stop(&mut self) {
         match self.state {
-            PlayerState::Running => self.state = PlayerState::StopRunning,
+            PlayerState::Running => self.state = PlayerState::RunningStop,
             PlayerState::Climbing => self.state = PlayerState::ClimbingStop,
             PlayerState::ClimbingSideways => self.state = PlayerState::ClimbingSidewaysStop,
             _ => (),
@@ -1277,24 +1283,6 @@ impl Blutti {
         }
     }
 
-    fn is_climbing(&self) -> bool {
-        match self.state {
-            PlayerState::Climbing
-            | PlayerState::ClimbingStop
-            | PlayerState::ClimbingIdle
-            | PlayerState::ClimbingSideways
-            | PlayerState::ClimbingSidewaysStop => true,
-            _ => false,
-        }
-    }
-
-    fn is_idling(&self) -> bool {
-        match self.state {
-            PlayerState::Idle | PlayerState::ClimbingIdle => true,
-            _ => false,
-        }
-    }
-
     fn start_jump(&mut self) {
         if self.is_standing()
             || self.state == PlayerState::Falling && self.fall_timer < Self::COYOTE_THRESHOLD
@@ -1306,11 +1294,10 @@ impl Blutti {
         }
     }
 
-    fn jump(&mut self) {
-        play_sound("sound_jump");
-        self.state = PlayerState::Jumping;
-        self.jump_buffer_timer = 0;
-        self.add_jump_animation();
+    fn stop_jump(&mut self) {
+        if self.state == PlayerState::Jumping {
+            self.state = PlayerState::JumpingStop
+        }
     }
 
     fn start_dash(&mut self) {
@@ -1332,6 +1319,38 @@ impl Blutti {
                 self.state = PlayerState::Idle;
                 self.add_idle_animation();
             }
+        }
+    }
+
+    fn jump(&mut self) {
+        play_sound("sound_jump");
+        self.state = PlayerState::Jumping;
+        self.jump_buffer_timer = 0;
+        self.add_jump_animation();
+    }
+
+    fn is_climbing(&self) -> bool {
+        match self.state {
+            PlayerState::Climbing
+            | PlayerState::ClimbingStop
+            | PlayerState::ClimbingIdle
+            | PlayerState::ClimbingSideways
+            | PlayerState::ClimbingSidewaysStop => true,
+            _ => false,
+        }
+    }
+
+    fn is_idling(&self) -> bool {
+        match self.state {
+            PlayerState::Idle | PlayerState::ClimbingIdle => true,
+            _ => false,
+        }
+    }
+
+    fn is_jumping(&self) -> bool {
+        match self.state {
+            PlayerState::Jumping | PlayerState::JumpingStop => true,
+            _ => false,
         }
     }
 
@@ -2066,6 +2085,7 @@ extern "C" fn update() {
     let state = get_state();
     let buttons = read_buttons(Peer::COMBINED);
     let just_pressed = buttons.just_pressed(&state.buttons);
+    let just_released = buttons.just_released(&state.buttons);
     state.buttons = buttons;
 
     match state.game_state {
@@ -2109,6 +2129,9 @@ extern "C" fn update() {
             }
             if just_pressed.s {
                 state.blutti.start_jump();
+            }
+            if just_released.s {
+                state.blutti.stop_jump();
             }
             if just_pressed.w {
                 state.blutti.start_dash();
