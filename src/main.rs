@@ -1090,7 +1090,9 @@ impl Updateable for Blutti {
             //log_debug(str_format!(str32, "dash_timer: {}", self.dash_timer).as_str());
             if self.dash_timer == 0 {
                 //log_debug("stop dashing");
+                let ft = self.fall_timer;
                 self.stop_movement();
+                self.fall_timer = ft;
                 self.dash_timer = -Self::DASH_WAIT_TIME;
             }
         } else if self.dash_timer < 0 {
