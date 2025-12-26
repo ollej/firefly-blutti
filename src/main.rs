@@ -716,7 +716,6 @@ struct Blutti {
     velocity: Vec2,
     remainder: Vec2,
     movement_modifier: f32,
-    target_velocity: f32,
     points: i32,
     stars: i32,
     lives: i32,
@@ -745,7 +744,6 @@ impl Default for Blutti {
             velocity: Vec2::zero(),
             remainder: Vec2::zero(),
             movement_modifier: 1.0,
-            target_velocity: 0.0,
             points: 0,
             stars: 0,
             lives: 3,
@@ -889,10 +887,11 @@ impl Updateable for Blutti {
 
         // Horizontal movement
         let (mut acceleration, mut target_velocity) = match self.state {
-            PlayerState::Running => (Self::RUNNING_ACCELERATION, self.target_velocity),
-            PlayerState::Jumping | PlayerState::JumpingStop => {
-                (Self::RUNNING_ACCELERATION, self.target_velocity)
+            PlayerState::Running => (Self::RUNNING_ACCELERATION, Self::MAX_VELOCITY),
+            PlayerState::Jumping | PlayerState::JumpingStop if self.velocity.x != 0.0 => {
+                (Self::JUMP_ACCELERATION, Self::JUMP_VELOCITY)
             }
+            PlayerState::Jumping | PlayerState::JumpingStop => (0.0, 0.0),
             PlayerState::Dashing => (Self::DASH_ACCELERATION, Self::DASH_VELOCITY),
             PlayerState::RunningStop => (0.3, 0.0),
             PlayerState::ClimbingSideways => (0.3, 1.5),
@@ -901,7 +900,7 @@ impl Updateable for Blutti {
             | PlayerState::ClimbingStop
             | PlayerState::Idle
             | PlayerState::ClimbingIdle => (0.0, 0.0),
-            PlayerState::Falling => (Self::FALLING_X_ACCELERATION, self.target_velocity),
+            PlayerState::Falling => (Self::FALLING_X_ACCELERATION, Self::MAX_FALLING_VELOCITY),
         };
         acceleration *= self.movement_modifier;
         target_velocity *= self.movement_modifier;
@@ -1041,7 +1040,6 @@ impl Updateable for Blutti {
         // Update states
         if self.state == PlayerState::Falling {
             self.fall_timer += 1;
-            self.target_velocity = 0.0;
         }
         if self.is_standing() && self.jump_buffer_timer > 0 {
             //log_debug("buffer jump!");
@@ -1120,8 +1118,8 @@ impl Blutti {
     const GRAVITY_MAX: f32 = 2.5;
     const GRAVITY_ACCELERATION: f32 = 0.8;
     const MAX_FALLING_VELOCITY: f32 = 0.8;
-    const JUMP_ACCELERATION: f32 = 2.0;
-    const JUMP_VELOCITY: f32 = 5.0;
+    const JUMP_ACCELERATION: f32 = 0.6;
+    const JUMP_VELOCITY: f32 = 2.5;
     const JUMP_TIME: i32 = 9;
     const JUMP_BUFFER: i32 = 2;
     const COYOTE_THRESHOLD: i32 = 5;
@@ -1159,11 +1157,6 @@ impl Blutti {
 
     fn move_left(&mut self, speed: f32) {
         self.movement_modifier = speed;
-        if self.state == PlayerState::Falling {
-            self.target_velocity = Self::MAX_FALLING_VELOCITY;
-        } else {
-            self.target_velocity = Self::MAX_VELOCITY;
-        }
         // Change direction
         if self.direction_x != DirectionX::Left {
             self.direction_x = DirectionX::Left;
@@ -1175,11 +1168,6 @@ impl Blutti {
 
     fn move_right(&mut self, speed: f32) {
         self.movement_modifier = speed;
-        if self.state == PlayerState::Falling {
-            self.target_velocity = Self::MAX_FALLING_VELOCITY;
-        } else {
-            self.target_velocity = Self::MAX_VELOCITY;
-        }
         // Change direction
         if self.direction_x != DirectionX::Right {
             self.direction_x = DirectionX::Right;
@@ -1426,7 +1414,6 @@ impl Blutti {
         self.dash_timer = 0;
         self.fall_timer = 0;
         self.movement_modifier = 1.0;
-        self.target_velocity = 0.0;
         self.remainder = Vec2::zero();
         self.velocity = Vec2::zero();
         self.start_idling();
