@@ -886,104 +886,10 @@ impl Updateable for Blutti {
         self.animation.update();
 
         // Horizontal movement
-        let (mut acceleration, mut target_velocity) = match self.state {
-            PlayerState::Running => (Self::RUNNING_ACCELERATION, Self::MAX_VELOCITY),
-            PlayerState::Jumping | PlayerState::JumpingStop if self.velocity.x != 0.0 => {
-                (Self::JUMP_ACCELERATION, Self::JUMP_VELOCITY)
-            }
-            PlayerState::Jumping | PlayerState::JumpingStop => (0.0, 0.0),
-            PlayerState::Dashing => (Self::DASH_ACCELERATION, Self::DASH_VELOCITY),
-            PlayerState::RunningStop => (0.3, 0.0),
-            PlayerState::ClimbingSideways => (0.3, 1.5),
-            PlayerState::ClimbingSidewaysStop => (0.3, 0.0),
-            PlayerState::Climbing
-            | PlayerState::ClimbingStop
-            | PlayerState::Idle
-            | PlayerState::ClimbingIdle => (0.0, 0.0),
-            PlayerState::Falling => (Self::FALLING_X_ACCELERATION, Self::MAX_FALLING_VELOCITY),
-        };
-        acceleration *= self.movement_modifier;
-        target_velocity *= self.movement_modifier;
-
-        if self.is_standing_on(TileCollider::Conveyor) {
-            acceleration -= Self::CONVEYOR_ACCELERATION;
-            if self.direction_x == DirectionX::Left {
-                target_velocity -= Self::CONVEYOR_SPEED;
-            } else {
-                target_velocity += Self::CONVEYOR_SPEED;
-            }
-        }
-
-        match self.state {
-            PlayerState::RunningStop | PlayerState::ClimbingSidewaysStop => {
-                if self.direction_x == DirectionX::Left {
-                    self.velocity.x = (self.velocity.x + acceleration).min(-target_velocity);
-                } else {
-                    self.velocity.x = (self.velocity.x - acceleration).max(target_velocity);
-                }
-            }
-            _ => {
-                if self.direction_x == DirectionX::Left {
-                    self.velocity.x = (self.velocity.x - acceleration).max(-target_velocity);
-                } else {
-                    self.velocity.x = (self.velocity.x + acceleration).min(target_velocity);
-                }
-            }
-        }
+        self.update_horizontal_movement();
 
         // Vertical movement
-        let (mut acceleration, mut target_velocity) = match self.state {
-            PlayerState::Jumping => (-1.5, -2.0),
-            PlayerState::JumpingStop => (2.0, 5.0),
-            PlayerState::Climbing => (0.4, 1.0),
-            PlayerState::ClimbingStop => (0.2, 0.0),
-            PlayerState::ClimbingIdle
-            | PlayerState::ClimbingSideways
-            | PlayerState::ClimbingSidewaysStop
-            | PlayerState::Dashing
-            | PlayerState::Running
-            | PlayerState::RunningStop
-            | PlayerState::Idle => (0.0, 0.0),
-            PlayerState::Falling => (Self::GRAVITY_ACCELERATION, Self::GRAVITY_MAX), // Gravity
-        };
-        acceleration *= self.movement_modifier;
-        target_velocity *= self.movement_modifier;
-
-        match self.state {
-            PlayerState::Jumping => {
-                // pos += vel * dt + 1/2*dt*dt
-                // Vel += acc*dt
-                self.velocity.y = (self.velocity.y + acceleration).max(target_velocity);
-            }
-            PlayerState::JumpingStop => {
-                self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
-            }
-            PlayerState::Climbing if self.direction_y == DirectionY::Up => {
-                self.velocity.y = (self.velocity.y - acceleration).max(-target_velocity);
-            }
-            PlayerState::Climbing => {
-                self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
-            }
-            PlayerState::ClimbingStop if self.direction_y == DirectionY::Up => {
-                self.velocity.y = (self.velocity.y + acceleration).min(-target_velocity);
-            }
-            PlayerState::ClimbingStop => {
-                self.velocity.y = (self.velocity.y - acceleration).max(target_velocity);
-            }
-            PlayerState::Idle
-            | PlayerState::Dashing
-            | PlayerState::Running
-            | PlayerState::RunningStop
-            | PlayerState::ClimbingIdle
-            | PlayerState::ClimbingSideways
-            | PlayerState::ClimbingSidewaysStop => {
-                self.velocity.y = 0.0;
-            }
-            PlayerState::Falling => {
-                // Gravity
-                self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
-            }
-        }
+        self.update_vertical_movement();
 
         // Move X position
         self.remainder.x += self.velocity.x;
@@ -1129,7 +1035,6 @@ impl Blutti {
     const DASH_WAIT_TIME: i32 = 32;
     const CONVEYOR_ACCELERATION: f32 = 0.2;
     const CONVEYOR_SPEED: f32 = 2.0;
-    const GRAVITY: i32 = 2;
     const MAX_FALL_HEIGHT: i32 = 30;
     const START_POSITION: Point = Point {
         x: WIDTH / 2 - TILE_WIDTH,
@@ -1531,6 +1436,108 @@ impl Blutti {
         let particle = Particle::stationary(position, anim);
         let state = get_state();
         state.level.particles.push(particle);
+    }
+
+    fn update_horizontal_movement(&mut self) {
+        let (mut acceleration, mut target_velocity) = match self.state {
+            PlayerState::Running => (Self::RUNNING_ACCELERATION, Self::MAX_VELOCITY),
+            PlayerState::Jumping | PlayerState::JumpingStop if self.velocity.x != 0.0 => {
+                (Self::JUMP_ACCELERATION, Self::JUMP_VELOCITY)
+            }
+            PlayerState::Jumping | PlayerState::JumpingStop => (0.0, 0.0),
+            PlayerState::Dashing => (Self::DASH_ACCELERATION, Self::DASH_VELOCITY),
+            PlayerState::RunningStop => (0.3, 0.0),
+            PlayerState::ClimbingSideways => (0.3, 1.5),
+            PlayerState::ClimbingSidewaysStop => (0.3, 0.0),
+            PlayerState::Climbing
+            | PlayerState::ClimbingStop
+            | PlayerState::Idle
+            | PlayerState::ClimbingIdle => (0.0, 0.0),
+            PlayerState::Falling => (Self::FALLING_X_ACCELERATION, Self::MAX_FALLING_VELOCITY),
+        };
+        acceleration *= self.movement_modifier;
+        target_velocity *= self.movement_modifier;
+
+        if self.is_standing_on(TileCollider::Conveyor) {
+            acceleration -= Self::CONVEYOR_ACCELERATION;
+            if self.direction_x == DirectionX::Left {
+                target_velocity -= Self::CONVEYOR_SPEED;
+            } else {
+                target_velocity += Self::CONVEYOR_SPEED;
+            }
+        }
+
+        match self.state {
+            PlayerState::RunningStop | PlayerState::ClimbingSidewaysStop => {
+                if self.direction_x == DirectionX::Left {
+                    self.velocity.x = (self.velocity.x + acceleration).min(-target_velocity);
+                } else {
+                    self.velocity.x = (self.velocity.x - acceleration).max(target_velocity);
+                }
+            }
+            _ => {
+                if self.direction_x == DirectionX::Left {
+                    self.velocity.x = (self.velocity.x - acceleration).max(-target_velocity);
+                } else {
+                    self.velocity.x = (self.velocity.x + acceleration).min(target_velocity);
+                }
+            }
+        }
+    }
+
+    fn update_vertical_movement(&mut self) {
+        let (mut acceleration, mut target_velocity) = match self.state {
+            PlayerState::Jumping => (-1.5, -2.0),
+            PlayerState::JumpingStop => (2.0, 5.0),
+            PlayerState::Climbing => (0.4, 1.0),
+            PlayerState::ClimbingStop => (0.2, 0.0),
+            PlayerState::ClimbingIdle
+            | PlayerState::ClimbingSideways
+            | PlayerState::ClimbingSidewaysStop
+            | PlayerState::Dashing
+            | PlayerState::Running
+            | PlayerState::RunningStop
+            | PlayerState::Idle => (0.0, 0.0),
+            PlayerState::Falling => (Self::GRAVITY_ACCELERATION, Self::GRAVITY_MAX), // Gravity
+        };
+        acceleration *= self.movement_modifier;
+        target_velocity *= self.movement_modifier;
+
+        match self.state {
+            PlayerState::Jumping => {
+                // pos += vel * dt + 1/2*dt*dt
+                // Vel += acc*dt
+                self.velocity.y = (self.velocity.y + acceleration).max(target_velocity);
+            }
+            PlayerState::JumpingStop => {
+                self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
+            }
+            PlayerState::Climbing if self.direction_y == DirectionY::Up => {
+                self.velocity.y = (self.velocity.y - acceleration).max(-target_velocity);
+            }
+            PlayerState::Climbing => {
+                self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
+            }
+            PlayerState::ClimbingStop if self.direction_y == DirectionY::Up => {
+                self.velocity.y = (self.velocity.y + acceleration).min(-target_velocity);
+            }
+            PlayerState::ClimbingStop => {
+                self.velocity.y = (self.velocity.y - acceleration).max(target_velocity);
+            }
+            PlayerState::Idle
+            | PlayerState::Dashing
+            | PlayerState::Running
+            | PlayerState::RunningStop
+            | PlayerState::ClimbingIdle
+            | PlayerState::ClimbingSideways
+            | PlayerState::ClimbingSidewaysStop => {
+                self.velocity.y = 0.0;
+            }
+            PlayerState::Falling => {
+                // Gravity
+                self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
+            }
+        }
     }
 }
 
