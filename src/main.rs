@@ -404,10 +404,10 @@ impl PointMath for Point {
     }
 
     fn is_in_screen(&self) -> bool {
-        self.x >= 0
-            && self.x <= (WIDTH - TILE_WIDTH)
-            && self.y >= 0
-            && self.y <= (HEIGHT - TILE_HEIGHT)
+        self.x >= Level::MIN.x
+            && self.x <= Level::MAX.x
+            && self.y >= Level::MIN.y
+            && self.y <= Level::MAX.y
     }
 }
 
@@ -611,23 +611,71 @@ trait Drawable {
 trait Updateable {
     fn update(&mut self);
 
-    fn move_horizontally(
-        &mut self,
-        position: Point,
-        velocity: Vec2,
-        remainder: Vec2,
-    ) -> (Point, Vec2);
-
-    fn move_vertically(
-        &mut self,
-        position: Point,
-        velocity: Vec2,
-        remainder: Vec2,
-    ) -> (Point, Vec2);
+    fn position(&self) -> Point;
 
     fn stop_movement(&mut self);
 
-    fn position(&self) -> Point;
+    fn move_horizontally(
+        &mut self,
+        mut position: Point,
+        velocity: Vec2,
+        mut remainder: Vec2,
+    ) -> (Point, Vec2) {
+        remainder.x += velocity.x;
+        let amount = math::floor(remainder.x + 0.5);
+        remainder.x -= amount;
+        let step = if amount > 0. {
+            1
+        } else if amount < 0. {
+            -1
+        } else {
+            0
+        };
+        for _ in 0..amount.abs() as i32 {
+            let test_pos = position.addx(step);
+            let nudge_pos = test_pos.addy(-1);
+            if test_pos.is_in_screen() && !self.collision_at(test_pos) {
+                position = test_pos
+            } else if nudge_pos.is_in_screen() && !self.collision_at(nudge_pos) {
+                // There was a collision, let's nudge up
+                position = nudge_pos
+            } else {
+                self.stop_movement();
+                break;
+            }
+        }
+
+        (position, remainder)
+    }
+
+    fn move_vertically(
+        &mut self,
+        mut position: Point,
+        velocity: Vec2,
+        mut remainder: Vec2,
+    ) -> (Point, Vec2) {
+        remainder.y += velocity.y;
+        let amount = math::floor(remainder.y + 0.5);
+        remainder.y -= amount;
+        let step = if amount > 0. {
+            1
+        } else if amount < 0. {
+            -1
+        } else {
+            0
+        };
+        for _ in 0..amount.abs() as i32 {
+            let test_pos = position.addy(step);
+            if test_pos.y >= 0 && test_pos.y < HEIGHT && !self.collision_at(test_pos) {
+                position.y += step;
+            } else {
+                self.stop_movement();
+                break;
+            }
+        }
+
+        (position, remainder)
+    }
 
     fn collision(&self, position: Point) -> TileCollider {
         let state = get_state();
@@ -635,6 +683,14 @@ trait Updateable {
             .level
             .collision_at_position(position)
             .map_or(TileCollider::None, |c| c.tile_collider)
+    }
+
+    fn rect(&self) -> Rect {
+        Rect::from(self.position())
+    }
+
+    fn overlaps(&self, other: Rect) -> bool {
+        self.rect().overlaps(other)
     }
 
     fn is_tile_empty(&self, position: Point) -> bool {
@@ -705,7 +761,7 @@ enum PlayerState {
     Falling,
 }
 
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Default, Debug)]
 struct Vec2 {
     x: f32,
     y: f32,
@@ -718,6 +774,35 @@ impl Vec2 {
 
     fn is_zero(&self) -> bool {
         self.x.abs() == 0.0 && self.y.abs() == 0.0
+    }
+}
+
+#[derive(Copy, Clone, PartialEq, Default, Debug)]
+struct Rect {
+    top_left: Point,
+    bottom_right: Point,
+}
+
+impl Rect {
+    fn from(position: Point) -> Self {
+        Self {
+            top_left: position,
+            bottom_right: Point {
+                x: position.x + TILE_WIDTH - 1,
+                y: position.y + TILE_HEIGHT - 1,
+            },
+        }
+    }
+
+    fn contains(&self, point: Point) -> bool {
+        point.x >= self.top_left.x
+            && point.x <= self.bottom_right.x
+            && point.y >= self.top_left.y
+            && point.y <= self.bottom_right.y
+    }
+
+    fn overlaps(&self, other: Rect) -> bool {
+        self.contains(other.top_left) || self.contains(other.bottom_right)
     }
 }
 
@@ -853,6 +938,37 @@ impl Updateable for Blutti {
         self.position
     }
 
+    fn update(&mut self) {
+        self.animation.update();
+
+        // Horizontal movement
+        self.update_horizontal_velocity();
+
+        // Vertical movement
+        self.update_vertical_velocity();
+
+        // Move X position
+        (self.position, self.remainder) =
+            self.move_horizontally(self.position, self.velocity, self.remainder);
+
+        // Move y position
+        (self.position, self.remainder) =
+            self.move_vertically(self.position, self.velocity, self.remainder);
+
+        // Update states
+        self.update_states();
+    }
+
+    fn stop_movement(&mut self) {
+        self.jump_timer = 0;
+        self.dash_timer = 0;
+        self.fall_timer = 0;
+        self.movement_modifier = 1.0;
+        self.remainder = Vec2::zero();
+        self.velocity = Vec2::zero();
+        self.start_idling();
+    }
+
     fn collision_at(&self, position: Point) -> bool {
         if self.is_climbing() {
             if self.direction_x == DirectionX::Left {
@@ -899,105 +1015,6 @@ impl Updateable for Blutti {
             self.collision(self.position().below_bottom_left().addx(3)) == collision
                 || self.collision(self.position().below_bottom_right()) == collision
         }
-    }
-
-    fn update(&mut self) {
-        self.animation.update();
-
-        // Horizontal movement
-        self.update_horizontal_velocity();
-
-        // Vertical movement
-        self.update_vertical_velocity();
-
-        // Move X position
-        (self.position, self.remainder) =
-            self.move_horizontally(self.position, self.velocity, self.remainder);
-
-        // Move y position
-        (self.position, self.remainder) =
-            self.move_vertically(self.position, self.velocity, self.remainder);
-
-        // Update states
-        self.update_states();
-    }
-
-    fn move_horizontally(
-        &mut self,
-        mut position: Point,
-        velocity: Vec2,
-        mut remainder: Vec2,
-    ) -> (Point, Vec2) {
-        remainder.x += velocity.x;
-        let amount = math::floor(remainder.x + 0.5);
-        remainder.x -= amount;
-        let step = if amount > 0. {
-            1
-        } else if amount < 0. {
-            -1
-        } else {
-            0
-        };
-        for _ in 0..amount.abs() as i32 {
-            let test_pos = position.addx(step);
-            let nudge_pos = test_pos.addy(-1);
-            if test_pos.is_in_screen() {
-                if !self.collision_at(test_pos) {
-                    position.x += step;
-                } else if nudge_pos.is_in_screen() && !self.collision_at(nudge_pos) {
-                    // There was a collision, let's nudge up
-                    position.y -= 1;
-                    position.x += step;
-                } else {
-                    self.stop_movement();
-                    break;
-                }
-            } else {
-                self.stop_movement();
-                break;
-            }
-        }
-
-        (position, remainder)
-    }
-
-    fn move_vertically(
-        &mut self,
-        mut position: Point,
-        velocity: Vec2,
-        mut remainder: Vec2,
-    ) -> (Point, Vec2) {
-        remainder.y += velocity.y;
-        let amount = math::floor(remainder.y + 0.5);
-        remainder.y -= amount;
-        let step = if amount > 0. {
-            1
-        } else if amount < 0. {
-            -1
-        } else {
-            0
-        };
-        for _ in 0..amount.abs() as i32 {
-            let test_pos = position.addy(step);
-            if test_pos.y >= 0 && test_pos.y < HEIGHT && !self.collision_at(test_pos) {
-                position.y += step;
-            } else {
-                self.stop_movement();
-                break;
-            }
-        }
-
-        (position, remainder)
-    }
-
-    fn stop_movement(&mut self) {
-        self.jump_timer = 0;
-        self.dash_timer = 0;
-        self.fall_timer = 0;
-        self.movement_modifier = 1.0;
-        self.remainder = Vec2::zero();
-        self.velocity = Vec2::zero();
-        self.start_idling();
     }
 }
 
@@ -1585,6 +1602,18 @@ impl Blutti {
             //log_debug(str_format!(str32, "increasing dash_timer: {}", self.dash_timer).as_str());
             self.dash_timer += 1;
         }
+
+        // Check for death
+        let state = get_state();
+        let rect = self.rect();
+        if state
+            .level
+            .monsters
+            .iter()
+            .any(|monster| monster.overlaps(rect))
+        {
+            state.blutti.die();
+        }
     }
 }
 
@@ -1683,7 +1712,9 @@ struct Monster {
     #[serde(with = "PointDef")]
     position: Point,
     sprite: i32,
-    movement: i32,
+    movement: f32,
+    #[serde(skip)]
+    remainder: Vec2,
     #[serde(skip)]
     animation: Animation,
 }
@@ -1693,7 +1724,7 @@ struct MonsterSerde {
     #[serde(with = "PointDef")]
     position: Point,
     sprite: i32,
-    movement: i32,
+    movement: f32,
 }
 
 impl From<MonsterSerde> for Monster {
@@ -1701,6 +1732,7 @@ impl From<MonsterSerde> for Monster {
         Monster {
             position: value.position,
             movement: value.movement,
+            remainder: Vec2::zero(),
             sprite: value.sprite,
             animation: Monster::animation_from(value.movement, value.sprite),
         }
@@ -1708,8 +1740,8 @@ impl From<MonsterSerde> for Monster {
 }
 
 impl Monster {
-    fn animation_from(movement: i32, sprite: i32) -> Animation {
-        if movement >= 0 {
+    fn animation_from(movement: f32, sprite: i32) -> Animation {
+        if movement >= 0.0 {
             Animation::looping([sprite + 2, sprite + 3], 10)
         } else {
             Animation::looping([sprite, sprite + 1], 10)
@@ -1717,8 +1749,15 @@ impl Monster {
     }
 
     fn change_direction(&mut self) {
-        self.movement *= -1;
+        self.movement *= -1.0;
         self.animation = Self::animation_from(self.movement, self.sprite);
+    }
+
+    fn velocity(&self) -> Vec2 {
+        Vec2 {
+            x: self.movement,
+            y: 0.0,
+        }
     }
 }
 
@@ -1731,6 +1770,33 @@ impl Drawable for Monster {
 }
 
 impl Updateable for Monster {
+    fn update(&mut self) {
+        self.animation.update();
+
+        // Move X position
+        (self.position, self.remainder) =
+            self.move_horizontally(self.position, self.velocity(), self.remainder);
+
+        // Move y position
+        (self.position, self.remainder) =
+            self.move_vertically(self.position, self.velocity(), self.remainder);
+    }
+
+    fn collision_at(&self, position: Point) -> bool {
+        let collision_below = if self.movement < 0.0 {
+            self.is_tile_free(position.below_bottom_left())
+        } else {
+            self.is_tile_free(position.below_bottom_right())
+        };
+
+        !(self.is_tile_free(position)
+            && self.is_tile_free(position.top_right())
+            && self.is_tile_free(position.bottom_left())
+            && self.is_tile_free(position.bottom_right())
+            && !collision_below)
+    }
+
+    /*
     fn update(&mut self) {
         self.animation.update();
 
@@ -1768,30 +1834,15 @@ impl Updateable for Monster {
             state.blutti.die();
         }
     }
+    */
 
     fn position(&self) -> Point {
         self.position
     }
 
-    fn move_horizontally(
-        &mut self,
-        position: Point,
-        _velocity: Vec2,
-        remainder: Vec2,
-    ) -> (Point, Vec2) {
-        (position, remainder)
+    fn stop_movement(&mut self) {
+        self.change_direction();
     }
-
-    fn move_vertically(
-        &mut self,
-        position: Point,
-        _velocity: Vec2,
-        remainder: Vec2,
-    ) -> (Point, Vec2) {
-        (position, remainder)
-    }
-
-    fn stop_movement(&mut self) {}
 }
 
 #[derive(Clone, Default, Debug)]
