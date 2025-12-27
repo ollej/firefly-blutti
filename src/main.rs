@@ -10,7 +10,7 @@ use firefly_blutti::{
     updateable::*,
 };
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 extern "C" fn cheat(cmd: i32, val: i32) -> i32 {
     let state = get_state();
     match cmd {
@@ -29,7 +29,7 @@ extern "C" fn cheat(cmd: i32, val: i32) -> i32 {
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 extern "C" fn handle_menu(menu_item: u8) {
     let state = get_state();
     match menu_item {
@@ -42,7 +42,7 @@ extern "C" fn handle_menu(menu_item: u8) {
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 extern "C" fn boot() {
     let fx = audio::OUT.add_gain(1.0);
     let theme = audio::OUT.add_gain(0.5);
@@ -67,7 +67,7 @@ extern "C" fn boot() {
     set_seed(4711);
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 extern "C" fn update() {
     let state = get_state();
     let buttons = read_buttons(Peer::COMBINED);
@@ -149,7 +149,7 @@ extern "C" fn update() {
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 extern "C" fn render() {
     let state = get_state();
     match state.game_state {
