@@ -6,15 +6,14 @@ extern crate alloc;
 use firefly_rust::*;
 
 use firefly_blutti::{
-    blutti::*, drawing::*, functions::*, game_state::*, level::*, rendering::*, state::*,
-    updateable::*,
+    blutti::*, functions::*, game_state::*, level::*, rendering::*, state::*, updateable::*,
 };
 
 #[unsafe(no_mangle)]
 extern "C" fn cheat(cmd: i32, val: i32) -> i32 {
     let state = get_state();
     match cmd {
-        1 => restart(val, true),
+        1 => Level::restart(val, true),
         2 => state.blutti.add_lives(val),
         3 => state.blutti.add_points(val),
         4 => {
@@ -35,7 +34,7 @@ extern "C" fn handle_menu(menu_item: u8) {
     match menu_item {
         1 => state.game_state = GameState::Credits,
         2 => {
-            restart(1, false);
+            Level::restart(1, false);
         }
         3 => state.game_state = GameState::Info,
         _ => (),
@@ -140,9 +139,9 @@ extern "C" fn update() {
             state.blutti.animation.update();
             if just_pressed.e {
                 if won {
-                    restart(state.blutti.current_level + 1, won);
+                    Level::restart(state.blutti.current_level + 1, won);
                 } else {
-                    restart(1, won);
+                    Level::restart(1, won);
                 }
             }
         }

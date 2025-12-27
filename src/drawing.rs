@@ -1,4 +1,4 @@
-use firefly_rust::{Color, HEIGHT, Point, Size, WIDTH, draw_sub_image, draw_text};
+use firefly_rust::{draw_sub_image, draw_text, Color, Point, Size, HEIGHT, WIDTH};
 
 use crate::{blutti::*, constants::*, game_state::*, level::*, state::*};
 
@@ -73,22 +73,4 @@ pub fn display_left_message(lines: &[&str]) {
             Color::Black,
         );
     }
-}
-
-pub fn restart(mut level: i32, won: bool) -> i32 {
-    let state = get_state();
-    if level >= LEVELS.len() as i32 {
-        // Restart at level 1, as level 0 is a debug level
-        level = 1;
-    }
-    state.level = Level::load_level(level);
-    if won {
-        state.blutti = state.blutti.at_new_level(state.level.start_position, level);
-        state.game_state = GameState::Playing;
-    } else {
-        state.blutti = Blutti::with_start_position(state.level.start_position);
-        state.level.reset();
-        state.game_state = GameState::Title;
-    }
-    level
 }

@@ -5,8 +5,8 @@ use fixedstr::{str32, str_format};
 
 use crate::{
     animation::*, collision::*, constants::*, direction::*, drawable::*, drawing::*, functions::*,
-    particle::*, player_state::*, point_math::*, state::*, tile_collider::*, updateable::*,
-    vec2::*,
+    level::*, particle::*, player_state::*, point_math::*, state::*, tile_collider::*,
+    updateable::*, vec2::*,
 };
 
 pub struct Blutti {
@@ -29,7 +29,7 @@ pub struct Blutti {
     pub iddqd: bool,
     pub died: bool,
     pub finished_level: bool,
-    pub current_level: i32,
+    pub current_level: LevelNumber,
     current_tile: i32,
     pub animation: Animation,
     debug: bool,
@@ -67,7 +67,7 @@ impl Blutti {
         }
     }
 
-    pub fn at_new_level(&self, start_position: Point, current_level: i32) -> Self {
+    pub fn at_new_level(&self, start_position: Point, current_level: LevelNumber) -> Self {
         Blutti {
             position: start_position,
             start_position,

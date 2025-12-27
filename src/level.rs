@@ -1,13 +1,15 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
-use firefly_rust::{Color, Point, clear_screen, load_file_buf};
+use firefly_rust::{clear_screen, load_file_buf, Color, Point};
 use serde::Deserialize;
 
 use crate::{
-    collision::*, constants::*, drawable::*, drawing::*, functions::*, monster::*, particle::*,
-    point_math::*, serde::*, updateable::*,
+    blutti::*, collision::*, constants::*, drawable::*, drawing::*, functions::*, game_state::*,
+    monster::*, particle::*, point_math::*, serde::*, state::*, updateable::*,
 };
+
+pub type LevelNumber = i32;
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct Level {
@@ -121,5 +123,23 @@ impl Level {
     pub fn remove_tile(&mut self, position: Point) {
         let tile_pos = get_tile_index(position);
         self.tiles[tile_pos as usize] = 0;
+    }
+
+    pub fn restart(mut level: LevelNumber, won: bool) -> LevelNumber {
+        let state = get_state();
+        if level >= LEVELS.len() as LevelNumber {
+            // Restart at level 1, as level 0 is a debug level
+            level = 1;
+        }
+        state.level = Level::load_level(level);
+        if won {
+            state.blutti = state.blutti.at_new_level(state.level.start_position, level);
+            state.game_state = GameState::Playing;
+        } else {
+            state.blutti = Blutti::with_start_position(state.level.start_position);
+            state.level.reset();
+            state.game_state = GameState::Title;
+        }
+        level
     }
 }
