@@ -1,6 +1,17 @@
-use firefly_rust::{HEIGHT, Point, math};
+use firefly_rust::{math, Point, HEIGHT};
 
 use crate::{point_math::*, rect::*, state::*, tile_collider::*, vec2::*};
+
+#[inline]
+pub fn movement_to_step(amount: f32) -> i32 {
+    if amount > 0. {
+        1
+    } else if amount < 0. {
+        -1
+    } else {
+        0
+    }
+}
 
 pub trait Updateable {
     fn update(&mut self);
@@ -18,13 +29,7 @@ pub trait Updateable {
         remainder.x += velocity.x;
         let amount = math::floor(remainder.x + 0.5);
         remainder.x -= amount;
-        let step = if amount > 0. {
-            1
-        } else if amount < 0. {
-            -1
-        } else {
-            0
-        };
+        let step = movement_to_step(amount);
         for _ in 0..amount.abs() as i32 {
             let test_pos = position.addx(step);
             let nudge_pos = test_pos.addy(-1);
@@ -51,13 +56,7 @@ pub trait Updateable {
         remainder.y += velocity.y;
         let amount = math::floor(remainder.y + 0.5);
         remainder.y -= amount;
-        let step = if amount > 0. {
-            1
-        } else if amount < 0. {
-            -1
-        } else {
-            0
-        };
+        let step = movement_to_step(amount);
         for _ in 0..amount.abs() as i32 {
             let test_pos = position.addy(step);
             if test_pos.y >= 0 && test_pos.y < HEIGHT && !self.collision_at(test_pos) {
