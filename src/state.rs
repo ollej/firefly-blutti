@@ -1,5 +1,5 @@
 use core::cell::OnceCell;
-use firefly_rust::{audio, Buttons, FileBuf};
+use firefly_rust::{Buttons, FileBuf, audio};
 
 use crate::{blutti::*, game_state::*, level::*};
 

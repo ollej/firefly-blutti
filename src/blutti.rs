@@ -1,7 +1,7 @@
 extern crate alloc;
 use alloc::vec::Vec;
-use firefly_rust::{add_progress, get_me, Point, HEIGHT, WIDTH};
-use fixedstr::{str32, str_format};
+use firefly_rust::{HEIGHT, Point, WIDTH, add_progress, get_me};
+use fixedstr::{str_format, str32};
 
 use crate::{
     animation::*, collision::*, constants::*, direction::*, drawable::*, drawing::*, functions::*,

@@ -1,4 +1,4 @@
-use firefly_rust::{math, Point, HEIGHT};
+use firefly_rust::{HEIGHT, Point, math};
 
 use crate::{point_math::*, rect::*, state::*, tile_collider::*, vec2::*};
 

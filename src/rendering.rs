@@ -1,5 +1,5 @@
-use firefly_rust::{clear_screen, draw_image, Color, Point, WIDTH};
-use fixedstr::{str32, str_format};
+use firefly_rust::{Color, Point, WIDTH, clear_screen, draw_image};
+use fixedstr::{str_format, str32};
 
 use crate::{constants::*, drawable::*, drawing::*, state::*};
 
