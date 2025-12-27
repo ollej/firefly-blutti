@@ -190,6 +190,45 @@ impl Blutti {
         state.blutti.current_tile = get_tile_index(self.position);
     }
 
+    pub fn add_lives(&mut self, lives: i32) -> i32 {
+        self.lives += lives;
+        self.lives
+    }
+
+    pub fn add_points(&mut self, points: i32) -> i32 {
+        self.points += points;
+        self.points
+    }
+
+    pub fn die(&mut self) {
+        if self.iddqd {
+            return;
+        }
+        let state = get_state();
+        state.level.reset();
+        self.stop_movement();
+        self.state = PlayerState::Idle;
+        self.add_death_animation();
+        self.add_lives(-1);
+        add_progress(get_me(), BADGE_DEATHS, 1);
+        self.died = true;
+        play_sound("sound_death");
+    }
+
+    pub fn reset(&mut self) {
+        self.died = false;
+        self.direction_x = DirectionX::Right;
+        self.direction_y = DirectionY::Up;
+        self.position = self.start_position;
+        self.stop_movement();
+        self.add_idle_animation();
+        self.current_tile = 0;
+    }
+
+    pub fn is_alive(&self) -> bool {
+        self.lives > 0
+    }
+
     fn start_running(&mut self) {
         if self.is_on_ladder() {
             if self.state != PlayerState::ClimbingSideways {
@@ -300,50 +339,11 @@ impl Blutti {
         }
     }
 
-    pub fn add_lives(&mut self, lives: i32) -> i32 {
-        self.lives += lives;
-        self.lives
-    }
-
-    pub fn add_points(&mut self, points: i32) -> i32 {
-        self.points += points;
-        self.points
-    }
-
-    pub fn die(&mut self) {
-        if self.iddqd {
-            return;
-        }
-        let state = get_state();
-        state.level.reset();
-        self.stop_movement();
-        self.state = PlayerState::Idle;
-        self.add_death_animation();
-        self.add_lives(-1);
-        add_progress(get_me(), BADGE_DEATHS, 1);
-        self.died = true;
-        play_sound("sound_death");
-    }
-
     fn finish_level(&mut self) {
         play_sound("sound_exit");
         self.finished_level = true;
         self.add_exit_animation();
         add_progress(get_me(), BADGE_LEVELS, 1);
-    }
-
-    pub fn reset(&mut self) {
-        self.died = false;
-        self.direction_x = DirectionX::Right;
-        self.direction_y = DirectionY::Up;
-        self.position = self.start_position;
-        self.stop_movement();
-        self.add_idle_animation();
-        self.current_tile = 0;
-    }
-
-    pub fn is_alive(&self) -> bool {
-        self.lives > 0
     }
 
     fn can_climb(&self) -> bool {
