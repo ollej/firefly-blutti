@@ -1,6 +1,6 @@
 use firefly_rust::{draw_sub_image, draw_text, Color, Point, Size, HEIGHT, WIDTH};
 
-use crate::{blutti::*, constants::*, game_state::*, level::*, state::*};
+use crate::{constants::*, state::*};
 
 pub type Sprite = i32;
 

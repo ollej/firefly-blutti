@@ -37,12 +37,30 @@ impl Level {
         y: Point::MAX.y - TILE_WIDTH,
     };
 
-    pub fn load_level(level: i32) -> Self {
+    pub fn load_level(level: LevelNumber) -> Self {
         let level_name = LEVELS[level as usize];
         let level_data = load_file_buf(level_name).expect("Couldn't load level data");
         let mut level =
             serde_json::from_slice::<Level>(level_data.data()).expect("Couldn't parse level data");
         level.original_monsters = level.monsters.clone();
+        level
+    }
+
+    pub fn restart(mut level: LevelNumber, won: bool) -> LevelNumber {
+        let state = get_state();
+        if level >= LEVELS.len() as LevelNumber {
+            // Restart at level 1, as level 0 is a debug level
+            level = 1;
+        }
+        state.level = Level::load_level(level);
+        if won {
+            state.blutti = state.blutti.at_new_level(state.level.start_position, level);
+            state.game_state = GameState::Playing;
+        } else {
+            state.blutti = Blutti::with_start_position(state.level.start_position);
+            state.level.reset();
+            state.game_state = GameState::Title;
+        }
         level
     }
 
@@ -86,15 +104,6 @@ impl Level {
         self.monsters = self.original_monsters.clone();
     }
 
-    fn sprite_at_position(&self, point: Point) -> Sprite {
-        let tile_pos = get_tile_index(point);
-        let maybe_sprite = self.tiles.get(tile_pos as usize);
-        // The default sprite should be a sprite with TileCollider::Full
-        // in the COLLISION list. Otherwise, if the Blutti is standing
-        // on the bottom edge of the screen, it will be considered falling.
-        maybe_sprite.unwrap_or(&4) - 1
-    }
-
     pub fn collision_at_position(&self, position: Point) -> Option<Collision> {
         //log_debug(str_format!(str256, "x: {}", test_point.x).as_str());
         //log_debug(str_format!(str256, "y: {}", test_point.y).as_str());
@@ -125,21 +134,12 @@ impl Level {
         self.tiles[tile_pos as usize] = 0;
     }
 
-    pub fn restart(mut level: LevelNumber, won: bool) -> LevelNumber {
-        let state = get_state();
-        if level >= LEVELS.len() as LevelNumber {
-            // Restart at level 1, as level 0 is a debug level
-            level = 1;
-        }
-        state.level = Level::load_level(level);
-        if won {
-            state.blutti = state.blutti.at_new_level(state.level.start_position, level);
-            state.game_state = GameState::Playing;
-        } else {
-            state.blutti = Blutti::with_start_position(state.level.start_position);
-            state.level.reset();
-            state.game_state = GameState::Title;
-        }
-        level
+    fn sprite_at_position(&self, point: Point) -> Sprite {
+        let tile_pos = get_tile_index(point);
+        let maybe_sprite = self.tiles.get(tile_pos as usize);
+        // The default sprite should be a sprite with TileCollider::Full
+        // in the COLLISION list. Otherwise, if the Blutti is standing
+        // on the bottom edge of the screen, it will be considered falling.
+        maybe_sprite.unwrap_or(&4) - 1
     }
 }
