@@ -1,4 +1,4 @@
-use firefly_rust::{HEIGHT, Point, WIDTH};
+use firefly_rust::{Point, HEIGHT, WIDTH};
 
 use crate::{animation::*, drawable::*, drawing::*, functions::*, state::*};
 
@@ -35,7 +35,7 @@ impl Particle {
         Self::new(position, animation, ParticleMovement::Following(offset_x))
     }
 
-    pub fn random(sprite: i32) -> Self {
+    pub fn random(sprite: Sprite) -> Self {
         Particle {
             position: Point {
                 x: random_value(WIDTH + 64),
@@ -49,6 +49,10 @@ impl Particle {
     pub fn update(&mut self) {
         self.animation.update();
         self.update_movement();
+    }
+
+    pub fn should_be_removed(&self) -> bool {
+        self.animation.finished || self.position.y > HEIGHT
     }
 
     fn update_movement(&mut self) {
@@ -76,10 +80,6 @@ impl Particle {
             }
             ParticleMovement::Stationary => (),
         }
-    }
-
-    pub fn should_be_removed(&self) -> bool {
-        self.animation.finished || self.position.y > HEIGHT
     }
 }
 
