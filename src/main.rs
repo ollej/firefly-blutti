@@ -13,7 +13,6 @@ const TILE_WIDTH: i32 = 8;
 const TILE_HEIGHT: i32 = 8;
 const SPRITES_H: i32 = 16;
 const TILES_H: i32 = 30;
-const DELTA_TIME: f32 = 1000.0 / 60.0;
 const HALF_FONT_WIDTH: i32 = 2;
 const FONT_BASE_LINE: i32 = 4;
 const LINE_HEIGHT: i32 = 8;
@@ -318,11 +317,14 @@ const COLLISION: [TileCollider; 256] = [
 
 trait PointMath {
     fn top_right(&self) -> Point;
+    #[allow(dead_code)]
     fn top_middle(&self) -> Point;
     fn bottom_left(&self) -> Point;
+    #[allow(dead_code)]
     fn bottom_middle(&self) -> Point;
     fn bottom_right(&self) -> Point;
     fn below_bottom_left(&self) -> Point;
+    #[allow(dead_code)]
     fn below_bottom_middle(&self) -> Point;
     fn below_bottom_right(&self) -> Point;
     fn addx(&self, addend: i32) -> Point;
@@ -609,6 +611,22 @@ trait Drawable {
 trait Updateable {
     fn update(&mut self);
 
+    fn move_horizontally(
+        &mut self,
+        position: Point,
+        velocity: Vec2,
+        remainder: Vec2,
+    ) -> (Point, Vec2);
+
+    fn move_vertically(
+        &mut self,
+        position: Point,
+        velocity: Vec2,
+        remainder: Vec2,
+    ) -> (Point, Vec2);
+
+    fn stop_movement(&mut self);
+
     fn position(&self) -> Point;
 
     fn collision(&self, position: Point) -> TileCollider {
@@ -687,6 +705,7 @@ enum PlayerState {
     Falling,
 }
 
+#[derive(Copy, Clone, PartialEq, Debug)]
 struct Vec2 {
     x: f32,
     y: f32,
@@ -886,15 +905,32 @@ impl Updateable for Blutti {
         self.animation.update();
 
         // Horizontal movement
-        self.update_horizontal_movement();
+        self.update_horizontal_velocity();
 
         // Vertical movement
-        self.update_vertical_movement();
+        self.update_vertical_velocity();
 
         // Move X position
-        self.remainder.x += self.velocity.x;
-        let amount = math::floor(self.remainder.x + 0.5);
-        self.remainder.x -= amount;
+        (self.position, self.remainder) =
+            self.move_horizontally(self.position, self.velocity, self.remainder);
+
+        // Move y position
+        (self.position, self.remainder) =
+            self.move_vertically(self.position, self.velocity, self.remainder);
+
+        // Update states
+        self.update_states();
+    }
+
+    fn move_horizontally(
+        &mut self,
+        mut position: Point,
+        velocity: Vec2,
+        mut remainder: Vec2,
+    ) -> (Point, Vec2) {
+        remainder.x += velocity.x;
+        let amount = math::floor(remainder.x + 0.5);
+        remainder.x -= amount;
         let step = if amount > 0. {
             1
         } else if amount < 0. {
@@ -903,15 +939,15 @@ impl Updateable for Blutti {
             0
         };
         for _ in 0..amount.abs() as i32 {
-            let test_pos = self.position().addx(step);
+            let test_pos = position.addx(step);
             let nudge_pos = test_pos.addy(-1);
             if test_pos.is_in_screen() {
                 if !self.collision_at(test_pos) {
-                    self.position.x += step;
+                    position.x += step;
                 } else if nudge_pos.is_in_screen() && !self.collision_at(nudge_pos) {
                     // There was a collision, let's nudge up
-                    self.position.y -= 1;
-                    self.position.x += step;
+                    position.y -= 1;
+                    position.x += step;
                 } else {
                     self.stop_movement();
                     break;
@@ -922,10 +958,18 @@ impl Updateable for Blutti {
             }
         }
 
-        // Move y position
-        self.remainder.y += self.velocity.y;
-        let amount = math::floor(self.remainder.y + 0.5);
-        self.remainder.y -= amount;
+        (position, remainder)
+    }
+
+    fn move_vertically(
+        &mut self,
+        mut position: Point,
+        velocity: Vec2,
+        mut remainder: Vec2,
+    ) -> (Point, Vec2) {
+        remainder.y += velocity.y;
+        let amount = math::floor(remainder.y + 0.5);
+        remainder.y -= amount;
         let step = if amount > 0. {
             1
         } else if amount < 0. {
@@ -934,86 +978,26 @@ impl Updateable for Blutti {
             0
         };
         for _ in 0..amount.abs() as i32 {
-            let test_pos = self.position().addy(step);
+            let test_pos = position.addy(step);
             if test_pos.y >= 0 && test_pos.y < HEIGHT && !self.collision_at(test_pos) {
-                self.position.y += step;
+                position.y += step;
             } else {
                 self.stop_movement();
                 break;
             }
         }
 
-        // Update states
-        if self.state == PlayerState::Falling {
-            self.fall_timer += 1;
-        }
-        if self.is_standing() && self.jump_buffer_timer > 0 {
-            //log_debug("buffer jump!");
-            self.jump();
-        }
-        let on_ladder = self.is_on_ladder();
-        if self.velocity.is_zero() && !self.is_idling() && !self.is_jumping()
-            || self.is_climbing() && !on_ladder
-            || self.state == PlayerState::Idle && on_ladder
-        {
-            //log_debug(str_format!(str32, "stop movement from {:?}", self.state).as_str());
-            self.stop_movement();
-        }
-        if self.is_standing() {
-            // Death from fall height
-            if self.fall_timer > Self::MAX_FALL_HEIGHT {
-                self.die();
-            }
-            self.fall_timer = 0;
-        } else {
-            match self.state {
-                PlayerState::Jumping
-                | PlayerState::JumpingStop
-                | PlayerState::Dashing
-                | PlayerState::Falling => (),
-                _ => {
-                    //log_debug(str_format!(str32, "state {:?} > Falling", self.state).as_str());
-                    self.state = PlayerState::Falling
-                }
-            }
-        }
-        if self.state == PlayerState::Jumping {
-            self.jump_timer += 1;
-            if self.jump_timer > self.jump_max_time {
-                self.state = PlayerState::JumpingStop;
-            }
-        }
-        if self.state == PlayerState::JumpingStop {
-            self.jump_timer -= 1;
-            if self.jump_timer <= 0 {
-                //log_debug(str_format!(str32, "jump > falling timer:{}", self.jump_timer).as_str());
-                self.state = PlayerState::Falling
-            }
-        }
-        // Death from falling out of screen
-        if self.position.y >= (HEIGHT - TILE_HEIGHT) {
-            self.die();
-        }
-        match self.state {
-            PlayerState::Falling | PlayerState::Jumping | PlayerState::JumpingStop => {
-                self.jump_buffer_timer -= 1
-            }
-            _ => (),
-        }
-        if self.state == PlayerState::Dashing {
-            self.dash_timer -= 1;
-            //log_debug(str_format!(str32, "dash_timer: {}", self.dash_timer).as_str());
-            if self.dash_timer == 0 {
-                //log_debug("stop dashing");
-                let ft = self.fall_timer;
-                self.stop_movement();
-                self.fall_timer = ft;
-                self.dash_timer = -Self::DASH_WAIT_TIME;
-            }
-        } else if self.dash_timer < 0 {
-            //log_debug(str_format!(str32, "increasing dash_timer: {}", self.dash_timer).as_str());
-            self.dash_timer += 1;
-        }
+        (position, remainder)
+    }
+
+    fn stop_movement(&mut self) {
+        self.jump_timer = 0;
+        self.dash_timer = 0;
+        self.fall_timer = 0;
+        self.movement_modifier = 1.0;
+        self.remainder = Vec2::zero();
+        self.velocity = Vec2::zero();
+        self.start_idling();
     }
 }
 
@@ -1314,16 +1298,6 @@ impl Blutti {
         add_progress(get_me(), BADGE_LEVELS, 1);
     }
 
-    fn stop_movement(&mut self) {
-        self.jump_timer = 0;
-        self.dash_timer = 0;
-        self.fall_timer = 0;
-        self.movement_modifier = 1.0;
-        self.remainder = Vec2::zero();
-        self.velocity = Vec2::zero();
-        self.start_idling();
-    }
-
     fn reset(&mut self) {
         self.died = false;
         self.direction_x = DirectionX::Right;
@@ -1438,7 +1412,7 @@ impl Blutti {
         state.level.particles.push(particle);
     }
 
-    fn update_horizontal_movement(&mut self) {
+    fn update_horizontal_velocity(&mut self) {
         let (mut acceleration, mut target_velocity) = match self.state {
             PlayerState::Running => (Self::RUNNING_ACCELERATION, Self::MAX_VELOCITY),
             PlayerState::Jumping | PlayerState::JumpingStop if self.velocity.x != 0.0 => {
@@ -1485,7 +1459,7 @@ impl Blutti {
         }
     }
 
-    fn update_vertical_movement(&mut self) {
+    fn update_vertical_velocity(&mut self) {
         let (mut acceleration, mut target_velocity) = match self.state {
             PlayerState::Jumping => (-1.5, -2.0),
             PlayerState::JumpingStop => (2.0, 5.0),
@@ -1537,6 +1511,79 @@ impl Blutti {
                 // Gravity
                 self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
             }
+        }
+    }
+
+    fn update_states(&mut self) {
+        if self.state == PlayerState::Falling {
+            self.fall_timer += 1;
+        }
+        if self.is_standing() && self.jump_buffer_timer > 0 {
+            //log_debug("buffer jump!");
+            self.jump();
+        }
+        let on_ladder = self.is_on_ladder();
+        if self.velocity.is_zero() && !self.is_idling() && !self.is_jumping()
+            || self.is_climbing() && !on_ladder
+            || self.state == PlayerState::Idle && on_ladder
+        {
+            //log_debug(str_format!(str32, "stop movement from {:?}", self.state).as_str());
+            self.stop_movement();
+        }
+        if self.is_standing() {
+            // Death from fall height
+            if self.fall_timer > Self::MAX_FALL_HEIGHT {
+                self.die();
+            }
+            self.fall_timer = 0;
+        } else {
+            match self.state {
+                PlayerState::Jumping
+                | PlayerState::JumpingStop
+                | PlayerState::Dashing
+                | PlayerState::Falling => (),
+                _ => {
+                    //log_debug(str_format!(str32, "state {:?} > Falling", self.state).as_str());
+                    self.state = PlayerState::Falling
+                }
+            }
+        }
+        if self.state == PlayerState::Jumping {
+            self.jump_timer += 1;
+            if self.jump_timer > self.jump_max_time {
+                self.state = PlayerState::JumpingStop;
+            }
+        }
+        if self.state == PlayerState::JumpingStop {
+            self.jump_timer -= 1;
+            if self.jump_timer <= 0 {
+                //log_debug(str_format!(str32, "jump > falling timer:{}", self.jump_timer).as_str());
+                self.state = PlayerState::Falling
+            }
+        }
+        // Death from falling out of screen
+        if self.position.y >= (HEIGHT - TILE_HEIGHT) {
+            self.die();
+        }
+        match self.state {
+            PlayerState::Falling | PlayerState::Jumping | PlayerState::JumpingStop => {
+                self.jump_buffer_timer -= 1
+            }
+            _ => (),
+        }
+        if self.state == PlayerState::Dashing {
+            self.dash_timer -= 1;
+            //log_debug(str_format!(str32, "dash_timer: {}", self.dash_timer).as_str());
+            if self.dash_timer == 0 {
+                //log_debug("stop dashing");
+                let ft = self.fall_timer;
+                self.stop_movement();
+                self.fall_timer = ft;
+                self.dash_timer = -Self::DASH_WAIT_TIME;
+            }
+        } else if self.dash_timer < 0 {
+            //log_debug(str_format!(str32, "increasing dash_timer: {}", self.dash_timer).as_str());
+            self.dash_timer += 1;
         }
     }
 }
@@ -1725,6 +1772,26 @@ impl Updateable for Monster {
     fn position(&self) -> Point {
         self.position
     }
+
+    fn move_horizontally(
+        &mut self,
+        position: Point,
+        _velocity: Vec2,
+        remainder: Vec2,
+    ) -> (Point, Vec2) {
+        (position, remainder)
+    }
+
+    fn move_vertically(
+        &mut self,
+        position: Point,
+        _velocity: Vec2,
+        remainder: Vec2,
+    ) -> (Point, Vec2) {
+        (position, remainder)
+    }
+
+    fn stop_movement(&mut self) {}
 }
 
 #[derive(Clone, Default, Debug)]
