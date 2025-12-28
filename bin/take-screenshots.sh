@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 GAME_NAME="olle.blutti"
 LEVELS=5
@@ -31,7 +31,7 @@ screenshot -f "$OUTPUT_DIR/screenshot-title.png" firefly-emulator
 for ((level = 1 ; level <= $LEVELS ; level++ ))
 do
     echo "Screenshotting level $level..."
-    firefly_cli cheat 1 $level
+    firefly_cli runtime cheat set-level $level
     if [ "$level" -eq "1" ] || [ "$level" -eq "3" ]
     then
         echo "Waiting for particles..."
