@@ -54,9 +54,14 @@
                  "name":"",
                  "properties":[
                         {
-                         "name":"movement",
+                         "name":"movement_x",
                          "type":"int",
                          "value":-1
+                        }, 
+                        {
+                         "name":"movement_y",
+                         "type":"int",
+                         "value":0
                         }],
                  "rotation":0,
                  "type":"",
@@ -72,9 +77,14 @@
                  "name":"",
                  "properties":[
                         {
-                         "name":"movement",
+                         "name":"movement_x",
                          "type":"int",
                          "value":1
+                        }, 
+                        {
+                         "name":"movement_y",
+                         "type":"int",
+                         "value":0
                         }],
                  "rotation":0,
                  "type":"",
@@ -90,9 +100,14 @@
                  "name":"",
                  "properties":[
                         {
-                         "name":"movement",
+                         "name":"movement_x",
                          "type":"int",
                          "value":1
+                        }, 
+                        {
+                         "name":"movement_y",
+                         "type":"int",
+                         "value":0
                         }],
                  "rotation":0,
                  "type":"",

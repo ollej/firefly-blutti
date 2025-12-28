@@ -40,6 +40,12 @@
    <frame tileid="131" duration="166"/>
   </animation>
  </tile>
+ <tile id="132">
+  <animation>
+   <frame tileid="132" duration="166"/>
+   <frame tileid="133" duration="166"/>
+  </animation>
+ </tile>
  <wangsets>
   <wangset name="Grass" type="mixed" tile="-1">
    <wangcolor name="Blutti tile" color="#00ff00" tile="-1" probability="1"/>

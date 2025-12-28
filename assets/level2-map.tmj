@@ -34,6 +34,7 @@
             29, 29, 29, 29, 30, 15, 15, 15, 28, 29, 29, 29, 30, 23, 23, 23, 28, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 30],
          "height":20,
          "id":1,
+         "locked":true,
          "name":"Tile Layer 1",
          "opacity":1,
          "type":"tilelayer",
@@ -54,9 +55,14 @@
                  "name":"",
                  "properties":[
                         {
-                         "name":"movement",
+                         "name":"movement_x",
                          "type":"int",
                          "value":-1
+                        }, 
+                        {
+                         "name":"movement_y",
+                         "type":"int",
+                         "value":0
                         }],
                  "rotation":0,
                  "type":"",
@@ -72,9 +78,14 @@
                  "name":"",
                  "properties":[
                         {
-                         "name":"movement",
+                         "name":"movement_x",
                          "type":"int",
                          "value":1
+                        }, 
+                        {
+                         "name":"movement_y",
+                         "type":"int",
+                         "value":0
                         }],
                  "rotation":0,
                  "type":"",
@@ -82,6 +93,29 @@
                  "width":8,
                  "x":40,
                  "y":72
+                }, 
+                {
+                 "gid":389,
+                 "height":8,
+                 "id":5,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"movement_x",
+                         "type":"int",
+                         "value":0
+                        }, 
+                        {
+                         "name":"movement_y",
+                         "type":"int",
+                         "value":1
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":8,
+                 "x":192,
+                 "y":40
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -90,7 +124,7 @@
          "y":0
         }],
  "nextlayerid":3,
- "nextobjectid":5,
+ "nextobjectid":6,
  "orientation":"orthogonal",
  "properties":[
         {
@@ -136,6 +170,10 @@
  "tilesets":[
         {
          "firstgid":1,
+         "source":"blutti-spritesheet.tsx"
+        }, 
+        {
+         "firstgid":257,
          "source":"blutti-spritesheet.tsx"
         }],
  "tilewidth":8,

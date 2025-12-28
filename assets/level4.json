@@ -15,7 +15,10 @@
                 "y": 144
             },
             "sprite": 128,
-            "movement": -1
+            "velocity": {
+                "x": -1,
+                "y": 0
+            }
         },
         {
             "position": {
@@ -23,7 +26,21 @@
                 "y": 24
             },
             "sprite": 128,
-            "movement": 1
+            "velocity": {
+                "x": 1,
+                "y": 0
+            }
+        },
+        {
+            "position": {
+                "x": 168,
+                "y": 48
+            },
+            "sprite": 132,
+            "velocity": {
+                "x": 0,
+                "y": 1
+            }
         }
     ],
     "tiles": [

@@ -31,6 +31,7 @@ pub struct Level {
 }
 
 impl Level {
+    const START_LEVEL: LevelNumber = 1;
     pub const MIN: Point = Point::MIN;
     pub const MAX: Point = Point {
         x: Point::MAX.x - TILE_WIDTH,
@@ -50,7 +51,7 @@ impl Level {
         let state = get_state();
         if level >= LEVELS.len() as LevelNumber {
             // Restart at level 1, as level 0 is a debug level
-            level = 1;
+            level = Self::START_LEVEL;
         }
         state.level = Level::load_level(level);
         if won {

@@ -7,7 +7,6 @@ var bluttiMapFormat = {
         return this.COLORS[map.property(prop).value];
     },
 
-    // TODO: Read list of monsters from a layer
     write: function(map, fileName) {
         COLORS = [
           "Black",
@@ -57,7 +56,10 @@ var bluttiMapFormat = {
                             y: obj["y"]
                         },
                         sprite: tile["id"],
-                        movement: obj.property("movement")
+                        velocity: {
+                          x: obj.property("movement_x"),
+                          y: obj.property("movement_y")
+                        }
                     };
                     m.monsters.push(monster);
                 }

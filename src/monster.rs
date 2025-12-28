@@ -12,7 +12,7 @@ pub struct Monster {
     #[serde(with = "PointDef")]
     position: Point,
     sprite: i32,
-    movement: f32,
+    velocity: Vec2,
     #[serde(skip)]
     remainder: Vec2,
     #[serde(skip)]
@@ -24,40 +24,38 @@ struct MonsterSerde {
     #[serde(with = "PointDef")]
     position: Point,
     sprite: i32,
-    movement: f32,
+    velocity: Vec2,
 }
 
 impl From<MonsterSerde> for Monster {
     fn from(value: MonsterSerde) -> Monster {
         Monster {
             position: value.position,
-            movement: value.movement,
+            velocity: value.velocity,
             remainder: Vec2::zero(),
             sprite: value.sprite,
-            animation: Monster::animation_from(value.movement, value.sprite),
+            animation: Monster::animation_from(value.velocity, value.sprite),
         }
     }
 }
 
 impl Monster {
-    fn animation_from(movement: f32, sprite: i32) -> Animation {
-        if movement >= 0.0 {
+    fn animation_from(velocity: Vec2, sprite: Sprite) -> Animation {
+        if velocity.x > 0.0 {
             Animation::looping([sprite + 2, sprite + 3], 10)
         } else {
             Animation::looping([sprite, sprite + 1], 10)
         }
     }
 
-    fn change_direction(&mut self) {
-        self.movement *= -1.0;
-        self.animation = Self::animation_from(self.movement, self.sprite);
+    fn change_direction_x(&mut self) {
+        self.velocity.x *= -1.0;
+        self.animation = Self::animation_from(self.velocity, self.sprite);
     }
 
-    fn velocity(&self) -> Vec2 {
-        Vec2 {
-            x: self.movement,
-            y: 0.0,
-        }
+    fn change_direction_y(&mut self) {
+        self.velocity.y *= -1.0;
+        self.animation = Self::animation_from(self.velocity, self.sprite);
     }
 }
 
@@ -75,18 +73,21 @@ impl Updateable for Monster {
 
         // Move X position
         (self.position, self.remainder) =
-            self.move_horizontally(self.position, self.velocity(), self.remainder);
+            self.move_horizontally(self.position, self.velocity, self.remainder);
 
         // Move y position
         (self.position, self.remainder) =
-            self.move_vertically(self.position, self.velocity(), self.remainder);
+            self.move_vertically(self.position, self.velocity, self.remainder);
     }
 
     fn collision_at(&self, position: Point) -> bool {
-        let collision_below = if self.movement < 0.0 {
+        // Handle direction change at edge of platforms
+        let collision_below = if self.velocity.x < 0.0 {
             self.is_tile_free(position.below_bottom_left())
-        } else {
+        } else if self.velocity.x > 0.0 {
             self.is_tile_free(position.below_bottom_right())
+        } else {
+            false
         };
 
         !(self.is_tile_free(position)
@@ -101,6 +102,10 @@ impl Updateable for Monster {
     }
 
     fn stop_movement(&mut self) {
-        self.change_direction();
+        if self.velocity.x != 0.0 {
+            self.change_direction_x();
+        } else {
+            self.change_direction_y();
+        }
     }
 }
