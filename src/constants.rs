@@ -25,6 +25,8 @@ pub const BLUTTI_DASH_LEFT_SPRITES: [i32; 4] = [100, 101, 102, 103];
 pub const BLUTTI_DEATH_SPRITES: [i32; 4] = [124, 125, 126, 127];
 pub const BLUTTI_EXIT_RIGHT_SPRITES: [i32; 4] = [92, 93, 94, 95];
 pub const BLUTTI_EXIT_LEFT_SPRITES: [i32; 4] = [108, 109, 110, 111];
+pub const BLUTTI_TURN_RIGHT_SPRITES: [i32; 4] = [71, 72, 73, 74];
+pub const BLUTTI_TURN_LEFT_SPRITES: [i32; 4] = [75, 76, 77, 78];
 pub const COLLECTION_SPRITES: [i32; 4] = [104, 105, 106, 107];
 
 // Level 0 is a debug level

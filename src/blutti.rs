@@ -80,23 +80,13 @@ impl Blutti {
 
     pub fn move_left(&mut self, speed: f32) {
         self.movement_modifier = speed;
-        // Change direction
-        if self.direction_x != DirectionX::Left {
-            self.direction_x = DirectionX::Left;
-            // TODO: Add particle for direction change
-            self.add_running_animation();
-        }
+        self.turn(DirectionX::Left);
         self.start_running();
     }
 
     pub fn move_right(&mut self, speed: f32) {
         self.movement_modifier = speed;
-        // Change direction
-        if self.direction_x != DirectionX::Right {
-            self.direction_x = DirectionX::Right;
-            // TODO: Add particle for direction change
-            self.add_running_animation();
-        }
+        self.turn(DirectionX::Right);
         self.start_running();
     }
 
@@ -267,6 +257,14 @@ impl Blutti {
         }
     }
 
+    fn turn(&mut self, new_direction: DirectionX) {
+        if self.direction_x != new_direction {
+            self.direction_x = new_direction;
+            self.add_turn_animation();
+            self.add_running_animation();
+        }
+    }
+
     fn jump(&mut self) {
         play_sound("sound_jump");
         self.state = PlayerState::Jumping;
@@ -420,6 +418,13 @@ impl Blutti {
         }
     }
 
+    fn add_turn_animation(&self) {
+        match self.direction_x {
+            DirectionX::Left => self.add_turn_particle(BLUTTI_TURN_LEFT_SPRITES),
+            DirectionX::Right => self.add_turn_particle(BLUTTI_TURN_RIGHT_SPRITES),
+        }
+    }
+
     fn add_dash_particle(&self, sprites: [i32; 4], offset_x: i32) {
         let anim = Animation::once(sprites.into(), 5);
         let position = Point {
@@ -433,6 +438,14 @@ impl Blutti {
 
     fn add_jump_particle(&self, sprites: [i32; 4]) {
         self.add_particle(self.position.bottom_left(), sprites.into());
+    }
+
+    fn add_turn_particle(&self, sprites: [i32; 4]) {
+        let position = match self.direction_x {
+            DirectionX::Left => self.position.bottom_left(),
+            DirectionX::Right => self.position.bottom_right(),
+        };
+        self.add_particle(position.addy(-2), sprites.into());
     }
 
     fn add_collection_particle(&self, position: Point) {
