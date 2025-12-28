@@ -21,6 +21,33 @@ Firefly Zero is a modern handheld game console with effortless multiplayer. It's
 
 <https://fireflyzero.com/>
 
+## Screenshots
+
+### Level 1
+
+![Screeenshot of level 1](resources/screenshots/screenshot-level1.png)
+
+### Level 2
+
+![Screeenshot of level 2](resources/screenshots/screenshot-level2.png)
+
+### Level 3
+
+![Screeenshot of level 3](resources/screenshots/screenshot-level3.png)
+
+### Level 4
+
+![Screeenshot of level 4](resources/screenshots/screenshot-level4.png)
+
+### Level 5
+
+![Screeenshot of level 5](resources/screenshots/screenshot-level5.png)
+
+### Title screen
+
+![Screenshot of title screen](resources/screenshots/screenshot-title.png)
+
+
 ## Installation
 
 Install the Firefly Emulator and the Firefly CLI according to [these instructions](https://docs.fireflyzero.com/user/installation/).
