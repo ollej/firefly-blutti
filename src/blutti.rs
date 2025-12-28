@@ -170,10 +170,11 @@ impl Blutti {
             .last()
         {
             match collision.tile_collider {
-                TileCollider::Star => self.collect_star(collision),
-                TileCollider::ExtraLife => self.collect_extra_life(collision),
-                TileCollider::Exit => self.exit(),
+                TileCollider::Collectible(points) => self.collect_collectible(collision, points),
                 TileCollider::Deadly => self.die(),
+                TileCollider::Exit => self.exit(),
+                TileCollider::ExtraLife => self.collect_extra_life(collision),
+                TileCollider::Star => self.collect_star(collision),
                 _ => (),
             }
         }
@@ -308,6 +309,12 @@ impl Blutti {
         self.add_points(1);
         self.stars += 1;
         add_progress(get_me(), BADGE_STARS, 1);
+        play_sound("sound_coin");
+    }
+
+    fn collect_collectible(&mut self, collision: Collision, points: i32) {
+        self.handle_collection(collision);
+        self.add_points(points);
         play_sound("sound_coin");
     }
 
