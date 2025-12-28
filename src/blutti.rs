@@ -170,7 +170,7 @@ impl Blutti {
             .last()
         {
             match collision.tile_collider {
-                TileCollider::Collectable(points) => self.collect_collectible(collision, points),
+                TileCollider::Collectable(points) => self.collect_collectable(collision, points),
                 TileCollider::Deadly => self.die(),
                 TileCollider::Exit => self.exit(),
                 TileCollider::ExtraLife => self.collect_extra_life(collision),
@@ -240,6 +240,7 @@ impl Blutti {
             if !self.is_climbing() {
                 self.add_climbing_animation();
             }
+            //log_debug("start climbing");
             self.state = PlayerState::Climbing;
         }
     }
@@ -312,7 +313,7 @@ impl Blutti {
         play_sound("sound_coin");
     }
 
-    fn collect_collectible(&mut self, collision: Collision, points: i32) {
+    fn collect_collectable(&mut self, collision: Collision, points: i32) {
         self.handle_collection(collision);
         self.add_points(points);
         play_sound("sound_coin");
@@ -360,11 +361,23 @@ impl Blutti {
 
     fn is_on_ladder(&self) -> bool {
         if self.direction_x == DirectionX::Left {
-            self.collision(self.position.bottom_left()) == TileCollider::Climbable
-                || self.collision(self.position.bottom_right().addx(-3)) == TileCollider::Climbable
+            if self.direction_y == DirectionY::Down {
+                self.collision(self.position.below_bottom_left()) == TileCollider::Climbable
+                    || self.collision(self.position.below_bottom_right().addx(-3))
+                        == TileCollider::Climbable
+            } else {
+                self.collision(self.position.bottom_left()) == TileCollider::Climbable
+                    || self.collision(self.position.bottom_right().addx(-3))
+                        == TileCollider::Climbable
+            }
         } else {
-            self.collision(self.position.bottom_left().addx(3)) == TileCollider::Climbable
-                || self.collision(self.position.bottom_right()) == TileCollider::Climbable
+            if self.direction_y == DirectionY::Down {
+                self.collision(self.position.below_bottom_left().addx(3)) == TileCollider::Climbable
+                    || self.collision(self.position.below_bottom_right()) == TileCollider::Climbable
+            } else {
+                self.collision(self.position.bottom_left().addx(3)) == TileCollider::Climbable
+                    || self.collision(self.position.bottom_right()) == TileCollider::Climbable
+            }
         }
     }
 
@@ -582,6 +595,7 @@ impl Blutti {
             || self.state == PlayerState::Idle && on_ladder
         {
             //log_debug(str_format!(str32, "stop movement from {:?}", self.state).as_str());
+            //log_debug(str_format!(str32, "velocity {:?}", self.velocity).as_str());
             self.stop_movement();
         }
         if self.is_standing() {
