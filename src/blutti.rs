@@ -170,7 +170,7 @@ impl Blutti {
             .last()
         {
             match collision.tile_collider {
-                TileCollider::Collectible(points) => self.collect_collectible(collision, points),
+                TileCollider::Collectable(points) => self.collect_collectible(collision, points),
                 TileCollider::Deadly => self.die(),
                 TileCollider::Exit => self.exit(),
                 TileCollider::ExtraLife => self.collect_extra_life(collision),

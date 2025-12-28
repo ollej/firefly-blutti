@@ -89,7 +89,7 @@ pub trait Updateable {
     fn is_tile_empty(&self, position: Point) -> bool {
         match self.collision(position) {
             TileCollider::None
-            | TileCollider::Collectible(_)
+            | TileCollider::Collectable(_)
             | TileCollider::Star
             | TileCollider::ExtraLife
             | TileCollider::Deadly

@@ -131,7 +131,7 @@ pub const COLLISION: [TileCollider; 256] = [
     TileCollider::None,
     TileCollider::None,
     TileCollider::None,
-    TileCollider::Collectible(20),
+    TileCollider::Collectable(20),
     TileCollider::None,
     TileCollider::None,
     TileCollider::None,
