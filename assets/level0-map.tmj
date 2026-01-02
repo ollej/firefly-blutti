@@ -74,6 +74,12 @@
                  "name":"",
                  "properties":[
                         {
+                         "name":"collision",
+                         "propertytype":"MonsterCollider",
+                         "type":"string",
+                         "value":"None"
+                        }, 
+                        {
                          "name":"gravity",
                          "type":"bool",
                          "value":true

@@ -1,10 +1,9 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
-use fixedstr::{str128, str_format};
 use serde::Deserialize;
 
-use firefly_rust::{log_debug, Point};
+use firefly_rust::Point;
 
 use crate::{
     animation::*, constants::*, drawable::*, drawing::*, point_math::*, serde::*, updateable::*,
@@ -123,15 +122,6 @@ impl Updateable for Monster {
         // Apply gravity
         if self.gravity == true {
             self.velocity.y = (self.velocity.y + GRAVITY_ACCELERATION).min(GRAVITY_MAX);
-            log_debug(
-                str_format!(
-                    str128,
-                    "gravity velocity x: {}, y: {}",
-                    self.velocity.x,
-                    self.velocity.y
-                )
-                .as_str(),
-            );
         }
 
         // Move X position

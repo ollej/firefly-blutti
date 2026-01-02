@@ -31,7 +31,7 @@
                 "x": 0.5,
                 "y": 0
             },
-            "collision": "Deadly",
+            "collision": "None",
             "movement": "Moving",
             "position": {
                 "x": 80,
