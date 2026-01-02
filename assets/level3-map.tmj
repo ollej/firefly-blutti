@@ -55,17 +55,16 @@
                  "name":"",
                  "properties":[
                         {
-                         "name":"movement_x",
-                         "type":"int",
-                         "value":1
-                        }, 
-                        {
-                         "name":"movement_y",
-                         "type":"int",
-                         "value":0
+                         "name":"velocity",
+                         "propertytype":"Vector",
+                         "type":"class",
+                         "value":
+                            {
+                             "x":1
+                            }
                         }],
                  "rotation":0,
-                 "type":"",
+                 "type":"Monster",
                  "visible":true,
                  "width":8,
                  "x":80,
@@ -78,40 +77,38 @@
                  "name":"",
                  "properties":[
                         {
-                         "name":"movement_x",
-                         "type":"int",
-                         "value":1
-                        }, 
-                        {
-                         "name":"movement_y",
-                         "type":"int",
-                         "value":0
+                         "name":"velocity",
+                         "propertytype":"Vector",
+                         "type":"class",
+                         "value":
+                            {
+                             "x":1
+                            }
                         }],
                  "rotation":0,
-                 "type":"",
+                 "type":"Monster",
                  "visible":true,
                  "width":8,
                  "x":200,
                  "y":48
                 }, 
                 {
-                 "gid":389,
+                 "gid":133,
                  "height":8,
                  "id":33,
                  "name":"",
                  "properties":[
                         {
-                         "name":"movement_x",
-                         "type":"int",
-                         "value":0
-                        }, 
-                        {
-                         "name":"movement_y",
-                         "type":"int",
-                         "value":1
+                         "name":"velocity",
+                         "propertytype":"Vector",
+                         "type":"class",
+                         "value":
+                            {
+                             "y":1
+                            }
                         }],
                  "rotation":0,
-                 "type":"",
+                 "type":"Monster",
                  "visible":true,
                  "width":8,
                  "x":160,
@@ -170,10 +167,6 @@
  "tilesets":[
         {
          "firstgid":1,
-         "source":"blutti-spritesheet.tsx"
-        }, 
-        {
-         "firstgid":257,
          "source":"blutti-spritesheet.tsx"
         }],
  "tilewidth":8,

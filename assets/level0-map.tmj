@@ -34,6 +34,7 @@
             4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4],
          "height":20,
          "id":1,
+         "locked":true,
          "name":"Tile Layer 1",
          "opacity":1,
          "type":"tilelayer",
@@ -45,9 +46,60 @@
         {
          "draworder":"topdown",
          "id":2,
-         "locked":true,
          "name":"Monsters",
-         "objects":[],
+         "objects":[
+                {
+                 "gid":393,
+                 "height":8,
+                 "id":4,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"collision",
+                         "propertytype":"MonsterCollider",
+                         "type":"string",
+                         "value":"Blocking"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":8,
+                 "x":56,
+                 "y":120
+                }, 
+                {
+                 "gid":393,
+                 "height":8,
+                 "id":5,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"gravity",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"movement",
+                         "propertytype":"MonsterMovement",
+                         "type":"string",
+                         "value":"Moving"
+                        }, 
+                        {
+                         "name":"velocity",
+                         "propertytype":"Vector",
+                         "type":"class",
+                         "value":
+                            {
+                             "x":0.5
+                            }
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":8,
+                 "x":80,
+                 "y":0
+                }],
          "opacity":1,
          "type":"objectgroup",
          "visible":true,
@@ -55,7 +107,7 @@
          "y":0
         }],
  "nextlayerid":3,
- "nextobjectid":3,
+ "nextobjectid":6,
  "orientation":"orthogonal",
  "properties":[
         {
@@ -101,6 +153,10 @@
  "tilesets":[
         {
          "firstgid":1,
+         "source":"blutti-spritesheet.tsx"
+        }, 
+        {
+         "firstgid":257,
          "source":"blutti-spritesheet.tsx"
         }],
  "tilewidth":8,

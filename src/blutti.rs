@@ -5,7 +5,7 @@ use fixedstr::{str32, str_format};
 
 use crate::{
     animation::*, collision::*, constants::*, direction::*, drawable::*, drawing::*, functions::*,
-    level::*, particle::*, player_state::*, point_math::*, state::*, tile_collider::*,
+    level::*, monster::*, particle::*, player_state::*, point_math::*, state::*, tile_collider::*,
     updateable::*, vec2::*,
 };
 
@@ -39,8 +39,6 @@ impl Blutti {
     const RUNNING_ACCELERATION: f32 = 0.5;
     const MAX_VELOCITY: f32 = 2.0;
     const FALLING_X_ACCELERATION: f32 = 0.1;
-    const GRAVITY_MAX: f32 = 2.5;
-    const GRAVITY_ACCELERATION: f32 = 0.8;
     const MAX_FALLING_VELOCITY: f32 = 0.8;
     const JUMP_ACCELERATION: f32 = 0.6;
     const JUMP_VELOCITY: f32 = 2.5;
@@ -197,7 +195,7 @@ impl Blutti {
         }
         let state = get_state();
         state.level.reset();
-        self.stop_movement();
+        self.stop_movement(StopDirection::Both);
         self.state = PlayerState::Idle;
         self.add_death_animation();
         self.add_lives(-1);
@@ -211,7 +209,7 @@ impl Blutti {
         self.direction_x = DirectionX::Right;
         self.direction_y = DirectionY::Up;
         self.position = self.start_position;
-        self.stop_movement();
+        self.stop_movement(StopDirection::Both);
         self.add_idle_animation();
         self.current_tile = 0;
     }
@@ -539,7 +537,7 @@ impl Blutti {
             | PlayerState::Running
             | PlayerState::RunningStop
             | PlayerState::Idle => (0.0, 0.0),
-            PlayerState::Falling => (Self::GRAVITY_ACCELERATION, Self::GRAVITY_MAX), // Gravity
+            PlayerState::Falling => (GRAVITY_ACCELERATION, GRAVITY_MAX), // Gravity
         };
         acceleration *= self.movement_modifier;
         target_velocity *= self.movement_modifier;
@@ -596,7 +594,7 @@ impl Blutti {
         {
             //log_debug(str_format!(str32, "stop movement from {:?}", self.state).as_str());
             //log_debug(str_format!(str32, "velocity {:?}", self.velocity).as_str());
-            self.stop_movement();
+            self.stop_movement(StopDirection::Both);
         }
         if self.is_standing() {
             // Death from fall height
@@ -645,7 +643,7 @@ impl Blutti {
             if self.dash_timer == 0 {
                 //log_debug("stop dashing");
                 let ft = self.fall_timer;
-                self.stop_movement();
+                self.stop_movement(StopDirection::Both);
                 self.fall_timer = ft;
                 self.dash_timer = -Self::DASH_WAIT_TIME;
             }
@@ -661,7 +659,7 @@ impl Blutti {
             .level
             .monsters
             .iter()
-            .any(|monster| monster.overlaps(rect))
+            .any(|monster| monster.collision == MonsterCollision::Deadly && monster.overlaps(rect))
         {
             state.blutti.die();
         }
@@ -795,7 +793,7 @@ impl Updateable for Blutti {
         self.update_states();
     }
 
-    fn stop_movement(&mut self) {
+    fn stop_movement(&mut self, _stop_direction: StopDirection) {
         self.jump_timer = 0;
         self.dash_timer = 0;
         self.fall_timer = 0;
@@ -834,12 +832,16 @@ impl Updateable for Blutti {
     }
 
     fn is_standing(&self) -> bool {
+        if self.is_standing_on(TileCollider::Climbable) {
+            return true;
+        }
+
         if self.direction_x == DirectionX::Left {
-            !(self.is_tile_empty(self.position().below_bottom_left())
-                && self.is_tile_empty(self.position().below_bottom_right().addx(-3)))
+            !(self.is_tile_free(self.position().below_bottom_left())
+                && self.is_tile_free(self.position().below_bottom_right().addx(-3)))
         } else {
-            !(self.is_tile_empty(self.position().below_bottom_left().addx(3))
-                && self.is_tile_empty(self.position().below_bottom_right()))
+            !(self.is_tile_free(self.position().below_bottom_left().addx(3))
+                && self.is_tile_free(self.position().below_bottom_right()))
         }
     }
 

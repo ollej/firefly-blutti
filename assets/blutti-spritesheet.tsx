@@ -28,7 +28,14 @@
    <frame tileid="119" duration="166"/>
   </animation>
  </tile>
- <tile id="128">
+ <tile id="128" type="Monster">
+  <properties>
+   <property name="velocity" type="class" propertytype="Vector">
+    <properties>
+     <property name="x" type="float" value="1"/>
+    </properties>
+   </property>
+  </properties>
   <animation>
    <frame tileid="128" duration="166"/>
    <frame tileid="129" duration="166"/>
@@ -40,16 +47,29 @@
    <frame tileid="131" duration="166"/>
   </animation>
  </tile>
- <tile id="132">
+ <tile id="132" type="Monster">
+  <properties>
+   <property name="velocity" type="class" propertytype="Vector">
+    <properties>
+     <property name="y" type="float" value="1"/>
+    </properties>
+   </property>
+  </properties>
   <animation>
    <frame tileid="132" duration="166"/>
    <frame tileid="133" duration="166"/>
   </animation>
  </tile>
- <tile id="134">
+ <tile id="134" type="Monster">
   <animation>
    <frame tileid="134" duration="166"/>
    <frame tileid="135" duration="166"/>
+  </animation>
+ </tile>
+ <tile id="136" type="Monster">
+  <animation>
+   <frame tileid="136" duration="166"/>
+   <frame tileid="137" duration="166"/>
   </animation>
  </tile>
  <wangsets>

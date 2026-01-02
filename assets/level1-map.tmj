@@ -28,7 +28,7 @@
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 48, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 11, 0, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 336, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 80, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 31, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0,
             0, 0, 32, 0, 5, 4, 4, 4, 6, 0, 0, 36, 0, 31, 0, 0, 0, 0, 0, 31, 0, 36, 0, 10, 0, 32, 0, 12, 0, 0,
             4, 4, 4, 4, 33, 9, 9, 9, 34, 4, 4, 4, 4, 4, 16, 16, 16, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4],
@@ -55,44 +55,54 @@
                  "name":"",
                  "properties":[
                         {
-                         "name":"movement_x",
-                         "type":"int",
-                         "value":-1
+                         "name":"movement",
+                         "propertytype":"MonsterMovement",
+                         "type":"string",
+                         "value":"TurnsAtEdge"
                         }, 
                         {
-                         "name":"movement_y",
-                         "type":"int",
-                         "value":0
+                         "name":"velocity",
+                         "propertytype":"Vector",
+                         "type":"class",
+                         "value":
+                            {
+                             "x":-1
+                            }
                         }],
                  "rotation":0,
-                 "type":"",
+                 "type":"Monster",
                  "visible":true,
                  "width":8,
                  "x":144,
                  "y":144
                 }, 
                 {
-                 "gid":389,
+                 "gid":133,
                  "height":8,
                  "id":3,
                  "name":"",
                  "properties":[
                         {
-                         "name":"movement_x",
-                         "type":"int",
-                         "value":0
+                         "name":"collision",
+                         "propertytype":"MonsterCollider",
+                         "type":"string",
+                         "value":"Deadly"
                         }, 
                         {
-                         "name":"movement_y",
-                         "type":"int",
-                         "value":1
+                         "name":"velocity",
+                         "propertytype":"Vector",
+                         "type":"class",
+                         "value":
+                            {
+                             "y":1
+                            }
                         }],
                  "rotation":0,
-                 "type":"",
+                 "type":"Monster",
                  "visible":true,
                  "width":8,
                  "x":104,
-                 "y":64
+                 "y":63
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -101,7 +111,7 @@
          "y":0
         }],
  "nextlayerid":3,
- "nextobjectid":6,
+ "nextobjectid":7,
  "orientation":"orthogonal",
  "properties":[
         {

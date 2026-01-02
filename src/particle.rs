@@ -41,7 +41,7 @@ impl Particle {
                 x: random_value(WIDTH + 64),
                 y: -3,
             },
-            animation: Animation::looping([sprite, sprite + 1], 15),
+            animation: Animation::looping([sprite, sprite + 1].into(), 15),
             movement: ParticleMovement::Falling,
         }
     }

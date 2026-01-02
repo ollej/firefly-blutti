@@ -1,6 +1,6 @@
 use firefly_rust::{math, Point, HEIGHT};
 
-use crate::{point_math::*, rect::*, state::*, tile_collider::*, vec2::*};
+use crate::{monster::*, point_math::*, rect::*, state::*, tile_collider::*, vec2::*};
 
 #[inline]
 pub fn movement_to_step(amount: f32) -> i32 {
@@ -13,12 +13,19 @@ pub fn movement_to_step(amount: f32) -> i32 {
     }
 }
 
+#[derive(PartialEq, Clone, Debug)]
+pub enum StopDirection {
+    X,
+    Y,
+    Both,
+}
+
 pub trait Updateable {
     fn update(&mut self);
 
     fn position(&self) -> Point;
 
-    fn stop_movement(&mut self);
+    fn stop_movement(&mut self, stop_direction: StopDirection);
 
     fn move_horizontally(
         &mut self,
@@ -39,7 +46,7 @@ pub trait Updateable {
                 // There was a collision, let's nudge up
                 position = nudge_pos
             } else {
-                self.stop_movement();
+                self.stop_movement(StopDirection::X);
                 break;
             }
         }
@@ -62,7 +69,7 @@ pub trait Updateable {
             if test_pos.y >= 0 && test_pos.y < HEIGHT && !self.collision_at(test_pos) {
                 position.y += step;
             } else {
-                self.stop_movement();
+                self.stop_movement(StopDirection::Y);
                 break;
             }
         }
@@ -86,27 +93,25 @@ pub trait Updateable {
         self.rect().overlaps(other)
     }
 
-    fn is_tile_empty(&self, position: Point) -> bool {
-        match self.collision(position) {
-            TileCollider::None
-            | TileCollider::Collectable(_)
-            | TileCollider::Star
-            | TileCollider::ExtraLife
-            | TileCollider::Deadly
-            | TileCollider::Exit => true,
-            TileCollider::Climbable
-            | TileCollider::Slippery
-            | TileCollider::Conveyor
-            | TileCollider::Full => false,
-        }
-    }
-
     fn is_tile_free(&self, position: Point) -> bool {
         let occupied = matches!(
             self.collision(position),
             TileCollider::Full | TileCollider::Slippery | TileCollider::Conveyor
         );
-        !occupied
+        if occupied {
+            // Return early if it's an occupied tile
+            return false;
+        }
+        let state = get_state();
+        // FIXME: Use better check for equality than position
+        let blocking_monster = state
+            .level
+            .monsters
+            .iter()
+            .filter(|monster| monster.position() != self.position())
+            .filter(|monster| monster.collision == MonsterCollision::Blocking)
+            .any(|monster| monster.rect().contains(position));
+        !blocking_monster
     }
 
     fn collision_at(&self, position: Point) -> bool {
@@ -117,8 +122,8 @@ pub trait Updateable {
     }
 
     fn is_standing(&self) -> bool {
-        !(self.is_tile_empty(self.position().below_bottom_left())
-            && self.is_tile_empty(self.position().below_bottom_right()))
+        !(self.is_tile_free(self.position().below_bottom_left())
+            && self.is_tile_free(self.position().below_bottom_right()))
     }
 
     fn is_standing_on(&self, collision: TileCollider) -> bool {

@@ -8,7 +8,38 @@
         "x": 8,
         "y": 144
     },
-    "monsters": [],
+    "monsters": [
+        {
+            "gravity": false,
+            "sprites": 2,
+            "velocity": {
+                "x": 0,
+                "y": 0
+            },
+            "collision": "Blocking",
+            "movement": "TurnsAtEdge",
+            "position": {
+                "x": 56,
+                "y": 120
+            },
+            "sprite": 136
+        },
+        {
+            "gravity": true,
+            "sprites": 2,
+            "velocity": {
+                "x": 0.5,
+                "y": 0
+            },
+            "collision": "Deadly",
+            "movement": "Moving",
+            "position": {
+                "x": 80,
+                "y": 0
+            },
+            "sprite": 136
+        }
+    ],
     "tiles": [
         0,
         0,

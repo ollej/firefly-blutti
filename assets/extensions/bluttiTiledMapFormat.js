@@ -1,7 +1,14 @@
+function filteredClone(obj, ...keys) {
+    let clone = {};
+    for (let key of keys) {
+        clone[key] = obj.resolvedProperty(key)
+    }
+    return clone;
+}
+
 var bluttiMapFormat = {
     name: "Blutti map format",
     extension: "json",
-
 
     color: function(map, prop) {
         return this.COLORS[map.property(prop).value];
@@ -26,6 +33,16 @@ var bluttiMapFormat = {
           "Gray",
           "DarkGray"
         ];
+        COLLISION = [
+          "Blocking",
+          "Deadly",
+          "None",
+        ];
+        MOVEMENT = [
+          "TurnsAtEdge",
+          "FollowsPlayer",
+          "Moving",
+        ];
         var m = {
             background_color: this.COLORS[map.property("background_color")["value"]],
             font_color: this.COLORS[map.property("font_color")["value"]],
@@ -48,19 +65,21 @@ var bluttiMapFormat = {
             }
             if (layer.isObjectLayer) {
                 for (x = 0; x < layer.objects.length; ++x) {
-                    var obj = layer.objectAt(x);
-                    var tile = obj["tile"];
-                    var monster = {
-                        position: {
+                    const obj = layer.objectAt(x);
+                    let monster = filteredClone(obj, "gravity", "sprites", "velocity");
+                    Object.assign(monster, {
+                        "collision": this.COLLISION[obj.resolvedProperty("collision")["value"]],
+                        "movement": this.MOVEMENT[obj.resolvedProperty("movement")["value"]],
+                        "position": {
                             x: obj["x"],
                             y: obj["y"]
                         },
-                        sprite: tile["id"],
-                        velocity: {
-                          x: obj.property("movement_x"),
-                          y: obj.property("movement_y")
+                        "sprite": obj["tile"]["id"],
+                        "velocity": {
+                            x: obj.resolvedProperty("velocity")["value"]["x"] || 0.0,
+                            y: obj.resolvedProperty("velocity")["value"]["y"] || 0.0
                         }
-                    };
+                    });
                     m.monsters.push(monster);
                 }
             }

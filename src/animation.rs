@@ -29,27 +29,27 @@ impl Animation {
     }
 
     pub fn animation_idle_left() -> Animation {
-        Animation::looping(BLUTTI_IDLE_LEFT_SPRITES, 10)
+        Animation::looping(BLUTTI_IDLE_LEFT_SPRITES.into(), 10)
     }
 
     pub fn animation_idle_right() -> Animation {
-        Animation::looping(BLUTTI_IDLE_RIGHT_SPRITES, 10)
+        Animation::looping(BLUTTI_IDLE_RIGHT_SPRITES.into(), 10)
     }
 
     pub fn animation_running_left() -> Animation {
-        Animation::looping(BLUTTI_LEFT_SPRITES, 10)
+        Animation::looping(BLUTTI_LEFT_SPRITES.into(), 10)
     }
 
     pub fn animation_running_right() -> Animation {
-        Animation::looping(BLUTTI_RIGHT_SPRITES, 10)
+        Animation::looping(BLUTTI_RIGHT_SPRITES.into(), 10)
     }
 
     pub fn animation_climb_left() -> Animation {
-        Animation::looping(BLUTTI_CLIMB_LEFT_SPRITES, 10)
+        Animation::looping(BLUTTI_CLIMB_LEFT_SPRITES.into(), 10)
     }
 
     pub fn animation_climb_right() -> Animation {
-        Animation::looping(BLUTTI_CLIMB_RIGHT_SPRITES, 10)
+        Animation::looping(BLUTTI_CLIMB_RIGHT_SPRITES.into(), 10)
     }
 
     pub fn animation_death() -> Animation {
@@ -68,7 +68,7 @@ impl Animation {
         Self::new(sprites, time_per_frame, false)
     }
 
-    pub fn looping(sprites: [Sprite; 2], time_per_frame: i32) -> Self {
+    pub fn looping(sprites: Vec<Sprite>, time_per_frame: i32) -> Self {
         Self::new(sprites.into(), time_per_frame, true)
     }
 

@@ -34,7 +34,6 @@
             51, 51, 51, 51, 51, 51, 51, 51, 51, 55, 50, 59, 60, 60, 60, 60, 60, 60, 60, 61, 50, 50, 23, 23, 23, 49, 50, 50, 50, 54],
          "height":20,
          "id":1,
-         "locked":true,
          "name":"Tile Layer 1",
          "opacity":1,
          "type":"tilelayer",
@@ -55,17 +54,16 @@
                  "name":"",
                  "properties":[
                         {
-                         "name":"movement_x",
-                         "type":"int",
-                         "value":-1
-                        }, 
-                        {
-                         "name":"movement_y",
-                         "type":"int",
-                         "value":0
+                         "name":"velocity",
+                         "propertytype":"Vector",
+                         "type":"class",
+                         "value":
+                            {
+                             "x":-1
+                            }
                         }],
                  "rotation":0,
-                 "type":"",
+                 "type":"Monster",
                  "visible":true,
                  "width":8,
                  "x":160,
@@ -78,17 +76,16 @@
                  "name":"",
                  "properties":[
                         {
-                         "name":"movement_x",
-                         "type":"int",
-                         "value":1
-                        }, 
-                        {
-                         "name":"movement_y",
-                         "type":"int",
-                         "value":0
+                         "name":"velocity",
+                         "propertytype":"Vector",
+                         "type":"class",
+                         "value":
+                            {
+                             "x":1
+                            }
                         }],
                  "rotation":0,
-                 "type":"",
+                 "type":"Monster",
                  "visible":true,
                  "width":8,
                  "x":16,
@@ -101,63 +98,40 @@
                  "name":"",
                  "properties":[
                         {
-                         "name":"movement_x",
-                         "type":"int",
-                         "value":1
-                        }, 
-                        {
-                         "name":"movement_y",
-                         "type":"int",
-                         "value":0
+                         "name":"velocity",
+                         "propertytype":"Vector",
+                         "type":"class",
+                         "value":
+                            {
+                             "x":1
+                            }
                         }],
                  "rotation":0,
-                 "type":"",
+                 "type":"Monster",
                  "visible":true,
                  "width":8,
                  "x":48,
                  "y":56
                 }, 
                 {
-                 "gid":391,
+                 "gid":393,
                  "height":8,
                  "id":38,
                  "name":"",
-                 "properties":[
-                        {
-                         "name":"movement_x",
-                         "type":"int",
-                         "value":0
-                        }, 
-                        {
-                         "name":"movement_y",
-                         "type":"int",
-                         "value":0
-                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"Monster",
                  "visible":true,
                  "width":8,
                  "x":128,
                  "y":0
                 }, 
                 {
-                 "gid":391,
+                 "gid":393,
                  "height":8,
                  "id":39,
                  "name":"",
-                 "properties":[
-                        {
-                         "name":"movement_x",
-                         "type":"int",
-                         "value":0
-                        }, 
-                        {
-                         "name":"movement_y",
-                         "type":"int",
-                         "value":0
-                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"Monster",
                  "visible":true,
                  "width":8,
                  "x":128,
@@ -170,7 +144,7 @@
          "y":0
         }],
  "nextlayerid":3,
- "nextobjectid":40,
+ "nextobjectid":42,
  "orientation":"orthogonal",
  "properties":[
         {

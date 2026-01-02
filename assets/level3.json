@@ -10,37 +10,49 @@
     },
     "monsters": [
         {
+            "gravity": false,
+            "sprites": 2,
+            "velocity": {
+                "x": 1,
+                "y": 0
+            },
+            "collision": "Deadly",
+            "movement": "TurnsAtEdge",
             "position": {
                 "x": 80,
                 "y": 144
             },
-            "sprite": 128,
+            "sprite": 128
+        },
+        {
+            "gravity": false,
+            "sprites": 2,
             "velocity": {
                 "x": 1,
                 "y": 0
-            }
-        },
-        {
+            },
+            "collision": "Deadly",
+            "movement": "TurnsAtEdge",
             "position": {
                 "x": 200,
                 "y": 48
             },
-            "sprite": 128,
-            "velocity": {
-                "x": 1,
-                "y": 0
-            }
+            "sprite": 128
         },
         {
+            "gravity": false,
+            "sprites": 2,
+            "velocity": {
+                "x": 0,
+                "y": 1
+            },
+            "collision": "Deadly",
+            "movement": "TurnsAtEdge",
             "position": {
                 "x": 160,
                 "y": 40
             },
-            "sprite": 132,
-            "velocity": {
-                "x": 0,
-                "y": 1
-            }
+            "sprite": 132
         }
     ],
     "tiles": [

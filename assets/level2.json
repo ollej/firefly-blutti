@@ -10,59 +10,79 @@
     },
     "monsters": [
         {
+            "gravity": false,
+            "sprites": 2,
+            "velocity": {
+                "x": -1,
+                "y": 0
+            },
+            "collision": "Deadly",
+            "movement": "TurnsAtEdge",
             "position": {
                 "x": 144,
                 "y": 144
             },
-            "sprite": 128,
-            "velocity": {
-                "x": -1,
-                "y": 0
-            }
+            "sprite": 128
         },
         {
+            "gravity": false,
+            "sprites": 2,
+            "velocity": {
+                "x": 1,
+                "y": 0
+            },
+            "collision": "Deadly",
+            "movement": "TurnsAtEdge",
             "position": {
                 "x": 40,
                 "y": 72
             },
-            "sprite": 128,
-            "velocity": {
-                "x": 1,
-                "y": 0
-            }
+            "sprite": 128
         },
         {
+            "gravity": false,
+            "sprites": 2,
+            "velocity": {
+                "x": 0,
+                "y": 1
+            },
+            "collision": "Deadly",
+            "movement": "TurnsAtEdge",
             "position": {
                 "x": 192,
                 "y": 40
             },
-            "sprite": 132,
-            "velocity": {
-                "x": 0,
-                "y": 1
-            }
+            "sprite": 136
         },
         {
+            "gravity": false,
+            "sprites": 2,
+            "velocity": {
+                "x": 0,
+                "y": 0
+            },
+            "collision": "Deadly",
+            "movement": "TurnsAtEdge",
             "position": {
                 "x": 16,
                 "y": 24
             },
-            "sprite": 134,
+            "sprite": 136
+        },
+        {
+            "gravity": false,
+            "sprites": 2,
             "velocity": {
                 "x": 0,
                 "y": 0
-            }
-        },
-        {
+            },
+            "collision": "Deadly",
+            "movement": "TurnsAtEdge",
             "position": {
                 "x": 128,
                 "y": 96
             },
-            "sprite": 134,
-            "velocity": {
-                "x": 0,
-                "y": 0
-            }
+            "sprite": 136
         }
     ],
     "tiles": [
