@@ -100,6 +100,7 @@ layer and add monsters in the first object layer. Use the custom property
 `movement` to set how fast the monster should move. Set a negative values to
 make the monster start by moving left.
 
+### Map properties
 The map should have the following custom properties:
 
 - `background_color` - A FireflyColor class for the background color of the
@@ -109,6 +110,29 @@ level.
 level.
 - `start_position` - A Point class defining the position where the player
 should start.
+- `particle_chance` - How often particles spawn, between 1 and 100.
+- `particle_sprite` - ID of the first sprite in the particle animation.
+
+### Monsters
+
+Monsters should be added to the Monsters layer of the level.
+The class of the monster should be set to `Monster`.
+
+The properties available on the Monster are:
+
+- `collision` - Type of collision.
+  - `Deadly` kills player that touches it.
+  - `Blocking` allows player to stand on the monster without dying.
+  - `None` Allows player to walk through the monster.
+- `gravity` - Whether gravity should affect the monster.
+- `movement` - Type of movement.
+  - `TurnsAtEdge` makes monster turn when reaching edge of a ledge.
+  - `FollowsPlayer` makes monster move towards player.
+  - `Moving` makes monster ignore edges of ledges.
+- `sprites` - Number of sprites in animation. When turning, the next set of sprites is used.
+- `velocity` - The initial speed in X and Y direction.
+
+### Exporting level data
 
 Once the map is finished, it can be exported using the `Blutti map format` to
 the `assets` directory..
@@ -117,6 +141,8 @@ The filename (without extension) has to be added to the `LEVELS` const at the
 top of `src/main.rs`. The position in the array defines when it will show up
 in the game. Finally, a reference to the file needs to be added under the
 `files` section in `firefly.toml` with the attribute `copy` set to `true`.
+
+### TileCollider description
 
 When adding new tiles to the spritesheet, remember to update the `COLLISION`
 array with collision info for each tile.
