@@ -72,6 +72,25 @@
    <frame tileid="137" duration="166"/>
   </animation>
  </tile>
+ <tile id="140" type="Monster">
+  <properties>
+   <property name="collision" propertytype="MonsterCollider" value="None"/>
+   <property name="movement" propertytype="MonsterMovement" value="Flying"/>
+   <property name="reverse_sprite" type="int" value="140"/>
+   <property name="sprites" type="int" value="4"/>
+   <property name="velocity" type="class" propertytype="Vector">
+    <properties>
+     <property name="x" type="float" value="0.2"/>
+    </properties>
+   </property>
+  </properties>
+  <animation>
+   <frame tileid="140" duration="333"/>
+   <frame tileid="141" duration="333"/>
+   <frame tileid="142" duration="333"/>
+   <frame tileid="143" duration="333"/>
+  </animation>
+ </tile>
  <wangsets>
   <wangset name="Grass" type="mixed" tile="-1">
    <wangcolor name="Blutti tile" color="#00ff00" tile="-1" probability="1"/>

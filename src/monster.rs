@@ -10,11 +10,12 @@ use crate::{
     vec2::*,
 };
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(PartialEq, Clone, Debug, Deserialize)]
 pub enum MonsterMovement {
-    TurnsAtEdge,
+    Flying,
     FollowsPlayer,
     Moving,
+    TurnsAtEdge,
 }
 
 impl Default for MonsterMovement {
@@ -43,8 +44,9 @@ struct MonsterSerde {
     movement: MonsterMovement,
     #[serde(with = "PointDef")]
     position: Point,
-    sprite: i32,
-    sprites: i32,
+    reverse_sprite: i32,
+    sprite: Sprite,
+    sprites: Sprite,
     velocity: Vec2,
 }
 
@@ -57,9 +59,15 @@ impl From<MonsterSerde> for Monster {
             position: value.position,
             velocity: value.velocity,
             remainder: Vec2::zero(),
+            reverse_sprite: value.reverse_sprite,
             sprite: value.sprite,
             sprites: value.sprites,
-            animation: Monster::animation_from(value.velocity, value.sprite, value.sprites),
+            animation: Monster::animation_from(
+                value.velocity,
+                value.sprite,
+                value.reverse_sprite,
+                value.sprites,
+            ),
         }
     }
 }
@@ -76,33 +84,49 @@ pub struct Monster {
     position: Point,
     #[serde(skip)]
     remainder: Vec2,
-    sprite: i32,
+    reverse_sprite: Sprite,
+    sprite: Sprite,
     sprites: i32,
     velocity: Vec2,
 }
 
 impl Monster {
-    fn animation_from(velocity: Vec2, sprite: Sprite, sprite_count: i32) -> Animation {
-        if velocity.x > 0.0 || velocity.y > 0.0 {
-            let sprites: Vec<i32> = (0..sprite_count)
-                .map(|offset| sprite + sprite_count + offset)
-                .collect();
-            Animation::looping(sprites, 10)
+    fn animation_from(
+        velocity: Vec2,
+        sprite: Sprite,
+        reverse_sprite: Sprite,
+        sprite_count: i32,
+    ) -> Animation {
+        let selected_sprite = if velocity.x > 0.0 || velocity.y > 0.0 {
+            reverse_sprite
         } else {
-            let sprites: Vec<i32> = (0..sprite_count).map(|offset| sprite + offset).collect();
-            Animation::looping(sprites, 10)
-        }
+            sprite
+        };
+        let sprites: Vec<i32> = (0..sprite_count)
+            .map(|offset| selected_sprite + offset)
+            .collect();
+        Animation::looping(sprites, 10)
     }
 
     fn change_direction_x(&mut self) {
         self.velocity.x *= -1.0;
-        self.animation = Self::animation_from(self.velocity, self.sprite, self.sprites);
+        self.animation = Self::animation_from(
+            self.velocity,
+            self.sprite,
+            self.reverse_sprite,
+            self.sprites,
+        );
     }
 
     fn change_direction_y(&mut self) {
         if !self.gravity {
             self.velocity.y *= -1.0;
-            self.animation = Self::animation_from(self.velocity, self.sprite, self.sprites);
+            self.animation = Self::animation_from(
+                self.velocity,
+                self.sprite,
+                self.reverse_sprite,
+                self.sprites,
+            );
         }
     }
 }
@@ -125,8 +149,10 @@ impl Updateable for Monster {
         }
 
         // Move X position
-        (self.position, self.remainder) =
-            self.move_horizontally(self.position, self.velocity, self.remainder);
+        if self.movement == MonsterMovement::Flying || self.is_standing() {
+            (self.position, self.remainder) =
+                self.move_horizontally(self.position, self.velocity, self.remainder);
+        }
 
         // Move y position
         (self.position, self.remainder) =
@@ -145,7 +171,9 @@ impl Updateable for Monster {
                     false
                 }
             }
-            MonsterMovement::FollowsPlayer | MonsterMovement::Moving => false,
+            MonsterMovement::Flying | MonsterMovement::FollowsPlayer | MonsterMovement::Moving => {
+                false
+            }
         };
 
         !(self.is_tile_free(position)

@@ -22,6 +22,7 @@
                 "x": 144,
                 "y": 144
             },
+            "reverse_sprite": 130,
             "sprite": 128
         },
         {
@@ -37,7 +38,56 @@
                 "x": 104,
                 "y": 63
             },
+            "reverse_sprite": 134,
             "sprite": 132
+        },
+        {
+            "gravity": false,
+            "sprites": 4,
+            "velocity": {
+                "x": -0.2,
+                "y": 0
+            },
+            "collision": "None",
+            "movement": "Flying",
+            "position": {
+                "x": 24,
+                "y": 8
+            },
+            "reverse_sprite": 140,
+            "sprite": 140
+        },
+        {
+            "gravity": false,
+            "sprites": 4,
+            "velocity": {
+                "x": -0.2,
+                "y": 0
+            },
+            "collision": "None",
+            "movement": "Flying",
+            "position": {
+                "x": 136,
+                "y": 0
+            },
+            "reverse_sprite": 140,
+            "sprite": 140
+        },
+        {
+            "gravity": false,
+            "sprites": 4,
+            "velocity": {
+                "x": 0.2,
+                "y": 0
+            },
+            "collision": "None",
+            "movement": "Flying",
+            "position": {
+                "x": 200,
+                "y": 16
+            },
+            "reverse_sprite": 140,
+            "sprite": 140
         }
     ],
     "tiles": [

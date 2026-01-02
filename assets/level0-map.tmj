@@ -12,10 +12,10 @@
  "infinite":false,
  "layers":[
         {
-         "data":[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 48, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 48, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 48, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 0, 0, 48, 0, 0, 0, 0, 11, 0, 0, 11, 0, 0, 0, 0, 0,
+         "data":[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 0, 11, 0, 0, 11, 0, 0, 0, 0, 0,
             0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 11, 0, 0, 0,
             0, 31, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 32, 0, 0, 0, 0, 0, 0, 31, 0, 36, 0, 0, 0, 0, 31, 0, 0,
             0, 5, 4, 4, 6, 0, 0, 0, 0, 0, 0, 5, 4, 4, 6, 0, 0, 0, 5, 4, 4, 4, 6, 10, 5, 4, 4, 6, 0, 0,
@@ -34,7 +34,6 @@
             4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4],
          "height":20,
          "id":1,
-         "locked":true,
          "name":"Tile Layer 1",
          "opacity":1,
          "type":"tilelayer",
@@ -105,15 +104,105 @@
                  "width":8,
                  "x":80,
                  "y":0
+                }, 
+                {
+                 "gid":397,
+                 "height":8,
+                 "id":8,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"velocity",
+                         "propertytype":"Vector",
+                         "type":"class",
+                         "value":
+                            {
+                             "x":-0.2
+                            }
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":8,
+                 "x":176,
+                 "y":0
+                }, 
+                {
+                 "gid":397,
+                 "height":8,
+                 "id":9,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":8,
+                 "x":128,
+                 "y":24
+                }, 
+                {
+                 "gid":397,
+                 "height":8,
+                 "id":10,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"velocity",
+                         "propertytype":"Vector",
+                         "type":"class",
+                         "value":
+                            {
+                             "x":-0.2
+                            }
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":8,
+                 "x":72,
+                 "y":16
+                }, 
+                {
+                 "gid":397,
+                 "height":8,
+                 "id":11,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":8,
+                 "x":32,
+                 "y":8
                 }],
          "opacity":1,
+         "properties":[
+                {
+                 "name":"collision",
+                 "propertytype":"MonsterCollider",
+                 "type":"string",
+                 "value":"None"
+                }, 
+                {
+                 "name":"movement",
+                 "propertytype":"MonsterMovement",
+                 "type":"string",
+                 "value":"Flying"
+                }, 
+                {
+                 "name":"velocity",
+                 "propertytype":"Vector",
+                 "type":"class",
+                 "value":
+                    {
+                     "x":0.2
+                    }
+                }],
          "type":"objectgroup",
          "visible":true,
          "x":0,
          "y":0
         }],
  "nextlayerid":3,
- "nextobjectid":6,
+ "nextobjectid":12,
  "orientation":"orthogonal",
  "properties":[
         {

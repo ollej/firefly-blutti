@@ -103,6 +103,62 @@
                  "width":8,
                  "x":104,
                  "y":63
+                }, 
+                {
+                 "gid":397,
+                 "height":8,
+                 "id":10,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"velocity",
+                         "propertytype":"Vector",
+                         "type":"class",
+                         "value":
+                            {
+                             "x":-0.2
+                            }
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":8,
+                 "x":24,
+                 "y":8
+                }, 
+                {
+                 "gid":397,
+                 "height":8,
+                 "id":11,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"velocity",
+                         "propertytype":"Vector",
+                         "type":"class",
+                         "value":
+                            {
+                             "x":-0.2
+                            }
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":8,
+                 "x":136,
+                 "y":0
+                }, 
+                {
+                 "gid":397,
+                 "height":8,
+                 "id":12,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":8,
+                 "x":200,
+                 "y":16
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -111,7 +167,7 @@
          "y":0
         }],
  "nextlayerid":3,
- "nextobjectid":7,
+ "nextobjectid":13,
  "orientation":"orthogonal",
  "properties":[
         {

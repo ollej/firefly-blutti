@@ -22,6 +22,7 @@
                 "x": 56,
                 "y": 120
             },
+            "reverse_sprite": 138,
             "sprite": 136
         },
         {
@@ -37,7 +38,72 @@
                 "x": 80,
                 "y": 0
             },
+            "reverse_sprite": 138,
             "sprite": 136
+        },
+        {
+            "gravity": false,
+            "sprites": 4,
+            "velocity": {
+                "x": -0.2,
+                "y": 0
+            },
+            "collision": "None",
+            "movement": "Flying",
+            "position": {
+                "x": 176,
+                "y": 0
+            },
+            "reverse_sprite": 140,
+            "sprite": 140
+        },
+        {
+            "gravity": false,
+            "sprites": 4,
+            "velocity": {
+                "x": 0.2,
+                "y": 0
+            },
+            "collision": "None",
+            "movement": "Flying",
+            "position": {
+                "x": 128,
+                "y": 24
+            },
+            "reverse_sprite": 140,
+            "sprite": 140
+        },
+        {
+            "gravity": false,
+            "sprites": 4,
+            "velocity": {
+                "x": -0.2,
+                "y": 0
+            },
+            "collision": "None",
+            "movement": "Flying",
+            "position": {
+                "x": 72,
+                "y": 16
+            },
+            "reverse_sprite": 140,
+            "sprite": 140
+        },
+        {
+            "gravity": false,
+            "sprites": 4,
+            "velocity": {
+                "x": 0.2,
+                "y": 0
+            },
+            "collision": "None",
+            "movement": "Flying",
+            "position": {
+                "x": 32,
+                "y": 8
+            },
+            "reverse_sprite": 140,
+            "sprite": 140
         }
     ],
     "tiles": [
@@ -63,19 +129,6 @@
         0,
         0,
         0,
-        48,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        48,
         0,
         0,
         0,
@@ -110,7 +163,20 @@
         0,
         0,
         0,
-        48,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
         0,
         0,
         0,
@@ -147,7 +213,7 @@
         11,
         0,
         0,
-        48,
+        0,
         0,
         0,
         0,

@@ -42,6 +42,7 @@ var bluttiMapFormat = {
           "TurnsAtEdge",
           "FollowsPlayer",
           "Moving",
+          "Flying",
         ];
         var m = {
             background_color: this.COLORS[map.property("background_color")["value"]],
@@ -67,6 +68,11 @@ var bluttiMapFormat = {
                 for (x = 0; x < layer.objects.length; ++x) {
                     const obj = layer.objectAt(x);
                     let monster = filteredClone(obj, "gravity", "sprites", "velocity");
+                    let reverse_sprite = obj.resolvedProperty("reverse_sprite");
+                    if (reverse_sprite == undefined || reverse_sprite == -1) {
+                        reverse_sprite = obj["tile"]["id"] + monster["sprites"];
+                    }
+
                     Object.assign(monster, {
                         "collision": this.COLLISION[obj.resolvedProperty("collision")["value"]],
                         "movement": this.MOVEMENT[obj.resolvedProperty("movement")["value"]],
@@ -74,6 +80,7 @@ var bluttiMapFormat = {
                             x: obj["x"],
                             y: obj["y"]
                         },
+                        "reverse_sprite": reverse_sprite,
                         "sprite": obj["tile"]["id"],
                         "velocity": {
                             x: obj.resolvedProperty("velocity")["value"]["x"] || 0.0,

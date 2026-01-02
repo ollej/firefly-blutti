@@ -113,6 +113,18 @@
                  "width":8,
                  "x":160,
                  "y":40
+                }, 
+                {
+                 "gid":397,
+                 "height":8,
+                 "id":34,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":8,
+                 "x":8,
+                 "y":0
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -121,7 +133,7 @@
          "y":0
         }],
  "nextlayerid":3,
- "nextobjectid":34,
+ "nextobjectid":35,
  "orientation":"orthogonal",
  "properties":[
         {
@@ -167,6 +179,10 @@
  "tilesets":[
         {
          "firstgid":1,
+         "source":"blutti-spritesheet.tsx"
+        }, 
+        {
+         "firstgid":257,
          "source":"blutti-spritesheet.tsx"
         }],
  "tilewidth":8,

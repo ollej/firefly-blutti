@@ -22,6 +22,7 @@
                 "x": 80,
                 "y": 144
             },
+            "reverse_sprite": 130,
             "sprite": 128
         },
         {
@@ -37,6 +38,7 @@
                 "x": 200,
                 "y": 48
             },
+            "reverse_sprite": 130,
             "sprite": 128
         },
         {
@@ -52,7 +54,24 @@
                 "x": 160,
                 "y": 40
             },
+            "reverse_sprite": 134,
             "sprite": 132
+        },
+        {
+            "gravity": false,
+            "sprites": 4,
+            "velocity": {
+                "x": 0.2,
+                "y": 0
+            },
+            "collision": "None",
+            "movement": "Flying",
+            "position": {
+                "x": 8,
+                "y": 0
+            },
+            "reverse_sprite": 140,
+            "sprite": 140
         }
     ],
     "tiles": [

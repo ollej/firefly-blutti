@@ -22,6 +22,7 @@
                 "x": 192,
                 "y": 144
             },
+            "reverse_sprite": 130,
             "sprite": 128
         },
         {
@@ -37,6 +38,7 @@
                 "x": 160,
                 "y": 24
             },
+            "reverse_sprite": 130,
             "sprite": 128
         },
         {
@@ -52,6 +54,7 @@
                 "x": 168,
                 "y": 48
             },
+            "reverse_sprite": 134,
             "sprite": 132
         }
     ],
