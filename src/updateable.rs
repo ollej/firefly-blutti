@@ -102,16 +102,23 @@ pub trait Updateable {
             // Return early if it's an occupied tile
             return false;
         }
+        !self.is_position_in_blocking_monster(position)
+    }
+
+    fn is_standing_on_blocking_monster(&self) -> bool {
+        self.is_position_in_blocking_monster(self.position().below_bottom_left())
+            || self.is_position_in_blocking_monster(self.position().below_bottom_right())
+    }
+
+    fn is_position_in_blocking_monster(&self, position: Point) -> bool {
         let state = get_state();
         // FIXME: Use better check for equality than position
-        let blocking_monster = state
+        state
             .level
-            .monsters
+            .monsters_at_position(position)
             .iter()
-            .filter(|monster| monster.position() != self.position())
             .filter(|monster| monster.collision == MonsterCollision::Blocking)
-            .any(|monster| monster.rect().contains(position));
-        !blocking_monster
+            .any(|monster| monster.position() != self.position())
     }
 
     fn collision_at(&self, position: Point) -> bool {

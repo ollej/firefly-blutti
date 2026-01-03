@@ -1,6 +1,6 @@
 extern crate alloc;
 use alloc::vec::Vec;
-use firefly_rust::{add_progress, get_me, Point, HEIGHT, WIDTH};
+use firefly_rust::{add_progress, get_me, log_debug, Point, HEIGHT, WIDTH};
 use fixedstr::{str32, str_format};
 
 use crate::{
@@ -478,16 +478,28 @@ impl Blutti {
     }
 
     fn update_horizontal_velocity(&mut self) {
+        let moving_left = self.direction_x == DirectionX::Left;
         let (mut acceleration, mut target_velocity) = match self.state {
-            PlayerState::Running => (Self::RUNNING_ACCELERATION, Self::MAX_VELOCITY),
-            PlayerState::Jumping | PlayerState::JumpingStop if self.velocity.x != 0.0 => {
-                (Self::JUMP_ACCELERATION, Self::JUMP_VELOCITY)
+            PlayerState::Running if moving_left => {
+                (-Self::RUNNING_ACCELERATION, -Self::MAX_VELOCITY)
             }
-            PlayerState::Jumping | PlayerState::JumpingStop => (0.0, 0.0),
-            PlayerState::Dashing => (Self::DASH_ACCELERATION, Self::DASH_VELOCITY),
+            PlayerState::Running => (Self::RUNNING_ACCELERATION, Self::MAX_VELOCITY),
+            PlayerState::RunningStop if moving_left => (-0.3, 0.0),
             PlayerState::RunningStop => (0.3, 0.0),
+            PlayerState::Jumping | PlayerState::JumpingStop => {
+                if self.velocity.x > 0.0 {
+                    (Self::JUMP_ACCELERATION, Self::JUMP_VELOCITY)
+                } else if self.velocity.x < 0.0 {
+                    (-Self::JUMP_ACCELERATION, -Self::JUMP_VELOCITY)
+                } else {
+                    (0.0, 0.0)
+                }
+            }
+            PlayerState::Dashing => (Self::DASH_ACCELERATION, Self::DASH_VELOCITY),
+            PlayerState::ClimbingSideways if moving_left => (-0.3, -1.5),
             PlayerState::ClimbingSideways => (0.3, 1.5),
-            PlayerState::ClimbingSidewaysStop => (0.3, 0.0),
+            PlayerState::ClimbingSidewaysStop if moving_left => (0.3, 0.0),
+            PlayerState::ClimbingSidewaysStop => (-0.3, 0.0),
             PlayerState::Climbing
             | PlayerState::ClimbingStop
             | PlayerState::Idle
@@ -497,30 +509,31 @@ impl Blutti {
         acceleration *= self.movement_modifier;
         target_velocity *= self.movement_modifier;
 
+        // Handle conveyor
+        // TODO: Change to state?
         if self.is_standing_on(TileCollider::Conveyor) {
-            acceleration -= Self::CONVEYOR_ACCELERATION;
-            if self.direction_x == DirectionX::Left {
-                target_velocity -= Self::CONVEYOR_SPEED;
-            } else {
+            acceleration += Self::CONVEYOR_ACCELERATION;
+            if target_velocity > 0.0 {
                 target_velocity += Self::CONVEYOR_SPEED;
+            } else {
+                target_velocity -= Self::CONVEYOR_SPEED;
             }
         }
 
-        match self.state {
-            PlayerState::RunningStop | PlayerState::ClimbingSidewaysStop => {
-                if self.direction_x == DirectionX::Left {
-                    self.velocity.x = (self.velocity.x + acceleration).min(-target_velocity);
-                } else {
-                    self.velocity.x = (self.velocity.x - acceleration).max(target_velocity);
-                }
-            }
-            _ => {
-                if self.direction_x == DirectionX::Left {
-                    self.velocity.x = (self.velocity.x - acceleration).max(-target_velocity);
-                } else {
-                    self.velocity.x = (self.velocity.x + acceleration).min(target_velocity);
-                }
-            }
+        // Handle platform movement
+        if self.is_standing_on_blocking_monster() {
+            acceleration += self.velocity_from_blocking_monster_below().x;
+            target_velocity += acceleration;
+        }
+
+        if target_velocity > 0.0 {
+            self.velocity.x = (self.velocity.x + acceleration).min(target_velocity);
+        } else if target_velocity < 0.0 {
+            self.velocity.x = (self.velocity.x + acceleration).max(target_velocity);
+        } else if acceleration > 0.0 {
+            self.velocity.x = (self.velocity.x + acceleration).min(target_velocity);
+        } else if acceleration < 0.0 {
+            self.velocity.x = (self.velocity.x + acceleration).max(target_velocity);
         }
     }
 
@@ -541,6 +554,15 @@ impl Blutti {
         };
         acceleration *= self.movement_modifier;
         target_velocity *= self.movement_modifier;
+
+        if self.is_standing_on_blocking_monster() {
+            let platform_velocity = self.velocity_from_blocking_monster_below().y;
+            if platform_velocity > 0.0 {
+                target_velocity = target_velocity.max(platform_velocity)
+            } else {
+                target_velocity = target_velocity.min(platform_velocity)
+            }
+        }
 
         match self.state {
             PlayerState::Jumping => {
@@ -570,7 +592,7 @@ impl Blutti {
             | PlayerState::ClimbingIdle
             | PlayerState::ClimbingSideways
             | PlayerState::ClimbingSidewaysStop => {
-                self.velocity.y = 0.0;
+                self.velocity.y = target_velocity;
             }
             PlayerState::Falling => {
                 // Gravity
@@ -601,7 +623,20 @@ impl Blutti {
             if self.fall_timer > Self::MAX_FALL_HEIGHT {
                 self.die();
             }
-            self.fall_timer = 0;
+
+            match self.state {
+                PlayerState::Jumping
+                | PlayerState::JumpingStop
+                | PlayerState::Dashing
+                | PlayerState::Falling
+                | PlayerState::Idle => {
+                    if self.is_moving() && !self.is_standing_on_blocking_monster() {
+                        log_debug("stop movement when standing");
+                        self.stop_movement(StopDirection::Both);
+                    }
+                }
+                _ => (),
+            }
         } else {
             match self.state {
                 PlayerState::Jumping
@@ -642,9 +677,7 @@ impl Blutti {
             //log_debug(str_format!(str32, "dash_timer: {}", self.dash_timer).as_str());
             if self.dash_timer == 0 {
                 //log_debug("stop dashing");
-                let ft = self.fall_timer;
-                self.stop_movement(StopDirection::Both);
-                self.fall_timer = ft;
+                self.stop_movement(StopDirection::X);
                 self.dash_timer = -Self::DASH_WAIT_TIME;
             }
         } else if self.dash_timer < 0 {
@@ -663,6 +696,31 @@ impl Blutti {
         {
             state.blutti.die();
         }
+    }
+
+    fn velocity_from_blocking_monster_below(&self) -> Vec2 {
+        let velocity_below_left =
+            self.find_velocity_from_blocking_monster_at_point(self.position.below_bottom_left());
+        let velocity_below_right =
+            self.find_velocity_from_blocking_monster_at_point(self.position.below_bottom_right());
+
+        velocity_below_left
+            .or_else(|| velocity_below_right)
+            .unwrap_or_else(|| Vec2::zero())
+    }
+
+    fn find_velocity_from_blocking_monster_at_point(&self, position: Point) -> Option<Vec2> {
+        let state = get_state();
+        state
+            .level
+            .monsters_at_position(position)
+            .iter()
+            .find(|monster| monster.collision == MonsterCollision::Blocking)
+            .map(|monster| monster.velocity)
+    }
+
+    fn is_moving(&self) -> bool {
+        !self.velocity.is_zero()
     }
 }
 
@@ -793,13 +851,19 @@ impl Updateable for Blutti {
         self.update_states();
     }
 
-    fn stop_movement(&mut self, _stop_direction: StopDirection) {
+    fn stop_movement(&mut self, stop_direction: StopDirection) {
         self.jump_timer = 0;
         self.dash_timer = 0;
-        self.fall_timer = 0;
+        if stop_direction != StopDirection::X {
+            self.fall_timer = 0;
+        }
         self.movement_modifier = 1.0;
         self.remainder = Vec2::zero();
-        self.velocity = Vec2::zero();
+        match stop_direction {
+            StopDirection::X => self.velocity.x = 0.0,
+            StopDirection::Y => self.velocity.y = 0.0,
+            StopDirection::Both => self.velocity = Vec2::zero(),
+        };
         self.start_idling();
     }
 

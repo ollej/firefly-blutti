@@ -135,6 +135,13 @@ impl Level {
         self.tiles[tile_pos as usize] = 0;
     }
 
+    pub fn monsters_at_position(&self, position: Point) -> Vec<&Monster> {
+        self.monsters
+            .iter()
+            .filter(|monster| monster.rect().contains(position))
+            .collect()
+    }
+
     fn sprite_at_position(&self, point: Point) -> Sprite {
         let tile_pos = get_tile_index(point);
         let maybe_sprite = self.tiles.get(tile_pos as usize);

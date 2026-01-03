@@ -87,7 +87,7 @@ pub struct Monster {
     reverse_sprite: Sprite,
     sprite: Sprite,
     sprites: i32,
-    velocity: Vec2,
+    pub velocity: Vec2,
 }
 
 impl Monster {
