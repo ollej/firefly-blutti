@@ -81,13 +81,13 @@ impl Blutti {
     pub fn move_left(&mut self, speed: f32) {
         self.movement_modifier = speed;
         self.turn(DirectionX::Left);
-        self.start_running();
+        self.start_moving();
     }
 
     pub fn move_right(&mut self, speed: f32) {
         self.movement_modifier = speed;
         self.turn(DirectionX::Right);
-        self.start_running();
+        self.start_moving();
     }
 
     pub fn move_up(&mut self, speed: f32) {
@@ -116,14 +116,16 @@ impl Blutti {
         }
 
         match self.state {
-            PlayerState::Running => {
+            PlayerState::RunningLeft | PlayerState::RunningRight => {
                 self.stop_timer = Self::RUNNING_STOP_TIME;
                 self.state = PlayerState::RunningStop
             }
             PlayerState::FallingLeft | PlayerState::FallingRight => {
                 self.state = PlayerState::Falling;
             }
-            PlayerState::Climbing => self.state = PlayerState::ClimbingStop,
+            PlayerState::ClimbingUp | PlayerState::ClimbingDown => {
+                self.state = PlayerState::ClimbingStop
+            }
             PlayerState::ClimbingSideways => self.state = PlayerState::ClimbingSidewaysStop,
             _ => (),
         }
@@ -143,7 +145,7 @@ impl Blutti {
     }
 
     pub fn stop_jump(&mut self) {
-        if self.state == PlayerState::Jumping {
+        if self.is_jumping() {
             self.state = PlayerState::JumpingStop
         }
     }
@@ -154,7 +156,11 @@ impl Blutti {
         }
         if self.is_jumping() || self.is_falling() {
             //log_debug("start dashing");
-            self.state = PlayerState::Dashing;
+            if self.direction_x == DirectionX::Left {
+                self.state = PlayerState::DashingLeft;
+            } else {
+                self.state = PlayerState::DashingRight;
+            }
             self.dash_timer = Self::DASH_TIME;
             self.add_dash_animation();
             play_sound("sound_dash");
@@ -173,7 +179,7 @@ impl Blutti {
             match collision.tile_collider {
                 TileCollider::Collectable(points) => self.collect_collectable(collision, points),
                 TileCollider::Deadly => {
-                    log_debug("death from deadly tile");
+                    //log_debug("death from deadly tile");
                     self.die();
                 }
                 TileCollider::Exit => self.exit(),
@@ -224,7 +230,7 @@ impl Blutti {
         self.lives > 0
     }
 
-    fn start_running(&mut self) {
+    fn start_moving(&mut self) {
         if self.is_on_ladder() {
             if self.state != PlayerState::ClimbingSideways {
                 self.velocity.y = 0.0;
@@ -236,22 +242,41 @@ impl Blutti {
             } else {
                 PlayerState::FallingLeft
             };
+        } else if self.is_jumping_up() {
+            self.state = if self.direction_x == DirectionX::Right {
+                PlayerState::JumpingRight
+            } else {
+                PlayerState::JumpingLeft
+            };
         } else if self.is_standing() {
-            if self.state != PlayerState::Running {
+            if !self.is_running() {
                 self.add_running_animation();
-                self.state = PlayerState::Running;
+                self.state = if self.direction_x == DirectionX::Right {
+                    PlayerState::RunningRight
+                } else {
+                    PlayerState::RunningLeft
+                };
             }
         }
     }
 
     fn start_climbing(&mut self) {
-        if self.can_climb() && self.state != PlayerState::Climbing {
+        if self.can_climb()
+            && !matches!(
+                self.state,
+                PlayerState::ClimbingUp | PlayerState::ClimbingDown
+            )
+        {
             self.velocity.x = 0.0;
             if !self.is_climbing() {
                 self.add_climbing_animation();
             }
             //log_debug("start climbing");
-            self.state = PlayerState::Climbing;
+            if self.direction_y == DirectionY::Up {
+                self.state = PlayerState::ClimbingUp;
+            } else {
+                self.state = PlayerState::ClimbingDown;
+            }
         }
     }
 
@@ -261,11 +286,11 @@ impl Blutti {
                 self.state = PlayerState::ClimbingIdle;
                 self.add_climbing_animation();
             }
-        } else {
-            if self.state != PlayerState::Idle {
-                self.state = PlayerState::Idle;
-                self.add_idle_animation();
-            }
+        } else if !self.is_standing() {
+            self.state = PlayerState::Falling;
+        } else if self.state != PlayerState::Idle {
+            self.state = PlayerState::Idle;
+            self.add_idle_animation();
         }
     }
 
@@ -279,7 +304,11 @@ impl Blutti {
 
     fn jump(&mut self) {
         play_sound("sound_jump");
-        self.state = PlayerState::Jumping;
+        match self.state {
+            PlayerState::RunningLeft => self.state = PlayerState::JumpingLeft,
+            PlayerState::RunningRight => self.state = PlayerState::JumpingRight,
+            _ => self.state = PlayerState::Jumping,
+        };
         // Jumping when on slippery will decrease jump height
         self.jump_max_time = if self.is_standing_on(TileCollider::Slippery) {
             Self::JUMP_TIME / 2
@@ -292,7 +321,8 @@ impl Blutti {
 
     fn is_climbing(&self) -> bool {
         match self.state {
-            PlayerState::Climbing
+            PlayerState::ClimbingUp
+            | PlayerState::ClimbingDown
             | PlayerState::ClimbingStop
             | PlayerState::ClimbingIdle
             | PlayerState::ClimbingSideways
@@ -309,14 +339,34 @@ impl Blutti {
     }
 
     fn is_jumping(&self) -> bool {
-        match self.state {
-            PlayerState::Jumping | PlayerState::JumpingStop => true,
-            _ => false,
-        }
+        matches!(
+            self.state,
+            PlayerState::Jumping
+                | PlayerState::JumpingLeft
+                | PlayerState::JumpingRight
+                | PlayerState::JumpingStop
+        )
+    }
+
+    fn is_jumping_up(&self) -> bool {
+        matches!(
+            self.state,
+            PlayerState::Jumping | PlayerState::JumpingLeft | PlayerState::JumpingRight
+        )
+    }
+
+    fn is_running(&self) -> bool {
+        matches!(
+            self.state,
+            PlayerState::RunningLeft | PlayerState::RunningRight | PlayerState::RunningStop
+        )
     }
 
     fn is_dashing(&self) -> bool {
-        self.state == PlayerState::Dashing
+        matches!(
+            self.state,
+            PlayerState::DashingLeft | PlayerState::DashingRight
+        )
     }
 
     fn collect_star(&mut self, collision: Collision) {
@@ -496,13 +546,14 @@ impl Blutti {
     fn update_horizontal_velocity(&mut self) {
         let moving_left = self.direction_x == DirectionX::Left;
         let (mut acceleration, mut target_velocity) = match self.state {
-            PlayerState::Running if moving_left => {
-                (-Self::RUNNING_ACCELERATION, -Self::MAX_VELOCITY)
-            }
-            PlayerState::Running => (Self::RUNNING_ACCELERATION, Self::MAX_VELOCITY),
+            PlayerState::RunningLeft => (-Self::RUNNING_ACCELERATION, -Self::MAX_VELOCITY),
+            PlayerState::RunningRight => (Self::RUNNING_ACCELERATION, Self::MAX_VELOCITY),
             PlayerState::RunningStop if moving_left => (0.5, 0.0),
             PlayerState::RunningStop => (-0.5, 0.0),
-            PlayerState::Jumping | PlayerState::JumpingStop => {
+            PlayerState::Jumping => (0.0, 0.0),
+            PlayerState::JumpingLeft => (-Self::JUMP_ACCELERATION, -Self::JUMP_VELOCITY),
+            PlayerState::JumpingRight => (Self::JUMP_ACCELERATION, Self::JUMP_VELOCITY),
+            PlayerState::JumpingStop => {
                 if self.velocity.x > 0.0 {
                     (Self::JUMP_ACCELERATION, Self::JUMP_VELOCITY)
                 } else if self.velocity.x < 0.0 {
@@ -511,12 +562,14 @@ impl Blutti {
                     (0.0, 0.0)
                 }
             }
-            PlayerState::Dashing => (Self::DASH_ACCELERATION, Self::DASH_VELOCITY),
+            PlayerState::DashingLeft => (-Self::DASH_ACCELERATION, -Self::DASH_VELOCITY),
+            PlayerState::DashingRight => (Self::DASH_ACCELERATION, Self::DASH_VELOCITY),
             PlayerState::ClimbingSideways if moving_left => (-0.3, -1.5),
             PlayerState::ClimbingSideways => (0.3, 1.5),
             PlayerState::ClimbingSidewaysStop if moving_left => (0.5, 0.0),
             PlayerState::ClimbingSidewaysStop => (-0.5, 0.0),
-            PlayerState::Climbing
+            PlayerState::ClimbingUp
+            | PlayerState::ClimbingDown
             | PlayerState::ClimbingStop
             | PlayerState::Idle
             | PlayerState::ClimbingIdle
@@ -562,15 +615,20 @@ impl Blutti {
 
     fn update_vertical_velocity(&mut self) {
         let (mut acceleration, mut target_velocity) = match self.state {
-            PlayerState::Jumping => (-1.5, -2.0),
+            PlayerState::Jumping | PlayerState::JumpingLeft | PlayerState::JumpingRight => {
+                (-1.5, -2.0)
+            }
             PlayerState::JumpingStop => (2.0, 5.0),
-            PlayerState::Climbing => (0.4, 1.0),
-            PlayerState::ClimbingStop => (0.2, 0.0),
+            PlayerState::ClimbingUp => (-0.4, -1.0),
+            PlayerState::ClimbingDown => (0.4, 1.0),
+            PlayerState::ClimbingStop => (-0.2, 0.0),
             PlayerState::ClimbingIdle
             | PlayerState::ClimbingSideways
             | PlayerState::ClimbingSidewaysStop
-            | PlayerState::Dashing
-            | PlayerState::Running
+            | PlayerState::DashingLeft
+            | PlayerState::DashingRight
+            | PlayerState::RunningLeft
+            | PlayerState::RunningRight
             | PlayerState::RunningStop
             | PlayerState::Idle => (0.0, 0.0),
             PlayerState::Falling | PlayerState::FallingLeft | PlayerState::FallingRight => {
@@ -582,47 +640,20 @@ impl Blutti {
 
         if self.is_standing_on_blocking_monster() {
             let platform_velocity = self.velocity_from_blocking_monster_below().y;
-            if platform_velocity > 0.0 {
-                target_velocity = target_velocity.max(platform_velocity)
-            } else {
-                target_velocity = target_velocity.min(platform_velocity)
-            }
+            acceleration += platform_velocity;
+            target_velocity += platform_velocity;
         }
 
-        match self.state {
-            PlayerState::Jumping => {
-                // pos += vel * dt + 1/2*dt*dt
-                // Vel += acc*dt
-                self.velocity.y = (self.velocity.y + acceleration).max(target_velocity);
-            }
-            PlayerState::JumpingStop => {
-                self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
-            }
-            PlayerState::Climbing if self.direction_y == DirectionY::Up => {
-                self.velocity.y = (self.velocity.y - acceleration).max(-target_velocity);
-            }
-            PlayerState::Climbing => {
-                self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
-            }
-            PlayerState::ClimbingStop if self.direction_y == DirectionY::Up => {
-                self.velocity.y = (self.velocity.y + acceleration).min(-target_velocity);
-            }
-            PlayerState::ClimbingStop => {
-                self.velocity.y = (self.velocity.y - acceleration).max(target_velocity);
-            }
-            PlayerState::Idle
-            | PlayerState::Dashing
-            | PlayerState::Running
-            | PlayerState::RunningStop
-            | PlayerState::ClimbingIdle
-            | PlayerState::ClimbingSideways
-            | PlayerState::ClimbingSidewaysStop => {
-                self.velocity.y = target_velocity;
-            }
-            PlayerState::Falling | PlayerState::FallingLeft | PlayerState::FallingRight => {
-                // Gravity
-                self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
-            }
+        if target_velocity > 0.0 {
+            self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
+        } else if target_velocity < 0.0 {
+            self.velocity.y = (self.velocity.y + acceleration).max(target_velocity);
+        } else if acceleration > 0.0 {
+            self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
+        } else if acceleration < 0.0 {
+            self.velocity.y = (self.velocity.y + acceleration).max(target_velocity);
+        } else {
+            self.velocity.y = 0.0;
         }
     }
 
@@ -630,12 +661,19 @@ impl Blutti {
         if self.is_falling() {
             self.fall_timer += 1;
         }
+
+        // Jump buffering to allow jump being pressed slightly too early
         if self.is_standing() && self.jump_buffer_timer > 0 {
             //log_debug("buffer jump!");
             self.jump();
         }
+        if self.is_falling() || self.is_jumping() {
+            self.jump_buffer_timer -= 1;
+        }
+
+        // Climbing
         let on_ladder = self.is_on_ladder();
-        if self.velocity.is_zero() && !self.is_idling() && !self.is_jumping()
+        if !self.is_moving() && !self.is_idling() && !self.is_jumping()
             || self.is_climbing() && !on_ladder
             || self.state == PlayerState::Idle && on_ladder
         {
@@ -643,6 +681,8 @@ impl Blutti {
             //log_debug(str_format!(str32, "velocity {:?}", self.velocity).as_str());
             self.stop_movement(StopDirection::Both);
         }
+
+        // Stop running
         if self.state == PlayerState::RunningStop {
             if self.stop_timer > 0 {
                 self.stop_timer -= 1;
@@ -650,61 +690,25 @@ impl Blutti {
                 self.stop_movement(StopDirection::X);
             }
         }
-        if self.is_standing() {
-            // Death from fall height
-            if self.fall_timer > Self::MAX_FALL_HEIGHT {
-                log_debug(str_format!(str32, "die from fall height {}", self.fall_timer).as_str());
-                self.die();
-            }
 
-            /*
-            match self.state {
-                PlayerState::Jumping
-                | PlayerState::JumpingStop
-                | PlayerState::Dashing
-                | PlayerState::Falling
-                | PlayerState::FallingLeft
-                | PlayerState::FallingRight
-                | PlayerState::Idle => {
-                    if self.is_moving() && self.is_standing_on_blocking_monster() {
-                        log_debug("stop movement when standing on platform");
-                        self.stop_movement(StopDirection::Both);
-                    }
+        // Jumping
+        if self.is_jumping() {
+            if self.state == PlayerState::JumpingStop {
+                self.jump_timer -= 1;
+                if self.jump_timer <= 0 {
+                    //log_debug(str_format!(str32, "jump > falling timer:{}", self.jump_timer).as_str());
+                    self.stop_movement(StopDirection::Y);
                 }
-                _ => (),
-            }
-            */
-        } else if !self.is_jumping() && !self.is_dashing() {
-            //log_debug(str_format!(str32, "state {:?} > Falling", self.state).as_str());
-            self.state = PlayerState::Falling
-        }
-        if self.state == PlayerState::Jumping {
-            self.jump_timer += 1;
-            if self.jump_timer > self.jump_max_time {
-                self.state = PlayerState::JumpingStop;
+            } else {
+                self.jump_timer += 1;
+                if self.jump_timer > self.jump_max_time {
+                    self.state = PlayerState::JumpingStop;
+                }
             }
         }
-        if self.state == PlayerState::JumpingStop {
-            self.jump_timer -= 1;
-            if self.jump_timer <= 0 {
-                //log_debug(str_format!(str32, "jump > falling timer:{}", self.jump_timer).as_str());
-                self.state = PlayerState::Falling
-            }
-        }
-        // Death from falling out of screen
-        if self.position.y >= (HEIGHT - TILE_HEIGHT) {
-            log_debug("die from falling out of screen");
-            self.die();
-        }
-        match self.state {
-            PlayerState::Falling
-            | PlayerState::FallingLeft
-            | PlayerState::FallingRight
-            | PlayerState::Jumping
-            | PlayerState::JumpingStop => self.jump_buffer_timer -= 1,
-            _ => (),
-        }
-        if self.state == PlayerState::Dashing {
+
+        // Dashing
+        if self.is_dashing() {
             self.dash_timer -= 1;
             //log_debug(str_format!(str32, "dash_timer: {}", self.dash_timer).as_str());
             if self.dash_timer == 0 {
@@ -717,16 +721,27 @@ impl Blutti {
             self.dash_timer += 1;
         }
 
-        // Check for death
+        // Death from fall height
+        if self.is_standing() {
+            if self.fall_timer > Self::MAX_FALL_HEIGHT {
+                //log_debug(str_format!(str32, "die from fall height {}", self.fall_timer).as_str());
+                self.die();
+            }
+        } else if !self.is_jumping() && !self.is_dashing() {
+            //log_debug(str_format!(str32, "state {:?} > Falling", self.state).as_str());
+            self.stop_movement(StopDirection::Y);
+        }
+
+        // Death from falling out of screen
+        if self.position.y >= (HEIGHT - TILE_HEIGHT) {
+            //log_debug("die from falling out of screen");
+            self.die();
+        }
+
+        // Death from deadly monsters
         let state = get_state();
-        let rect = self.rect();
-        if state
-            .level
-            .monsters
-            .iter()
-            .any(|monster| monster.collision == MonsterCollision::Deadly && monster.overlaps(rect))
-        {
-            log_debug("die from monster");
+        if state.level.deadly_monsters_overlapping_rect(self.rect()) {
+            //log_debug("die from monster");
             state.blutti.die();
         }
     }
@@ -831,6 +846,11 @@ impl Drawable for Blutti {
         textpos.y -= 8;
         display_text(
             str_format!(str32, "VY {:.2}", self.velocity.y).as_str(),
+            textpos,
+        );
+        textpos.y -= 8;
+        display_text(
+            str_format!(str32, "JT {:}", self.jump_timer).as_str(),
             textpos,
         );
         textpos.y -= 8;
