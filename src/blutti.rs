@@ -172,7 +172,10 @@ impl Blutti {
         {
             match collision.tile_collider {
                 TileCollider::Collectable(points) => self.collect_collectable(collision, points),
-                TileCollider::Deadly => self.die(),
+                TileCollider::Deadly => {
+                    log_debug("death from deadly tile");
+                    self.die();
+                }
                 TileCollider::Exit => self.exit(),
                 TileCollider::ExtraLife => self.collect_extra_life(collision),
                 TileCollider::Star => self.collect_star(collision),
@@ -310,6 +313,10 @@ impl Blutti {
             PlayerState::Jumping | PlayerState::JumpingStop => true,
             _ => false,
         }
+    }
+
+    fn is_dashing(&self) -> bool {
+        self.state == PlayerState::Dashing
     }
 
     fn collect_star(&mut self, collision: Collision) {
@@ -535,8 +542,9 @@ impl Blutti {
 
         // Handle platform movement
         if self.is_standing_on_blocking_monster() {
-            acceleration += self.velocity_from_blocking_monster_below().x;
-            target_velocity += acceleration;
+            let platform_velocity = self.velocity_from_blocking_monster_below().x;
+            acceleration += platform_velocity;
+            target_velocity += platform_velocity;
         }
 
         if target_velocity > 0.0 {
@@ -645,9 +653,11 @@ impl Blutti {
         if self.is_standing() {
             // Death from fall height
             if self.fall_timer > Self::MAX_FALL_HEIGHT {
+                log_debug(str_format!(str32, "die from fall height {}", self.fall_timer).as_str());
                 self.die();
             }
 
+            /*
             match self.state {
                 PlayerState::Jumping
                 | PlayerState::JumpingStop
@@ -663,19 +673,10 @@ impl Blutti {
                 }
                 _ => (),
             }
-        } else {
-            match self.state {
-                PlayerState::Jumping
-                | PlayerState::JumpingStop
-                | PlayerState::Dashing
-                | PlayerState::Falling
-                | PlayerState::FallingLeft
-                | PlayerState::FallingRight => (),
-                _ => {
-                    //log_debug(str_format!(str32, "state {:?} > Falling", self.state).as_str());
-                    self.state = PlayerState::Falling
-                }
-            }
+            */
+        } else if !self.is_jumping() && !self.is_dashing() {
+            //log_debug(str_format!(str32, "state {:?} > Falling", self.state).as_str());
+            self.state = PlayerState::Falling
         }
         if self.state == PlayerState::Jumping {
             self.jump_timer += 1;
@@ -692,6 +693,7 @@ impl Blutti {
         }
         // Death from falling out of screen
         if self.position.y >= (HEIGHT - TILE_HEIGHT) {
+            log_debug("die from falling out of screen");
             self.die();
         }
         match self.state {
@@ -724,6 +726,7 @@ impl Blutti {
             .iter()
             .any(|monster| monster.collision == MonsterCollision::Deadly && monster.overlaps(rect))
         {
+            log_debug("die from monster");
             state.blutti.die();
         }
     }
