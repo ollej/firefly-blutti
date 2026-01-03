@@ -12,4 +12,6 @@ pub enum PlayerState {
     ClimbingSidewaysStop,
     ClimbingIdle,
     Falling,
+    FallingLeft,
+    FallingRight,
 }
