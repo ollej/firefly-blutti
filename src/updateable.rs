@@ -105,6 +105,11 @@ pub trait Updateable {
         !self.is_position_in_blocking_monster(position)
     }
 
+    fn is_standing_on_rect(&self, rect: Rect) -> bool {
+        rect.contains(self.position().below_bottom_left())
+            || rect.contains(self.position().below_bottom_right())
+    }
+
     fn is_standing_on_blocking_monster(&self) -> bool {
         self.is_position_in_blocking_monster(self.position().below_bottom_left())
             || self.is_position_in_blocking_monster(self.position().below_bottom_right())

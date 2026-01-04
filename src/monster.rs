@@ -3,11 +3,11 @@ extern crate alloc;
 use alloc::vec::Vec;
 use serde::Deserialize;
 
-use firefly_rust::Point;
+use firefly_rust::{log_debug, Point};
 
 use crate::{
-    animation::*, constants::*, drawable::*, drawing::*, point_math::*, serde::*, updateable::*,
-    vec2::*,
+    animation::*, constants::*, drawable::*, drawing::*, point_math::*, serde::*, state::*,
+    updateable::*, vec2::*,
 };
 
 #[derive(PartialEq, Clone, Debug, Deserialize)]
@@ -157,6 +157,14 @@ impl Updateable for Monster {
         // Move y position
         (self.position, self.remainder) =
             self.move_vertically(self.position, self.velocity, self.remainder);
+
+        // Move player
+        if self.collision == MonsterCollision::Blocking {
+            let state = get_state();
+            if state.blutti.is_standing_on_rect(self.rect()) {
+                state.blutti.force_move(self.velocity);
+            }
+        }
     }
 
     fn collision_at(&self, position: Point) -> bool {

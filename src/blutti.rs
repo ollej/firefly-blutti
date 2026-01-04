@@ -78,6 +78,10 @@ impl Blutti {
         }
     }
 
+    pub fn force_move(&mut self, velocity: Vec2) {
+        self.remainder = self.remainder.add(velocity);
+    }
+
     pub fn move_left(&mut self, speed: f32) {
         self.movement_modifier = speed;
         self.turn(DirectionX::Left);
@@ -598,13 +602,6 @@ impl Blutti {
             }
         }
 
-        // Handle platform movement
-        if self.is_standing_on_blocking_monster() {
-            let platform_velocity = self.velocity_from_blocking_monster_below().x;
-            acceleration += platform_velocity;
-            target_velocity += platform_velocity;
-        }
-
         if target_velocity > 0.0 {
             self.velocity.x = (self.velocity.x + acceleration).min(target_velocity);
         } else if target_velocity < 0.0 {
@@ -642,12 +639,6 @@ impl Blutti {
         };
         acceleration *= self.movement_modifier;
         target_velocity *= self.movement_modifier;
-
-        if self.is_standing_on_blocking_monster() {
-            let platform_velocity = self.velocity_from_blocking_monster_below().y;
-            acceleration += platform_velocity;
-            target_velocity += platform_velocity;
-        }
 
         if target_velocity > 0.0 {
             self.velocity.y = (self.velocity.y + acceleration).min(target_velocity);
