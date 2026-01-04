@@ -1,21 +1,42 @@
-function filteredClone(obj, ...keys) {
-    let clone = {};
-    for (let key of keys) {
-        clone[key] = obj.resolvedProperty(key)
-    }
-    return clone;
-}
-
 var bluttiMapFormat = {
     name: "Blutti map format",
     extension: "json",
 
-    color: function(map, prop) {
-        return this.COLORS[map.property(prop).value];
-    },
-
     write: function(map, fileName) {
-        COLORS = [
+        function filteredClone(obj, ...keys) {
+            let clone = {};
+            for (let key of keys) {
+                clone[key] = obj.resolvedProperty(key)
+            }
+            return clone;
+        }
+
+        function buildMonsterFromObject(obj) {
+            let monster = filteredClone(obj, "gravity", "frames", "velocity");
+            let reverse_sprite = obj.resolvedProperty("reverse_sprite");
+            if (reverse_sprite == undefined || reverse_sprite == -1) {
+                reverse_sprite = obj["tile"]["id"] + monster["frames"];
+            }
+
+            Object.assign(monster, {
+                "collision": COLLISION[obj.resolvedProperty("collision")["value"]],
+                "movement": MOVEMENT[obj.resolvedProperty("movement")["value"]],
+                "position": {
+                    x: obj["x"],
+                    y: obj["y"]
+                },
+                "reverse_sprite": reverse_sprite,
+                "sprite": obj["tile"]["id"],
+                "velocity": {
+                    x: obj.resolvedProperty("velocity")["value"]["x"] || 0.0,
+                    y: obj.resolvedProperty("velocity")["value"]["y"] || 0.0
+                }
+            });
+
+            return monster;
+        }
+
+        const COLORS = [
           "Black",
           "Purple",
           "Red",
@@ -33,20 +54,20 @@ var bluttiMapFormat = {
           "Gray",
           "DarkGray"
         ];
-        COLLISION = [
+        const COLLISION = [
           "Blocking",
           "Deadly",
           "None",
         ];
-        MOVEMENT = [
+        const MOVEMENT = [
           "TurnsAtEdge",
           "FollowsPlayer",
           "Moving",
           "Flying",
         ];
         var m = {
-            background_color: this.COLORS[map.property("background_color")["value"]],
-            font_color: this.COLORS[map.property("font_color")["value"]],
+            background_color: COLORS[map.property("background_color")["value"]],
+            font_color: COLORS[map.property("font_color")["value"]],
             particle_chance: map.property("particle_chance"),
             particle_sprite: map.property("particle_sprite"),
             stars: map.property("stars"),
@@ -67,26 +88,7 @@ var bluttiMapFormat = {
             if (layer.isObjectLayer) {
                 for (x = 0; x < layer.objects.length; ++x) {
                     const obj = layer.objectAt(x);
-                    let monster = filteredClone(obj, "gravity", "frames", "velocity");
-                    let reverse_sprite = obj.resolvedProperty("reverse_sprite");
-                    if (reverse_sprite == undefined || reverse_sprite == -1) {
-                        reverse_sprite = obj["tile"]["id"] + monster["frames"];
-                    }
-
-                    Object.assign(monster, {
-                        "collision": this.COLLISION[obj.resolvedProperty("collision")["value"]],
-                        "movement": this.MOVEMENT[obj.resolvedProperty("movement")["value"]],
-                        "position": {
-                            x: obj["x"],
-                            y: obj["y"]
-                        },
-                        "reverse_sprite": reverse_sprite,
-                        "sprite": obj["tile"]["id"],
-                        "velocity": {
-                            x: obj.resolvedProperty("velocity")["value"]["x"] || 0.0,
-                            y: obj.resolvedProperty("velocity")["value"]["y"] || 0.0
-                        }
-                    });
+                    const monster = buildMonsterFromObject(obj);
                     m.monsters.push(monster);
                 }
             }
