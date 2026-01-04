@@ -1,11 +1,11 @@
 extern crate alloc;
 use alloc::vec::Vec;
-use firefly_rust::{add_progress, get_me, log_debug, Point, HEIGHT, WIDTH};
+use firefly_rust::{add_progress, get_me, Point, HEIGHT, WIDTH};
 use fixedstr::{str32, str_format};
 
 use crate::{
     animation::*, collision::*, constants::*, direction::*, drawable::*, drawing::*, functions::*,
-    level::*, monster::*, particle::*, player_state::*, point_math::*, state::*, tile_collider::*,
+    level::*, particle::*, player_state::*, point_math::*, state::*, tile_collider::*,
     updateable::*, vec2::*,
 };
 
@@ -740,27 +740,6 @@ impl Blutti {
             //log_debug("die from monster");
             state.blutti.die();
         }
-    }
-
-    fn velocity_from_blocking_monster_below(&self) -> Vec2 {
-        let velocity_below_left =
-            self.find_velocity_from_blocking_monster_at_point(self.position.below_bottom_left());
-        let velocity_below_right =
-            self.find_velocity_from_blocking_monster_at_point(self.position.below_bottom_right());
-
-        velocity_below_left
-            .or_else(|| velocity_below_right)
-            .unwrap_or_else(|| Vec2::zero())
-    }
-
-    fn find_velocity_from_blocking_monster_at_point(&self, position: Point) -> Option<Vec2> {
-        let state = get_state();
-        state
-            .level
-            .monsters_at_position(position)
-            .iter()
-            .find(|monster| monster.collision == MonsterCollision::Blocking)
-            .map(|monster| monster.velocity)
     }
 
     fn is_moving(&self) -> bool {
