@@ -65,7 +65,7 @@ impl PointMath for Point {
     fn below_bottom_middle(&self) -> Point {
         Point {
             x: self.x,
-            y: self.y + TILE_HEIGHT,
+            y: self.y + TILE_HEIGHT / 2,
         }
     }
 

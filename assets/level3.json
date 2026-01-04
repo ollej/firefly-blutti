@@ -22,8 +22,14 @@
                 "x": 80,
                 "y": 144
             },
-            "reverse_sprite": 130,
-            "sprite": 128
+            "reverse_sprites": [
+                130
+            ],
+            "sprites": [
+                128
+            ],
+            "width": 8,
+            "height": 8
         },
         {
             "gravity": false,
@@ -38,8 +44,14 @@
                 "x": 200,
                 "y": 48
             },
-            "reverse_sprite": 130,
-            "sprite": 128
+            "reverse_sprites": [
+                130
+            ],
+            "sprites": [
+                128
+            ],
+            "width": 8,
+            "height": 8
         },
         {
             "gravity": false,
@@ -54,8 +66,14 @@
                 "x": 160,
                 "y": 40
             },
-            "reverse_sprite": 134,
-            "sprite": 132
+            "reverse_sprites": [
+                134
+            ],
+            "sprites": [
+                132
+            ],
+            "width": 8,
+            "height": 8
         },
         {
             "gravity": false,
@@ -70,8 +88,14 @@
                 "x": 8,
                 "y": 0
             },
-            "reverse_sprite": 140,
-            "sprite": 140
+            "reverse_sprites": [
+                140
+            ],
+            "sprites": [
+                140
+            ],
+            "width": 8,
+            "height": 8
         }
     ],
     "tiles": [

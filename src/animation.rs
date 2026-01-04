@@ -7,9 +7,39 @@ use crate::{constants::*, drawing::*};
 pub type Frame = i32;
 
 #[derive(Clone, Default, Debug)]
+pub struct Animations {
+    pub animations: Vec<Animation>,
+}
+
+impl Animations {
+    pub fn new(animations: Vec<Animation>) -> Self {
+        Animations { animations }
+    }
+
+    pub fn update(&mut self) {
+        self.animations
+            .iter_mut()
+            .for_each(|animation| animation.update());
+    }
+
+    pub fn reset(&mut self) {
+        self.animations
+            .iter_mut()
+            .for_each(|animation| animation.reset());
+    }
+
+    pub fn current_sprites(&self) -> Vec<Sprite> {
+        self.animations
+            .iter()
+            .map(|animation| animation.current_sprite())
+            .collect()
+    }
+}
+
+#[derive(Clone, Default, Debug)]
 pub struct Animation {
     sprites: Vec<Sprite>,
-    current_frame: Frame,
+    pub current_frame: Frame,
     time_per_frame: i32,
     frame_timer: i32,
     looping: bool,
@@ -81,6 +111,12 @@ impl Animation {
         if self.frame_timer > self.time_per_frame {
             self.next_frame();
         }
+    }
+
+    pub fn reset(&mut self) {
+        self.frame_timer = 0;
+        self.current_frame = 0;
+        self.finished = false;
     }
 
     fn next_frame(&mut self) {

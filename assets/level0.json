@@ -22,40 +22,18 @@
                 "x": 136,
                 "y": 128
             },
-            "reverse_sprite": 144,
-            "sprite": 144
-        },
-        {
-            "gravity": false,
-            "frames": 1,
-            "velocity": {
-                "x": -0.4,
-                "y": 0
-            },
-            "collision": "Blocking",
-            "movement": "Flying",
-            "position": {
-                "x": 144,
-                "y": 128
-            },
-            "reverse_sprite": 145,
-            "sprite": 145
-        },
-        {
-            "gravity": false,
-            "frames": 1,
-            "velocity": {
-                "x": -0.4,
-                "y": 0
-            },
-            "collision": "Blocking",
-            "movement": "Flying",
-            "position": {
-                "x": 152,
-                "y": 128
-            },
-            "reverse_sprite": 146,
-            "sprite": 146
+            "reverse_sprites": [
+                144,
+                145,
+                146
+            ],
+            "sprites": [
+                144,
+                145,
+                146
+            ],
+            "width": 24,
+            "height": 8
         },
         {
             "gravity": false,
@@ -70,8 +48,14 @@
                 "x": 56,
                 "y": 120
             },
-            "reverse_sprite": 138,
-            "sprite": 136
+            "reverse_sprites": [
+                138
+            ],
+            "sprites": [
+                136
+            ],
+            "width": 8,
+            "height": 8
         },
         {
             "gravity": true,
@@ -86,8 +70,14 @@
                 "x": 80,
                 "y": 0
             },
-            "reverse_sprite": 138,
-            "sprite": 136
+            "reverse_sprites": [
+                138
+            ],
+            "sprites": [
+                136
+            ],
+            "width": 8,
+            "height": 8
         },
         {
             "gravity": false,
@@ -102,8 +92,14 @@
                 "x": 176,
                 "y": 0
             },
-            "reverse_sprite": 140,
-            "sprite": 140
+            "reverse_sprites": [
+                140
+            ],
+            "sprites": [
+                140
+            ],
+            "width": 8,
+            "height": 8
         },
         {
             "gravity": false,
@@ -118,8 +114,14 @@
                 "x": 128,
                 "y": 24
             },
-            "reverse_sprite": 140,
-            "sprite": 140
+            "reverse_sprites": [
+                140
+            ],
+            "sprites": [
+                140
+            ],
+            "width": 8,
+            "height": 8
         },
         {
             "gravity": false,
@@ -134,8 +136,14 @@
                 "x": 72,
                 "y": 16
             },
-            "reverse_sprite": 140,
-            "sprite": 140
+            "reverse_sprites": [
+                140
+            ],
+            "sprites": [
+                140
+            ],
+            "width": 8,
+            "height": 8
         },
         {
             "gravity": false,
@@ -150,8 +158,14 @@
                 "x": 32,
                 "y": 8
             },
-            "reverse_sprite": 140,
-            "sprite": 140
+            "reverse_sprites": [
+                140
+            ],
+            "sprites": [
+                140
+            ],
+            "width": 8,
+            "height": 8
         }
     ],
     "tiles": [

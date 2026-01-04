@@ -1,4 +1,4 @@
-var bluttiMapFormat = {
+let bluttiMapFormat = {
     name: "Blutti map format",
     extension: "json",
 
@@ -11,12 +11,16 @@ var bluttiMapFormat = {
             return clone;
         }
 
-        function buildMonsterFromObject(obj) {
-            let monster = filteredClone(obj, "gravity", "frames", "velocity");
+        function reverseSpriteFrom(obj) {
             let reverse_sprite = obj.resolvedProperty("reverse_sprite");
             if (reverse_sprite == undefined || reverse_sprite == -1) {
-                reverse_sprite = obj["tile"]["id"] + monster["frames"];
+                reverse_sprite = obj["tile"]["id"] + obj.resolvedProperty("frames");
             }
+            return reverse_sprite;
+        }
+
+        function buildMonsterFromObject(obj) {
+            let monster = filteredClone(obj, "gravity", "frames", "velocity");
 
             Object.assign(monster, {
                 "collision": COLLISION[obj.resolvedProperty("collision")["value"]],
@@ -25,12 +29,14 @@ var bluttiMapFormat = {
                     x: obj["x"],
                     y: obj["y"]
                 },
-                "reverse_sprite": reverse_sprite,
-                "sprite": obj["tile"]["id"],
+                "reverse_sprites": [reverseSpriteFrom(obj)],
+                "sprites": [obj["tile"]["id"]],
                 "velocity": {
                     x: obj.resolvedProperty("velocity")["value"]["x"] || 0.0,
                     y: obj.resolvedProperty("velocity")["value"]["y"] || 0.0
-                }
+                },
+                "width": 8,
+                "height": 8,
             });
 
             return monster;
@@ -65,7 +71,7 @@ var bluttiMapFormat = {
           "Moving",
           "Flying",
         ];
-        var m = {
+        let m = {
             background_color: COLORS[map.property("background_color")["value"]],
             font_color: COLORS[map.property("font_color")["value"]],
             particle_chance: map.property("particle_chance"),
@@ -76,25 +82,38 @@ var bluttiMapFormat = {
             tiles: []
         };
 
-        for (var i = 0; i < map.layerCount; ++i) {
-            var layer = map.layerAt(i);
+        for (let i = 0; i < map.layerCount; ++i) {
+            let layer = map.layerAt(i);
             if (layer.isTileLayer) {
-                for (y = 0; y < layer.height; ++y) {
-                    for (x = 0; x < layer.width; ++x) {
+                for (let y = 0; y < layer.height; ++y) {
+                    for (let x = 0; x < layer.width; ++x) {
                         m.tiles.push(layer.cellAt(x, y).tileId + 1);
                     }
                 }
             }
             if (layer.isObjectLayer) {
-                for (x = 0; x < layer.objects.length; ++x) {
-                    const obj = layer.objectAt(x);
-                    const monster = buildMonsterFromObject(obj);
+                if (layer.className == "SingleEntity") {
+                    let obj = layer.objectAt(0);
+                    let monster = buildMonsterFromObject(obj);
+                    for (let x = 1; x < layer.objects.length; ++x) {
+                        let obj = layer.objectAt(x);
+                        monster.sprites.push(obj["tile"]["id"]);
+                        monster.reverse_sprites.push(reverseSpriteFrom(obj));
+                    }
+                    monster.width = layer.resolvedProperty("width") || 8;
+                    monster.height = layer.resolvedProperty("height") || 8;
                     m.monsters.push(monster);
+                } else {
+                    for (x = 0; x < layer.objects.length; ++x) {
+                        const obj = layer.objectAt(x);
+                        const monster = buildMonsterFromObject(obj);
+                        m.monsters.push(monster);
+                    }
                 }
             }
         }
 
-        var file = new TextFile(fileName, TextFile.WriteOnly);
+        const file = new TextFile(fileName, TextFile.WriteOnly);
         file.write(JSON.stringify(m, null, 4));
         file.commit();
     },

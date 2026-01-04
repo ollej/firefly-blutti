@@ -43,6 +43,7 @@
          "y":0
         }, 
         {
+         "class":"SingleEntity",
          "draworder":"topdown",
          "id":3,
          "name":"Platform",
@@ -180,6 +181,12 @@
                  "y":128
                 }],
          "opacity":1,
+         "properties":[
+                {
+                 "name":"width",
+                 "type":"int",
+                 "value":24
+                }],
          "type":"objectgroup",
          "visible":true,
          "x":0,

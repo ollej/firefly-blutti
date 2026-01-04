@@ -22,8 +22,14 @@
                 "x": 160,
                 "y": 64
             },
-            "reverse_sprite": 130,
-            "sprite": 128
+            "reverse_sprites": [
+                130
+            ],
+            "sprites": [
+                128
+            ],
+            "width": 8,
+            "height": 8
         },
         {
             "gravity": false,
@@ -38,8 +44,14 @@
                 "x": 16,
                 "y": 8
             },
-            "reverse_sprite": 130,
-            "sprite": 128
+            "reverse_sprites": [
+                130
+            ],
+            "sprites": [
+                128
+            ],
+            "width": 8,
+            "height": 8
         },
         {
             "gravity": false,
@@ -54,8 +66,14 @@
                 "x": 48,
                 "y": 56
             },
-            "reverse_sprite": 130,
-            "sprite": 128
+            "reverse_sprites": [
+                130
+            ],
+            "sprites": [
+                128
+            ],
+            "width": 8,
+            "height": 8
         },
         {
             "gravity": false,
@@ -70,8 +88,14 @@
                 "x": 128,
                 "y": 0
             },
-            "reverse_sprite": 138,
-            "sprite": 136
+            "reverse_sprites": [
+                138
+            ],
+            "sprites": [
+                136
+            ],
+            "width": 8,
+            "height": 8
         },
         {
             "gravity": false,
@@ -86,8 +110,14 @@
                 "x": 128,
                 "y": 120
             },
-            "reverse_sprite": 138,
-            "sprite": 136
+            "reverse_sprites": [
+                138
+            ],
+            "sprites": [
+                136
+            ],
+            "width": 8,
+            "height": 8
         }
     ],
     "tiles": [
