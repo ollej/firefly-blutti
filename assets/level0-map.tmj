@@ -44,11 +44,154 @@
         }, 
         {
          "draworder":"topdown",
+         "id":3,
+         "name":"Platform",
+         "objects":[
+                {
+                 "gid":145,
+                 "height":8,
+                 "id":15,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"collision",
+                         "propertytype":"MonsterCollider",
+                         "type":"string",
+                         "value":"Blocking"
+                        }, 
+                        {
+                         "name":"frames",
+                         "type":"int",
+                         "value":1
+                        }, 
+                        {
+                         "name":"movement",
+                         "propertytype":"MonsterMovement",
+                         "type":"string",
+                         "value":"Flying"
+                        }, 
+                        {
+                         "name":"reverse_sprite",
+                         "type":"int",
+                         "value":144
+                        }, 
+                        {
+                         "name":"velocity",
+                         "propertytype":"Vector",
+                         "type":"class",
+                         "value":
+                            {
+                             "x":-0.4
+                            }
+                        }],
+                 "rotation":0,
+                 "type":"Monster",
+                 "visible":true,
+                 "width":8,
+                 "x":136,
+                 "y":128
+                }, 
+                {
+                 "gid":146,
+                 "height":8,
+                 "id":16,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"collision",
+                         "propertytype":"MonsterCollider",
+                         "type":"string",
+                         "value":"Blocking"
+                        }, 
+                        {
+                         "name":"frames",
+                         "type":"int",
+                         "value":1
+                        }, 
+                        {
+                         "name":"movement",
+                         "propertytype":"MonsterMovement",
+                         "type":"string",
+                         "value":"Flying"
+                        }, 
+                        {
+                         "name":"reverse_sprite",
+                         "type":"int",
+                         "value":145
+                        }, 
+                        {
+                         "name":"velocity",
+                         "propertytype":"Vector",
+                         "type":"class",
+                         "value":
+                            {
+                             "x":-0.4
+                            }
+                        }],
+                 "rotation":0,
+                 "type":"Monster",
+                 "visible":true,
+                 "width":8,
+                 "x":144,
+                 "y":128
+                }, 
+                {
+                 "gid":147,
+                 "height":8,
+                 "id":17,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"collision",
+                         "propertytype":"MonsterCollider",
+                         "type":"string",
+                         "value":"Blocking"
+                        }, 
+                        {
+                         "name":"frames",
+                         "type":"int",
+                         "value":1
+                        }, 
+                        {
+                         "name":"movement",
+                         "propertytype":"MonsterMovement",
+                         "type":"string",
+                         "value":"Flying"
+                        }, 
+                        {
+                         "name":"reverse_sprite",
+                         "type":"int",
+                         "value":146
+                        }, 
+                        {
+                         "name":"velocity",
+                         "propertytype":"Vector",
+                         "type":"class",
+                         "value":
+                            {
+                             "x":-0.4
+                            }
+                        }],
+                 "rotation":0,
+                 "type":"Monster",
+                 "visible":true,
+                 "width":8,
+                 "x":152,
+                 "y":128
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "draworder":"topdown",
          "id":2,
          "name":"Monsters",
          "objects":[
                 {
-                 "gid":393,
+                 "gid":137,
                  "height":8,
                  "id":4,
                  "name":"",
@@ -60,14 +203,14 @@
                          "value":"Blocking"
                         }],
                  "rotation":0,
-                 "type":"",
+                 "type":"Monster",
                  "visible":true,
                  "width":8,
                  "x":56,
                  "y":120
                 }, 
                 {
-                 "gid":393,
+                 "gid":137,
                  "height":8,
                  "id":5,
                  "name":"",
@@ -99,18 +242,40 @@
                             }
                         }],
                  "rotation":0,
-                 "type":"",
+                 "type":"Monster",
                  "visible":true,
                  "width":8,
                  "x":80,
                  "y":0
                 }, 
                 {
-                 "gid":397,
+                 "gid":141,
                  "height":8,
                  "id":8,
                  "name":"",
                  "properties":[
+                        {
+                         "name":"collision",
+                         "propertytype":"MonsterCollider",
+                         "type":"string",
+                         "value":"None"
+                        }, 
+                        {
+                         "name":"frames",
+                         "type":"int",
+                         "value":4
+                        }, 
+                        {
+                         "name":"movement",
+                         "propertytype":"MonsterMovement",
+                         "type":"string",
+                         "value":"Flying"
+                        }, 
+                        {
+                         "name":"reverse_sprite",
+                         "type":"int",
+                         "value":140
+                        }, 
                         {
                          "name":"velocity",
                          "propertytype":"Vector",
@@ -121,30 +286,84 @@
                             }
                         }],
                  "rotation":0,
-                 "type":"",
+                 "type":"Monster",
                  "visible":true,
                  "width":8,
                  "x":176,
                  "y":0
                 }, 
                 {
-                 "gid":397,
+                 "gid":141,
                  "height":8,
                  "id":9,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"collision",
+                         "propertytype":"MonsterCollider",
+                         "type":"string",
+                         "value":"None"
+                        }, 
+                        {
+                         "name":"frames",
+                         "type":"int",
+                         "value":4
+                        }, 
+                        {
+                         "name":"movement",
+                         "propertytype":"MonsterMovement",
+                         "type":"string",
+                         "value":"Flying"
+                        }, 
+                        {
+                         "name":"reverse_sprite",
+                         "type":"int",
+                         "value":140
+                        }, 
+                        {
+                         "name":"velocity",
+                         "propertytype":"Vector",
+                         "type":"class",
+                         "value":
+                            {
+                             "x":0.2
+                            }
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"Monster",
                  "visible":true,
                  "width":8,
                  "x":128,
                  "y":24
                 }, 
                 {
-                 "gid":397,
+                 "gid":141,
                  "height":8,
                  "id":10,
                  "name":"",
                  "properties":[
+                        {
+                         "name":"collision",
+                         "propertytype":"MonsterCollider",
+                         "type":"string",
+                         "value":"None"
+                        }, 
+                        {
+                         "name":"frames",
+                         "type":"int",
+                         "value":4
+                        }, 
+                        {
+                         "name":"movement",
+                         "propertytype":"MonsterMovement",
+                         "type":"string",
+                         "value":"Flying"
+                        }, 
+                        {
+                         "name":"reverse_sprite",
+                         "type":"int",
+                         "value":140
+                        }, 
                         {
                          "name":"velocity",
                          "propertytype":"Vector",
@@ -155,89 +374,55 @@
                             }
                         }],
                  "rotation":0,
-                 "type":"",
+                 "type":"Monster",
                  "visible":true,
                  "width":8,
                  "x":72,
                  "y":16
                 }, 
                 {
-                 "gid":397,
+                 "gid":141,
                  "height":8,
                  "id":11,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"collision",
+                         "propertytype":"MonsterCollider",
+                         "type":"string",
+                         "value":"None"
+                        }, 
+                        {
+                         "name":"frames",
+                         "type":"int",
+                         "value":4
+                        }, 
+                        {
+                         "name":"movement",
+                         "propertytype":"MonsterMovement",
+                         "type":"string",
+                         "value":"Flying"
+                        }, 
+                        {
+                         "name":"reverse_sprite",
+                         "type":"int",
+                         "value":140
+                        }, 
+                        {
+                         "name":"velocity",
+                         "propertytype":"Vector",
+                         "type":"class",
+                         "value":
+                            {
+                             "x":-0.2
+                            }
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"Monster",
                  "visible":true,
                  "width":8,
                  "x":32,
                  "y":8
-                }, 
-                {
-                 "gid":401,
-                 "height":8,
-                 "id":12,
-                 "name":"",
-                 "properties":[
-                        {
-                         "name":"velocity",
-                         "propertytype":"Vector",
-                         "type":"class",
-                         "value":
-                            {
-                             "x":-0.4
-                            }
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":8,
-                 "x":144,
-                 "y":128
-                }, 
-                {
-                 "gid":402,
-                 "height":8,
-                 "id":13,
-                 "name":"",
-                 "properties":[
-                        {
-                         "name":"velocity",
-                         "propertytype":"Vector",
-                         "type":"class",
-                         "value":
-                            {
-                             "x":-0.4
-                            }
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":8,
-                 "x":152,
-                 "y":128
-                }, 
-                {
-                 "gid":403,
-                 "height":8,
-                 "id":14,
-                 "name":"",
-                 "properties":[
-                        {
-                         "name":"velocity",
-                         "propertytype":"Vector",
-                         "type":"class",
-                         "value":
-                            {
-                             "x":-0.4
-                            }
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":8,
-                 "x":160,
-                 "y":128
                 }],
          "opacity":1,
          "properties":[
@@ -267,8 +452,8 @@
          "x":0,
          "y":0
         }],
- "nextlayerid":3,
- "nextobjectid":15,
+ "nextlayerid":4,
+ "nextobjectid":18,
  "orientation":"orthogonal",
  "properties":[
         {
@@ -314,10 +499,6 @@
  "tilesets":[
         {
          "firstgid":1,
-         "source":"blutti-spritesheet.tsx"
-        }, 
-        {
-         "firstgid":257,
          "source":"blutti-spritesheet.tsx"
         }],
  "tilewidth":8,

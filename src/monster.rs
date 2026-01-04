@@ -46,7 +46,7 @@ struct MonsterSerde {
     position: Point,
     reverse_sprite: i32,
     sprite: Sprite,
-    sprites: Sprite,
+    frames: Sprite,
     velocity: Vec2,
 }
 
@@ -61,12 +61,12 @@ impl From<MonsterSerde> for Monster {
             remainder: Vec2::zero(),
             reverse_sprite: value.reverse_sprite,
             sprite: value.sprite,
-            sprites: value.sprites,
+            frames: value.frames,
             animation: Monster::animation_from(
                 value.velocity,
                 value.sprite,
                 value.reverse_sprite,
-                value.sprites,
+                value.frames,
             ),
         }
     }
@@ -86,7 +86,7 @@ pub struct Monster {
     remainder: Vec2,
     reverse_sprite: Sprite,
     sprite: Sprite,
-    sprites: i32,
+    frames: i32,
     pub velocity: Vec2,
 }
 
@@ -95,38 +95,28 @@ impl Monster {
         velocity: Vec2,
         sprite: Sprite,
         reverse_sprite: Sprite,
-        sprite_count: i32,
+        frames: i32,
     ) -> Animation {
         let selected_sprite = if velocity.x > 0.0 || velocity.y > 0.0 {
             reverse_sprite
         } else {
             sprite
         };
-        let sprites: Vec<i32> = (0..sprite_count)
-            .map(|offset| selected_sprite + offset)
-            .collect();
+        let sprites: Vec<i32> = (0..frames).map(|offset| selected_sprite + offset).collect();
         Animation::looping(sprites, 10)
     }
 
     fn change_direction_x(&mut self) {
         self.velocity.x *= -1.0;
-        self.animation = Self::animation_from(
-            self.velocity,
-            self.sprite,
-            self.reverse_sprite,
-            self.sprites,
-        );
+        self.animation =
+            Self::animation_from(self.velocity, self.sprite, self.reverse_sprite, self.frames);
     }
 
     fn change_direction_y(&mut self) {
         if !self.gravity {
             self.velocity.y *= -1.0;
-            self.animation = Self::animation_from(
-                self.velocity,
-                self.sprite,
-                self.reverse_sprite,
-                self.sprites,
-            );
+            self.animation =
+                Self::animation_from(self.velocity, self.sprite, self.reverse_sprite, self.frames);
         }
     }
 }

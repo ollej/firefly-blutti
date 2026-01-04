@@ -67,10 +67,10 @@ var bluttiMapFormat = {
             if (layer.isObjectLayer) {
                 for (x = 0; x < layer.objects.length; ++x) {
                     const obj = layer.objectAt(x);
-                    let monster = filteredClone(obj, "gravity", "sprites", "velocity");
+                    let monster = filteredClone(obj, "gravity", "frames", "velocity");
                     let reverse_sprite = obj.resolvedProperty("reverse_sprite");
                     if (reverse_sprite == undefined || reverse_sprite == -1) {
-                        reverse_sprite = obj["tile"]["id"] + monster["sprites"];
+                        reverse_sprite = obj["tile"]["id"] + monster["frames"];
                     }
 
                     Object.assign(monster, {
