@@ -156,10 +156,15 @@ impl Blutti {
         }
         if self.is_jumping() || self.is_falling() {
             //log_debug("start dashing");
-            if self.direction_x == DirectionX::Left {
-                self.state = PlayerState::DashingLeft;
-            } else {
-                self.state = PlayerState::DashingRight;
+            match self.state {
+                PlayerState::JumpingLeft | PlayerState::FallingLeft => {
+                    self.state = PlayerState::DashingLeft
+                }
+                PlayerState::JumpingRight | PlayerState::FallingRight => {
+                    self.state = PlayerState::DashingRight
+                }
+                _ if self.direction_x == DirectionX::Left => self.state = PlayerState::DashingLeft,
+                _ => self.state = PlayerState::DashingRight,
             }
             self.dash_timer = Self::DASH_TIME;
             self.add_dash_animation();
