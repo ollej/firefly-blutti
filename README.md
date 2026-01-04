@@ -94,10 +94,10 @@ firefly_cli runtime cheat iddqd 1
 
 ## Create maps
 
-Use [Tiled](https://www.mapeditor.org/) mapeditor to create maps. Load the
+Use [Tiled](https://www.mapeditor.org/) map editor to create maps. Load the
 project file `assets/blutti-spritesheet.tsx`. Draw the level in the first tile
 layer and add monsters in the first object layer. Use the custom property
-`movement` to set how fast the monster should move. Set a negative values to
+`velocity` to set how fast the monster should move. Set a negative values to
 make the monster start by moving left.
 
 ### Map properties
@@ -124,13 +124,28 @@ The properties available on the Monster are:
   - `Deadly` kills player that touches it.
   - `Blocking` allows player to stand on the monster without dying.
   - `None` Allows player to walk through the monster.
+- `frames` - Number of frames in animation. The sprites following the selected
+  sprite will be used to build an animation.
 - `gravity` - Whether gravity should affect the monster.
 - `movement` - Type of movement.
   - `TurnsAtEdge` makes monster turn when reaching edge of a ledge.
   - `FollowsPlayer` makes monster move towards player.
   - `Moving` makes monster ignore edges of ledges.
-- `sprites` - Number of sprites in animation. When turning, the next set of sprites is used.
+- `reverse_sprites` - ID of first sprite to use when reversing direction. Set
+  to `-1` to use same as the normal direction.
 - `velocity` - The initial speed in X and Y direction.
+
+### Multi tile monsters
+
+It is possible to create monsters made up of multiple tiles, such as bosses or
+platforms.
+
+To create a multi tile monster, create a new object layer for that monster.
+Set the class to `SingleEntity` and set the `width` and `height` properties to
+the width and height in pixels. Then add the tiles that make up the object to
+the layer. Use the properties on the first tile to set the properties for the
+monster. Make sure that all the tiles are connected in a rectangle with no
+missing tiles.
 
 ### Exporting level data
 
@@ -138,8 +153,8 @@ Once the map is finished, it can be exported using the `Blutti map format` to
 the `assets` directory..
 
 The filename (without extension) has to be added to the `LEVELS` const at the
-top of `src/main.rs`. The position in the array defines when it will show up
-in the game. Finally, a reference to the file needs to be added under the
+top of `src/constants.rs`. The position in the array defines when it will show
+up in the game. Finally, a reference to the file needs to be added under the
 `files` section in `firefly.toml` with the attribute `copy` set to `true`.
 
 ### TileCollider description

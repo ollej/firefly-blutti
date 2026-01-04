@@ -2,6 +2,28 @@ use firefly_rust::Badge;
 
 use crate::tile_collider::*;
 
+// Level 0 is a debug level
+pub const LEVELS: [&str; 6] = ["level0", "level1", "level2", "level3", "level4", "level5"];
+
+pub const CREDITS: [&str; 8] = [
+    "Credits:",
+    "Programming: Olle Wreede",
+    "Graphics: Olle Wreede",
+    "Level design: Olle Wreede",
+    "Music: Zane Little Music",
+    "SFX: @Shades, Luke.RUSTLTD, sauer2",
+    "",
+    "Press (E) to go back to game",
+];
+
+pub const INFO: [&str; 5] = [
+    "Controls:",
+    "Press (S) to jump",
+    "Press (W) to dash",
+    "",
+    "Press (E) to go back to game",
+];
+
 pub const TILE_WIDTH: i32 = 8;
 pub const TILE_HEIGHT: i32 = 8;
 pub const SPRITES_H: i32 = 16;
@@ -30,28 +52,6 @@ pub const BLUTTI_EXIT_LEFT_SPRITES: [i32; 4] = [108, 109, 110, 111];
 pub const BLUTTI_TURN_RIGHT_SPRITES: [i32; 4] = [71, 72, 73, 74];
 pub const BLUTTI_TURN_LEFT_SPRITES: [i32; 4] = [75, 76, 77, 78];
 pub const COLLECTION_SPRITES: [i32; 4] = [104, 105, 106, 107];
-
-// Level 0 is a debug level
-pub const LEVELS: [&str; 6] = ["level0", "level1", "level2", "level3", "level4", "level5"];
-
-pub const CREDITS: [&str; 8] = [
-    "Credits:",
-    "Programming: Olle Wreede",
-    "Graphics: Olle Wreede",
-    "Level design: Olle Wreede",
-    "Music: Zane Little Music",
-    "SFX: @Shades, Luke.RUSTLTD, sauer2",
-    "",
-    "Press (E) to go back to game",
-];
-
-pub const INFO: [&str; 5] = [
-    "Controls:",
-    "Press (S) to jump",
-    "Press (W) to dash",
-    "",
-    "Press (E) to go back to game",
-];
 
 pub const COLLISION: [TileCollider; 256] = [
     TileCollider::None,
