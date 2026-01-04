@@ -34,6 +34,7 @@
             4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4],
          "height":20,
          "id":1,
+         "locked":true,
          "name":"Tile Layer 1",
          "opacity":1,
          "type":"tilelayer",
@@ -46,6 +47,7 @@
          "class":"SingleEntity",
          "draworder":"topdown",
          "id":3,
+         "locked":true,
          "name":"Platform",
          "objects":[
                 {
@@ -193,8 +195,115 @@
          "y":0
         }, 
         {
+         "class":"SingleEntity",
+         "draworder":"topdown",
+         "id":4,
+         "name":"Elevator",
+         "objects":[
+                {
+                 "gid":145,
+                 "height":8,
+                 "id":20,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"collision",
+                         "propertytype":"MonsterCollider",
+                         "type":"string",
+                         "value":"Blocking"
+                        }, 
+                        {
+                         "name":"frames",
+                         "type":"int",
+                         "value":1
+                        }, 
+                        {
+                         "name":"movement",
+                         "propertytype":"MonsterMovement",
+                         "type":"string",
+                         "value":"Flying"
+                        }, 
+                        {
+                         "name":"reverse_sprite",
+                         "type":"int",
+                         "value":144
+                        }, 
+                        {
+                         "name":"velocity",
+                         "propertytype":"Vector",
+                         "type":"class",
+                         "value":
+                            {
+                             "y":-0.4
+                            }
+                        }],
+                 "rotation":0,
+                 "type":"Monster",
+                 "visible":true,
+                 "width":8,
+                 "x":16,
+                 "y":128
+                }, 
+                {
+                 "gid":147,
+                 "height":8,
+                 "id":19,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"collision",
+                         "propertytype":"MonsterCollider",
+                         "type":"string",
+                         "value":"Blocking"
+                        }, 
+                        {
+                         "name":"frames",
+                         "type":"int",
+                         "value":1
+                        }, 
+                        {
+                         "name":"movement",
+                         "propertytype":"MonsterMovement",
+                         "type":"string",
+                         "value":"Flying"
+                        }, 
+                        {
+                         "name":"reverse_sprite",
+                         "type":"int",
+                         "value":146
+                        }, 
+                        {
+                         "name":"velocity",
+                         "propertytype":"Vector",
+                         "type":"class",
+                         "value":
+                            {
+                             "y":-0.4
+                            }
+                        }],
+                 "rotation":0,
+                 "type":"Monster",
+                 "visible":true,
+                 "width":8,
+                 "x":24,
+                 "y":128
+                }],
+         "opacity":1,
+         "properties":[
+                {
+                 "name":"width",
+                 "type":"int",
+                 "value":16
+                }],
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
          "draworder":"topdown",
          "id":2,
+         "locked":true,
          "name":"Monsters",
          "objects":[
                 {
@@ -459,8 +568,8 @@
          "x":0,
          "y":0
         }],
- "nextlayerid":4,
- "nextobjectid":18,
+ "nextlayerid":5,
+ "nextobjectid":21,
  "orientation":"orthogonal",
  "properties":[
         {

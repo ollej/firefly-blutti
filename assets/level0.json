@@ -37,6 +37,30 @@
         },
         {
             "gravity": false,
+            "frames": 1,
+            "velocity": {
+                "x": 0,
+                "y": -0.4
+            },
+            "collision": "Blocking",
+            "movement": "Flying",
+            "position": {
+                "x": 16,
+                "y": 128
+            },
+            "reverse_sprites": [
+                144,
+                146
+            ],
+            "sprites": [
+                144,
+                146
+            ],
+            "width": 16,
+            "height": 8
+        },
+        {
+            "gravity": false,
             "frames": 2,
             "velocity": {
                 "x": 0,
