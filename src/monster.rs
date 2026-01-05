@@ -1,9 +1,10 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
-use fixedstr::{str128, str_format};
 use serde::Deserialize;
+//use fixedstr::{str128, str_format};
 
+//use firefly_rust::log_debug;
 use firefly_rust::Point;
 
 use crate::{
@@ -125,9 +126,9 @@ impl Monster {
 impl Drawable for Monster {
     fn draw(&self) {
         let animations = if self.velocity.x > 0.0 || self.velocity.y > 0.0 {
-            &self.animations
-        } else {
             &self.reverse_animations
+        } else {
+            &self.animations
         };
         let tiles_w = self.width / TILE_WIDTH;
         let tiles_h = self.height / TILE_HEIGHT;
@@ -188,26 +189,19 @@ impl Updateable for Monster {
         let rect = self.rect_from_position(position);
 
         // Handle direction change at edge of platforms
-        let collision_below = match self.movement {
-            MonsterMovement::TurnsAtEdge => {
-                if self.velocity.x < 0.0 {
-                    self.is_position_free(rect.below_bottom_left())
-                } else if self.velocity.x > 0.0 {
-                    self.is_position_free(rect.below_bottom_right())
-                } else {
-                    false
-                }
-            }
-            MonsterMovement::Flying | MonsterMovement::FollowsPlayer | MonsterMovement::Moving => {
+        let collision_below = if self.movement == MonsterMovement::TurnsAtEdge {
+            if self.velocity.x < 0.0 {
+                self.is_position_free(rect.below_bottom_left())
+            } else if self.velocity.x > 0.0 {
+                self.is_position_free(rect.below_bottom_right())
+            } else {
                 false
             }
+        } else {
+            false
         };
 
-        !(self.is_position_free(rect.top_left())
-            && self.is_position_free(rect.top_right())
-            && self.is_position_free(rect.bottom_left())
-            && self.is_position_free(rect.bottom_right())
-            && !collision_below)
+        !(self.is_rect_free(rect) && !collision_below)
     }
 
     fn is_monster_blocking(&self, monster: &Monster) -> bool {

@@ -13,7 +13,7 @@
             "gravity": false,
             "frames": 2,
             "velocity": {
-                "x": -1,
+                "x": -0.8,
                 "y": 0
             },
             "collision": "Deadly",
@@ -35,7 +35,7 @@
             "gravity": false,
             "frames": 2,
             "velocity": {
-                "x": 1,
+                "x": 0.8,
                 "y": 0
             },
             "collision": "Deadly",
@@ -57,7 +57,7 @@
             "gravity": false,
             "frames": 2,
             "velocity": {
-                "x": 1,
+                "x": 0.8,
                 "y": 0
             },
             "collision": "Deadly",
