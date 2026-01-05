@@ -64,6 +64,7 @@ let bluttiMapFormat = {
           "Blocking",
           "Deadly",
           "None",
+          "BlockingMonster",
         ];
         const MOVEMENT = [
           "TurnsAtEdge",

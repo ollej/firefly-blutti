@@ -93,16 +93,19 @@ pub trait Updateable {
         self.rect().overlaps(other)
     }
 
-    fn is_tile_free(&self, position: Point) -> bool {
-        let occupied = matches!(
-            self.collision(position),
-            TileCollider::Full | TileCollider::Slippery | TileCollider::Conveyor
-        );
-        if occupied {
-            // Return early if it's an occupied tile
+    fn is_position_free(&self, position: Point) -> bool {
+        // Return early if it's an occupied tile
+        if self.is_tile_blocking(position) {
             return false;
         }
         !self.is_position_in_blocking_monster(position)
+    }
+
+    fn is_tile_blocking(&self, position: Point) -> bool {
+        matches!(
+            self.collision(position),
+            TileCollider::Full | TileCollider::Slippery | TileCollider::Conveyor
+        )
     }
 
     fn is_standing_on_rect(&self, rect: Rect) -> bool {
@@ -122,20 +125,24 @@ pub trait Updateable {
             .level
             .monsters_at_position(position)
             .iter()
-            .filter(|monster| monster.collision == MonsterCollision::Blocking)
+            .filter(|monster| self.is_monster_blocking(monster))
             .any(|monster| monster.position() != self.position())
     }
 
+    fn is_monster_blocking(&self, monster: &Monster) -> bool {
+        monster.collision == MonsterCollision::Blocking
+    }
+
     fn collision_at(&self, position: Point) -> bool {
-        !(self.is_tile_free(position)
-            && self.is_tile_free(position.top_right())
-            && self.is_tile_free(position.bottom_left())
-            && self.is_tile_free(position.bottom_right()))
+        !(self.is_position_free(position)
+            && self.is_position_free(position.top_right())
+            && self.is_position_free(position.bottom_left())
+            && self.is_position_free(position.bottom_right()))
     }
 
     fn is_standing(&self) -> bool {
-        !(self.is_tile_free(self.position().below_bottom_left())
-            && self.is_tile_free(self.position().below_bottom_right()))
+        !(self.is_position_free(self.position().below_bottom_left())
+            && self.is_position_free(self.position().below_bottom_right()))
     }
 
     fn is_standing_on(&self, collision: TileCollider) -> bool {

@@ -906,27 +906,27 @@ impl Updateable for Blutti {
     fn collision_at(&self, position: Point) -> bool {
         if self.is_climbing() {
             if self.direction_x == DirectionX::Left {
-                !(self.is_tile_free(position.addx(3))
-                    && self.is_tile_free(position.top_right().addx(-4))
-                    && self.is_tile_free(position.bottom_left().addx(3))
-                    && self.is_tile_free(position.bottom_right().addx(-4)))
+                !(self.is_position_free(position.addx(3))
+                    && self.is_position_free(position.top_right().addx(-4))
+                    && self.is_position_free(position.bottom_left().addx(3))
+                    && self.is_position_free(position.bottom_right().addx(-4)))
             } else {
-                !(self.is_tile_free(position.addx(4))
-                    && self.is_tile_free(position.top_right().addx(-3))
-                    && self.is_tile_free(position.bottom_left().addx(4))
-                    && self.is_tile_free(position.bottom_right().addx(-3)))
+                !(self.is_position_free(position.addx(4))
+                    && self.is_position_free(position.top_right().addx(-3))
+                    && self.is_position_free(position.bottom_left().addx(4))
+                    && self.is_position_free(position.bottom_right().addx(-3)))
             }
         } else {
             if self.direction_x == DirectionX::Left {
-                !(self.is_tile_free(position)
-                    && self.is_tile_free(position.top_right().addx(-3))
-                    && self.is_tile_free(position.bottom_left())
-                    && self.is_tile_free(position.bottom_right().addx(-3)))
+                !(self.is_position_free(position)
+                    && self.is_position_free(position.top_right().addx(-3))
+                    && self.is_position_free(position.bottom_left())
+                    && self.is_position_free(position.bottom_right().addx(-3)))
             } else {
-                !(self.is_tile_free(position.addx(3))
-                    && self.is_tile_free(position.top_right())
-                    && self.is_tile_free(position.bottom_left().addx(3))
-                    && self.is_tile_free(position.bottom_right()))
+                !(self.is_position_free(position.addx(3))
+                    && self.is_position_free(position.top_right())
+                    && self.is_position_free(position.bottom_left().addx(3))
+                    && self.is_position_free(position.bottom_right()))
             }
         }
     }
@@ -937,11 +937,11 @@ impl Updateable for Blutti {
         }
 
         if self.direction_x == DirectionX::Left {
-            !(self.is_tile_free(self.position().below_bottom_left())
-                && self.is_tile_free(self.position().below_bottom_right().addx(-3)))
+            !(self.is_position_free(self.position().below_bottom_left())
+                && self.is_position_free(self.position().below_bottom_right().addx(-3)))
         } else {
-            !(self.is_tile_free(self.position().below_bottom_left().addx(3))
-                && self.is_tile_free(self.position().below_bottom_right()))
+            !(self.is_position_free(self.position().below_bottom_left().addx(3))
+                && self.is_position_free(self.position().below_bottom_right()))
         }
     }
 

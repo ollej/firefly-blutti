@@ -28,6 +28,7 @@ impl Default for MonsterMovement {
 #[derive(PartialEq, Clone, Debug, Deserialize)]
 pub enum MonsterCollision {
     Blocking,
+    BlockingMonster,
     Deadly,
     None,
 }
@@ -190,9 +191,9 @@ impl Updateable for Monster {
         let collision_below = match self.movement {
             MonsterMovement::TurnsAtEdge => {
                 if self.velocity.x < 0.0 {
-                    self.is_tile_free(rect.below_bottom_left())
+                    self.is_position_free(rect.below_bottom_left())
                 } else if self.velocity.x > 0.0 {
-                    self.is_tile_free(rect.below_bottom_right())
+                    self.is_position_free(rect.below_bottom_right())
                 } else {
                     false
                 }
@@ -202,11 +203,18 @@ impl Updateable for Monster {
             }
         };
 
-        !(self.is_tile_free(rect.top_left())
-            && self.is_tile_free(rect.top_right())
-            && self.is_tile_free(rect.bottom_left())
-            && self.is_tile_free(rect.bottom_right())
+        !(self.is_position_free(rect.top_left())
+            && self.is_position_free(rect.top_right())
+            && self.is_position_free(rect.bottom_left())
+            && self.is_position_free(rect.bottom_right())
             && !collision_below)
+    }
+
+    fn is_monster_blocking(&self, monster: &Monster) -> bool {
+        matches!(
+            monster.collision,
+            MonsterCollision::Blocking | MonsterCollision::BlockingMonster
+        )
     }
 
     fn stop_movement(&mut self, stop_direction: StopDirection) {

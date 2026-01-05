@@ -190,6 +190,72 @@
             ],
             "width": 8,
             "height": 8
+        },
+        {
+            "gravity": false,
+            "frames": 1,
+            "velocity": {
+                "x": 0,
+                "y": 0
+            },
+            "collision": "BlockingMonster",
+            "movement": "Flying",
+            "position": {
+                "x": 24,
+                "y": 80
+            },
+            "reverse_sprites": [
+                0
+            ],
+            "sprites": [
+                0
+            ],
+            "width": 8,
+            "height": 8
+        },
+        {
+            "gravity": false,
+            "frames": 1,
+            "velocity": {
+                "x": 0,
+                "y": 0
+            },
+            "collision": "BlockingMonster",
+            "movement": "Flying",
+            "position": {
+                "x": 24,
+                "y": 136
+            },
+            "reverse_sprites": [
+                0
+            ],
+            "sprites": [
+                0
+            ],
+            "width": 8,
+            "height": 8
+        },
+        {
+            "gravity": false,
+            "frames": 1,
+            "velocity": {
+                "x": 0,
+                "y": 0
+            },
+            "collision": "BlockingMonster",
+            "movement": "Flying",
+            "position": {
+                "x": 72,
+                "y": 128
+            },
+            "reverse_sprites": [
+                0
+            ],
+            "sprites": [
+                0
+            ],
+            "width": 8,
+            "height": 8
         }
     ],
     "tiles": [

@@ -198,6 +198,7 @@
          "class":"SingleEntity",
          "draworder":"topdown",
          "id":4,
+         "locked":true,
          "name":"Elevator",
          "objects":[
                 {
@@ -291,6 +292,11 @@
          "opacity":1,
          "properties":[
                 {
+                 "name":"height",
+                 "type":"int",
+                 "value":8
+                }, 
+                {
                  "name":"width",
                  "type":"int",
                  "value":16
@@ -303,7 +309,6 @@
         {
          "draworder":"topdown",
          "id":2,
-         "locked":true,
          "name":"Monsters",
          "objects":[
                 {
@@ -539,6 +544,111 @@
                  "width":8,
                  "x":32,
                  "y":8
+                }, 
+                {
+                 "gid":257,
+                 "height":8,
+                 "id":21,
+                 "name":"Elevator blocker",
+                 "properties":[
+                        {
+                         "name":"collision",
+                         "propertytype":"MonsterCollider",
+                         "type":"string",
+                         "value":"BlockingMonster"
+                        }, 
+                        {
+                         "name":"frames",
+                         "type":"int",
+                         "value":1
+                        }, 
+                        {
+                         "name":"movement",
+                         "propertytype":"MonsterMovement",
+                         "type":"string",
+                         "value":"Flying"
+                        }, 
+                        {
+                         "name":"reverse_sprite",
+                         "type":"int",
+                         "value":0
+                        }],
+                 "rotation":0,
+                 "type":"Monster",
+                 "visible":true,
+                 "width":8,
+                 "x":24,
+                 "y":80
+                }, 
+                {
+                 "gid":257,
+                 "height":8,
+                 "id":22,
+                 "name":"Elevator blocker",
+                 "properties":[
+                        {
+                         "name":"collision",
+                         "propertytype":"MonsterCollider",
+                         "type":"string",
+                         "value":"BlockingMonster"
+                        }, 
+                        {
+                         "name":"frames",
+                         "type":"int",
+                         "value":1
+                        }, 
+                        {
+                         "name":"movement",
+                         "propertytype":"MonsterMovement",
+                         "type":"string",
+                         "value":"Flying"
+                        }, 
+                        {
+                         "name":"reverse_sprite",
+                         "type":"int",
+                         "value":0
+                        }],
+                 "rotation":0,
+                 "type":"Monster",
+                 "visible":true,
+                 "width":8,
+                 "x":24,
+                 "y":136
+                }, 
+                {
+                 "gid":257,
+                 "height":8,
+                 "id":23,
+                 "name":"Elevator blocker",
+                 "properties":[
+                        {
+                         "name":"collision",
+                         "propertytype":"MonsterCollider",
+                         "type":"string",
+                         "value":"BlockingMonster"
+                        }, 
+                        {
+                         "name":"frames",
+                         "type":"int",
+                         "value":1
+                        }, 
+                        {
+                         "name":"movement",
+                         "propertytype":"MonsterMovement",
+                         "type":"string",
+                         "value":"Flying"
+                        }, 
+                        {
+                         "name":"reverse_sprite",
+                         "type":"int",
+                         "value":0
+                        }],
+                 "rotation":0,
+                 "type":"Monster",
+                 "visible":true,
+                 "width":8,
+                 "x":72,
+                 "y":128
                 }],
          "opacity":1,
          "properties":[
@@ -569,7 +679,7 @@
          "y":0
         }],
  "nextlayerid":5,
- "nextobjectid":21,
+ "nextobjectid":24,
  "orientation":"orthogonal",
  "properties":[
         {
@@ -615,6 +725,10 @@
  "tilesets":[
         {
          "firstgid":1,
+         "source":"blutti-spritesheet.tsx"
+        }, 
+        {
+         "firstgid":257,
          "source":"blutti-spritesheet.tsx"
         }],
  "tilewidth":8,

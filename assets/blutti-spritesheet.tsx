@@ -1,14 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <tileset version="1.11" tiledversion="1.11.0" name="Blutti" tilewidth="8" tileheight="8" tilecount="256" columns="16" objectalignment="topleft">
  <image source="spritesheet.png" width="128" height="128"/>
- <tile id="0">
-  <animation>
-   <frame tileid="108" duration="166"/>
-   <frame tileid="109" duration="166"/>
-   <frame tileid="110" duration="166"/>
-   <frame tileid="111" duration="166"/>
-  </animation>
- </tile>
  <tile id="21">
   <properties>
    <property name="movement" type="int" value="0"/>
@@ -20,6 +12,14 @@
    <frame tileid="81" duration="166"/>
    <frame tileid="82" duration="166"/>
    <frame tileid="83" duration="166"/>
+  </animation>
+ </tile>
+ <tile id="92">
+  <animation>
+   <frame tileid="108" duration="166"/>
+   <frame tileid="109" duration="166"/>
+   <frame tileid="110" duration="166"/>
+   <frame tileid="111" duration="166"/>
   </animation>
  </tile>
  <tile id="116">
