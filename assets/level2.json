@@ -61,7 +61,7 @@
                 "y": 1
             },
             "collision": "Deadly",
-            "movement": "TurnsAtEdge",
+            "movement": "Flying",
             "position": {
                 "x": 192,
                 "y": 40

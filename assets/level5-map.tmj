@@ -54,6 +54,12 @@
                  "name":"",
                  "properties":[
                         {
+                         "name":"movement",
+                         "propertytype":"MonsterMovement",
+                         "type":"string",
+                         "value":"Moving"
+                        }, 
+                        {
                          "name":"velocity",
                          "propertytype":"Vector",
                          "type":"class",
@@ -114,7 +120,7 @@
                  "y":56
                 }, 
                 {
-                 "gid":393,
+                 "gid":137,
                  "height":8,
                  "id":38,
                  "name":"",
@@ -126,7 +132,7 @@
                  "y":0
                 }, 
                 {
-                 "gid":393,
+                 "gid":137,
                  "height":8,
                  "id":39,
                  "name":"",
@@ -190,10 +196,6 @@
  "tilesets":[
         {
          "firstgid":1,
-         "source":"blutti-spritesheet.tsx"
-        }, 
-        {
-         "firstgid":257,
          "source":"blutti-spritesheet.tsx"
         }],
  "tilewidth":8,

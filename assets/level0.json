@@ -129,7 +129,7 @@
             "gravity": false,
             "frames": 4,
             "velocity": {
-                "x": 0.2,
+                "x": 0.1,
                 "y": 0
             },
             "collision": "None",
@@ -173,7 +173,7 @@
             "gravity": false,
             "frames": 4,
             "velocity": {
-                "x": -0.2,
+                "x": -0.1,
                 "y": 0
             },
             "collision": "None",

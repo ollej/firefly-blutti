@@ -49,6 +49,7 @@
  </tile>
  <tile id="132" type="Monster">
   <properties>
+   <property name="movement" propertytype="MonsterMovement" value="Flying"/>
    <property name="velocity" type="class" propertytype="Vector">
     <properties>
      <property name="y" type="float" value="1"/>
@@ -97,11 +98,7 @@
    <property name="frames" type="int" value="1"/>
    <property name="movement" propertytype="MonsterMovement" value="Flying"/>
    <property name="reverse_sprite" type="int" value="144"/>
-   <property name="velocity" type="class" propertytype="Vector">
-    <properties>
-     <property name="x" type="float" value="0.4"/>
-    </properties>
-   </property>
+   <property name="velocity" type="class"/>
   </properties>
  </tile>
  <tile id="145" type="Monster">
@@ -110,11 +107,7 @@
    <property name="frames" type="int" value="1"/>
    <property name="movement" propertytype="MonsterMovement" value="Flying"/>
    <property name="reverse_sprite" type="int" value="145"/>
-   <property name="velocity" type="class" propertytype="Vector">
-    <properties>
-     <property name="x" type="float" value="0.4"/>
-    </properties>
-   </property>
+   <property name="velocity" type="class"/>
   </properties>
  </tile>
  <tile id="146" type="Monster">

@@ -447,7 +447,7 @@
                          "type":"class",
                          "value":
                             {
-                             "x":0.2
+                             "x":0.1
                             }
                         }],
                  "rotation":0,
@@ -535,7 +535,7 @@
                          "type":"class",
                          "value":
                             {
-                             "x":-0.2
+                             "x":-0.1
                             }
                         }],
                  "rotation":0,
@@ -546,7 +546,7 @@
                  "y":8
                 }, 
                 {
-                 "gid":257,
+                 "gid":1,
                  "height":8,
                  "id":21,
                  "name":"Elevator blocker",
@@ -581,7 +581,7 @@
                  "y":80
                 }, 
                 {
-                 "gid":257,
+                 "gid":1,
                  "height":8,
                  "id":22,
                  "name":"Elevator blocker",
@@ -616,7 +616,7 @@
                  "y":136
                 }, 
                 {
-                 "gid":257,
+                 "gid":1,
                  "height":8,
                  "id":23,
                  "name":"Elevator blocker",
@@ -725,10 +725,6 @@
  "tilesets":[
         {
          "firstgid":1,
-         "source":"blutti-spritesheet.tsx"
-        }, 
-        {
-         "firstgid":257,
          "source":"blutti-spritesheet.tsx"
         }],
  "tilewidth":8,
