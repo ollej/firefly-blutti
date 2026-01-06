@@ -298,7 +298,7 @@ impl Blutti {
             }
         } else if !self.is_standing() {
             self.state = PlayerState::Falling;
-        } else if self.state != PlayerState::Idle {
+        } else if self.is_idling() {
             self.state = PlayerState::Idle;
             self.add_idle_animation();
         }
@@ -737,13 +737,6 @@ impl Blutti {
         if self.position.y >= (HEIGHT - TILE_HEIGHT) {
             //log_debug("die from falling out of screen");
             self.die();
-        }
-
-        // Death from deadly monsters
-        let state = get_state();
-        if state.level.deadly_monsters_overlapping_rect(self.rect()) {
-            //log_debug("die from monster");
-            state.blutti.die();
         }
     }
 
