@@ -1,7 +1,7 @@
 extern crate alloc;
 use alloc::vec::Vec;
 //use firefly_rust::log_debug;
-use firefly_rust::{add_progress, get_me, math, Point, HEIGHT, WIDTH};
+use firefly_rust::{add_progress, get_me, Point, HEIGHT, WIDTH};
 use fixedstr::{str32, str_format};
 
 use crate::{
@@ -217,7 +217,7 @@ impl Blutti {
         }
         let state = get_state();
         state.level.reset();
-        self.stop_movement(StopDirection::Both);
+        self.stop_moving(StopDirection::Both);
         self.state = PlayerState::Idle;
         self.add_death_animation();
         self.add_lives(-1);
@@ -231,7 +231,7 @@ impl Blutti {
         self.direction_x = DirectionX::Right;
         self.direction_y = DirectionY::Up;
         self.position = self.start_position;
-        self.stop_movement(StopDirection::Both);
+        self.stop_moving(StopDirection::Both);
         self.add_idle_animation();
         self.current_tile = 0;
     }
@@ -298,7 +298,7 @@ impl Blutti {
             }
         } else if !self.is_standing() {
             self.state = PlayerState::Falling;
-        } else if self.is_idling() {
+        } else if !self.is_idling() {
             self.state = PlayerState::Idle;
             self.add_idle_animation();
         }
@@ -674,7 +674,7 @@ impl Blutti {
         if self.is_climbing() && !on_ladder || self.state == PlayerState::Idle && on_ladder {
             //log_debug(str_format!(str32, "stop movement from {:?}", self.state).as_str());
             //log_debug(str_format!(str32, "velocity {:?}", self.velocity).as_str());
-            self.stop_movement(StopDirection::Both);
+            self.stop_moving(StopDirection::Both);
         }
 
         // Jumping
@@ -683,7 +683,7 @@ impl Blutti {
                 self.jump_timer -= 1;
                 if self.jump_timer <= 0 {
                     //log_debug(str_format!(str32, "jump > falling timer:{}", self.jump_timer).as_str());
-                    self.stop_movement(StopDirection::Y);
+                    self.stop_moving(StopDirection::Y);
                 }
             } else {
                 self.jump_timer += 1;
@@ -699,7 +699,7 @@ impl Blutti {
             //log_debug(str_format!(str32, "dash_timer: {}", self.dash_timer).as_str());
             if self.dash_timer == 0 {
                 //log_debug("stop dashing");
-                self.stop_movement(StopDirection::X);
+                self.stop_moving(StopDirection::X);
                 self.dash_timer = -Self::DASH_WAIT_TIME;
             }
         } else if self.dash_timer < 0 {
@@ -712,19 +712,26 @@ impl Blutti {
             if self.stop_timer > 0 {
                 self.stop_timer -= 1;
             } else {
-                self.stop_movement(StopDirection::X);
+                self.stop_moving(StopDirection::X);
             }
         }
 
         // Stop movement when in air while not jumping or dashing
         if !is_standing && !self.is_jumping() && !self.is_dashing() {
             //log_debug(str_format!(str32, "state {:?} > Falling", self.state).as_str());
-            self.stop_movement(StopDirection::Y);
+            //log_debug("Stop movement when in air while not jumping or dashing");
+            self.stop_moving(StopDirection::Y);
+        }
+
+        if is_standing && self.is_falling() {
+            //log_debug("Stop movement when standing and falling");
+            self.stop_moving(StopDirection::Y);
         }
 
         // Stop movement when not moving and not idling or jumping
         if !self.is_moving() && !self.is_idling() && !self.is_jumping() {
-            self.stop_movement(StopDirection::Y);
+            //log_debug("Stop movement when not moving, idling or jumping");
+            self.stop_moving(StopDirection::Both);
         }
 
         // Death from fall height
@@ -740,8 +747,20 @@ impl Blutti {
         }
     }
 
+    fn stop_moving(&mut self, stop_direction: StopDirection) {
+        self.jump_timer = 0;
+        self.dash_timer = 0;
+        if stop_direction != StopDirection::X {
+            self.fall_timer = 0;
+        }
+        self.movement_modifier = 1.0;
+        self.remainder = Vec2::zero();
+        self.stop_movement(stop_direction);
+        self.start_idling();
+    }
+
     fn is_moving(&self) -> bool {
-        !self.velocity.is_zero() && !self.remainder.is_zero()
+        !self.velocity.is_zero() || !self.remainder.is_zero()
     }
 
     fn is_falling(&self) -> bool {
@@ -886,19 +905,11 @@ impl Updateable for Blutti {
     }
 
     fn stop_movement(&mut self, stop_direction: StopDirection) {
-        self.jump_timer = 0;
-        self.dash_timer = 0;
-        if stop_direction != StopDirection::X {
-            self.fall_timer = 0;
-        }
-        self.movement_modifier = 1.0;
-        self.remainder = Vec2::zero();
         match stop_direction {
             StopDirection::X => self.velocity.x = 0.0,
             StopDirection::Y => self.velocity.y = 0.0,
             StopDirection::Both => self.velocity = Vec2::zero(),
         };
-        self.start_idling();
     }
 
     fn collision_at(&self, position: Point) -> bool {

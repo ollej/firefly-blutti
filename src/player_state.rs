@@ -1,4 +1,4 @@
-#[derive(PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub enum PlayerState {
     Idle,
     Jumping,
