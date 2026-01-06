@@ -100,15 +100,16 @@ extern "C" fn update() {
         GameState::Playing => {
             let pad = read_pad(Peer::COMBINED);
             if let Some(pad) = pad {
-                if pad.y > 100 {
+                let x = pad.x;
+                let y = pad.y;
+                if y > 100 && y > x.abs() {
                     state.blutti.move_up(axis_to_speed(pad.y));
-                } else if pad.y < -100 {
+                } else if y < -100 && -y > x.abs() {
                     state.blutti.move_down(axis_to_speed(pad.y));
-                }
-                if pad.x < -100 {
-                    state.blutti.move_left(axis_to_speed(pad.x));
-                } else if pad.x > 100 {
+                } else if x > 100 && x > y.abs() {
                     state.blutti.move_right(axis_to_speed(pad.x));
+                } else if x < -100 && -x > y.abs() {
+                    state.blutti.move_left(axis_to_speed(pad.x));
                 }
             } else {
                 state.blutti.stop();
