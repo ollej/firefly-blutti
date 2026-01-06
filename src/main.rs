@@ -125,8 +125,8 @@ extern "C" fn update() {
             if just_pressed.e {
                 state.blutti.toggle_debug();
             }
-            state.blutti.update();
             state.level.update();
+            state.blutti.update();
             state.blutti.handle_effects();
 
             if !state.blutti.is_alive() || state.blutti.finished_level {

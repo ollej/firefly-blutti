@@ -1,8 +1,8 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
-use serde::Deserialize;
 //use fixedstr::{str128, str_format};
+use serde::Deserialize;
 
 //use firefly_rust::log_debug;
 use firefly_rust::Point;
@@ -167,6 +167,7 @@ impl Updateable for Monster {
         }
 
         // Move X position
+        let last_position = self.position;
         if self.movement == MonsterMovement::Flying || self.is_standing() {
             (self.position, self.remainder) =
                 self.move_horizontally(self.position, self.velocity, self.remainder);
@@ -177,10 +178,13 @@ impl Updateable for Monster {
             self.move_vertically(self.position, self.velocity, self.remainder);
 
         // Move player
-        if self.collision == MonsterCollision::Blocking {
+        let moved: Vec2 = (self.position - last_position).into();
+        if self.collision == MonsterCollision::Blocking && !moved.is_zero() {
             let state = get_state();
-            if state.blutti.is_standing_on_rect(self.rect()) {
-                state.blutti.force_move(self.velocity);
+            if state.blutti.is_standing_on_rect(self.rect())
+                || state.blutti.is_standing_on_rect(Rect::from(last_position))
+            {
+                state.blutti.force_move(moved);
             }
         }
     }

@@ -1,3 +1,4 @@
+use firefly_rust::Point;
 use serde::Deserialize;
 
 #[derive(Copy, Clone, PartialEq, Default, Debug, Deserialize)]
@@ -7,6 +8,10 @@ pub struct Vec2 {
 }
 
 impl Vec2 {
+    pub fn new(x: f32, y: f32) -> Self {
+        Self { x, y }
+    }
+
     pub fn zero() -> Self {
         Self { x: 0.0, y: 0.0 }
     }
@@ -30,10 +35,23 @@ impl Vec2 {
         }
     }
 
+    pub fn sub(&self, other: Vec2) -> Vec2 {
+        Vec2 {
+            x: self.x - other.x,
+            y: self.y - other.y,
+        }
+    }
+
     pub fn max(&self, other: Vec2) -> Vec2 {
         Vec2 {
             x: self.x.max(other.x),
             y: self.y.max(other.y),
         }
+    }
+}
+
+impl From<Point> for Vec2 {
+    fn from(value: Point) -> Self {
+        Vec2::new(value.x as f32, value.y as f32)
     }
 }

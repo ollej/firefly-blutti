@@ -1,4 +1,6 @@
-use firefly_rust::{math, Point, HEIGHT};
+//use firefly_rust::log_debug;
+use firefly_rust::{math, Point};
+//use fixedstr::{str128, str_format};
 
 use crate::{monster::*, point_math::*, rect::*, state::*, tile_collider::*, vec2::*};
 
@@ -66,8 +68,8 @@ pub trait Updateable {
         let step = movement_to_step(amount);
         for _ in 0..amount.abs() as i32 {
             let test_pos = position.addy(step);
-            if test_pos.y >= 0 && test_pos.y < HEIGHT && !self.collision_at(test_pos) {
-                position.y += step;
+            if test_pos.is_in_screen() && !self.collision_at(test_pos) {
+                position = test_pos;
             } else {
                 self.stop_movement(StopDirection::Y);
                 break;
