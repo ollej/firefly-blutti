@@ -592,7 +592,6 @@ impl Blutti {
         target_velocity *= self.movement_modifier;
 
         // Handle conveyor
-        // TODO: Change to state?
         if self.is_standing_on(TileCollider::Conveyor) {
             acceleration += Self::CONVEYOR_ACCELERATION;
             if target_velocity > 0.0 {
@@ -743,7 +742,7 @@ impl Blutti {
     }
 
     fn is_moving(&self) -> bool {
-        !self.velocity.is_zero()
+        !self.velocity.is_zero() && !self.remainder.is_zero()
     }
 
     fn is_falling(&self) -> bool {
@@ -936,22 +935,12 @@ impl Updateable for Blutti {
             return true;
         }
 
-        if self.direction_x == DirectionX::Left {
-            !(self.is_position_free(self.position().below_bottom_left())
-                && self.is_position_free(self.position().below_bottom_right().addx(-3)))
-        } else {
-            !(self.is_position_free(self.position().below_bottom_left().addx(3))
-                && self.is_position_free(self.position().below_bottom_right()))
-        }
+        !(self.is_position_free(self.position().below_bottom_left())
+            && self.is_position_free(self.position().below_bottom_right()))
     }
 
     fn is_standing_on(&self, collision: TileCollider) -> bool {
-        if self.direction_x == DirectionX::Left {
-            self.collision(self.position().below_bottom_left()) == collision
-                || self.collision(self.position().below_bottom_right().addx(-3)) == collision
-        } else {
-            self.collision(self.position().below_bottom_left().addx(3)) == collision
-                || self.collision(self.position().below_bottom_right()) == collision
-        }
+        self.collision(self.position().below_bottom_left()) == collision
+            || self.collision(self.position().below_bottom_right()) == collision
     }
 }
