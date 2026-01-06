@@ -15,6 +15,14 @@ impl Vec2 {
         self.x.abs() == 0.0 && self.y.abs() == 0.0
     }
 
+    pub fn with_x(&self, x: f32) -> Self {
+        Self { x, y: self.y }
+    }
+
+    pub fn with_y(&self, y: f32) -> Self {
+        Self { x: self.x, y }
+    }
+
     pub fn add(&self, other: Vec2) -> Vec2 {
         Vec2 {
             x: self.x + other.x,
