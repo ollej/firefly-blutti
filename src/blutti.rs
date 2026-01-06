@@ -653,12 +653,14 @@ impl Blutti {
     }
 
     fn update_states(&mut self) {
+        let is_standing = self.is_standing();
+
         if self.is_falling() {
             self.fall_timer += 1;
         }
 
         // Jump buffering to allow jump being pressed slightly too early
-        if self.is_standing() && self.jump_buffer_timer > 0 {
+        if is_standing && self.jump_buffer_timer > 0 {
             //log_debug("buffer jump!");
             self.jump();
         }
@@ -668,22 +670,10 @@ impl Blutti {
 
         // Climbing
         let on_ladder = self.is_on_ladder();
-        if !self.is_moving() && !self.is_idling() && !self.is_jumping()
-            || self.is_climbing() && !on_ladder
-            || self.state == PlayerState::Idle && on_ladder
-        {
+        if self.is_climbing() && !on_ladder || self.state == PlayerState::Idle && on_ladder {
             //log_debug(str_format!(str32, "stop movement from {:?}", self.state).as_str());
             //log_debug(str_format!(str32, "velocity {:?}", self.velocity).as_str());
             self.stop_movement(StopDirection::Both);
-        }
-
-        // Stop running
-        if self.state == PlayerState::RunningStop {
-            if self.stop_timer > 0 {
-                self.stop_timer -= 1;
-            } else {
-                self.stop_movement(StopDirection::X);
-            }
         }
 
         // Jumping
@@ -716,15 +706,30 @@ impl Blutti {
             self.dash_timer += 1;
         }
 
-        // Death from fall height
-        if self.is_standing() {
-            if self.fall_timer > Self::MAX_FALL_HEIGHT {
-                //log_debug(str_format!(str32, "die from fall height {}", self.fall_timer).as_str());
-                self.die();
+        // Stop running
+        if self.state == PlayerState::RunningStop {
+            if self.stop_timer > 0 {
+                self.stop_timer -= 1;
+            } else {
+                self.stop_movement(StopDirection::X);
             }
-        } else if !self.is_jumping() && !self.is_dashing() {
+        }
+
+        // Stop movement when in air while not jumping or dashing
+        if !is_standing && !self.is_jumping() && !self.is_dashing() {
             //log_debug(str_format!(str32, "state {:?} > Falling", self.state).as_str());
             self.stop_movement(StopDirection::Y);
+        }
+
+        // Stop movement when not moving and not idling or jumping
+        if !self.is_moving() && !self.is_idling() && !self.is_jumping() {
+            self.stop_movement(StopDirection::Y);
+        }
+
+        // Death from fall height
+        if is_standing && self.fall_timer > Self::MAX_FALL_HEIGHT {
+            //log_debug(str_format!(str32, "die from fall height {}", self.fall_timer).as_str());
+            self.die();
         }
 
         // Death from falling out of screen
