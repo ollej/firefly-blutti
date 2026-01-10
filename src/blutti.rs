@@ -1,8 +1,8 @@
 extern crate alloc;
 use alloc::vec::Vec;
 //use firefly_rust::log_debug;
-use firefly_rust::{add_progress, get_me, Point, HEIGHT, WIDTH};
-use fixedstr::{str32, str_format};
+use firefly_rust::{HEIGHT, Point, WIDTH, add_progress, get_me};
+use fixedstr::{str_format, str32};
 
 use crate::{
     animation::*, collision::*, constants::*, direction::*, drawable::*, drawing::*, functions::*,
@@ -258,15 +258,13 @@ impl Blutti {
             } else {
                 PlayerState::JumpingLeft
             };
-        } else if self.is_standing() {
-            if !self.is_running() {
-                self.add_running_animation();
-                self.state = if self.direction_x == DirectionX::Right {
-                    PlayerState::RunningRight
-                } else {
-                    PlayerState::RunningLeft
-                };
-            }
+        } else if self.is_standing() && !self.is_running() {
+            self.add_running_animation();
+            self.state = if self.direction_x == DirectionX::Right {
+                PlayerState::RunningRight
+            } else {
+                PlayerState::RunningLeft
+            };
         }
     }
 
@@ -330,22 +328,19 @@ impl Blutti {
     }
 
     fn is_climbing(&self) -> bool {
-        match self.state {
+        matches!(
+            self.state,
             PlayerState::ClimbingUp
-            | PlayerState::ClimbingDown
-            | PlayerState::ClimbingStop
-            | PlayerState::ClimbingIdle
-            | PlayerState::ClimbingSideways
-            | PlayerState::ClimbingSidewaysStop => true,
-            _ => false,
-        }
+                | PlayerState::ClimbingDown
+                | PlayerState::ClimbingStop
+                | PlayerState::ClimbingIdle
+                | PlayerState::ClimbingSideways
+                | PlayerState::ClimbingSidewaysStop
+        )
     }
 
     fn is_idling(&self) -> bool {
-        match self.state {
-            PlayerState::Idle | PlayerState::ClimbingIdle => true,
-            _ => false,
-        }
+        matches!(self.state, PlayerState::Idle | PlayerState::ClimbingIdle)
     }
 
     fn is_jumping(&self) -> bool {
@@ -444,14 +439,12 @@ impl Blutti {
                     || self.collision(self.position.bottom_right().addx(-3))
                         == TileCollider::Climbable
             }
+        } else if self.direction_y == DirectionY::Down {
+            self.collision(self.position.below_bottom_left().addx(3)) == TileCollider::Climbable
+                || self.collision(self.position.below_bottom_right()) == TileCollider::Climbable
         } else {
-            if self.direction_y == DirectionY::Down {
-                self.collision(self.position.below_bottom_left().addx(3)) == TileCollider::Climbable
-                    || self.collision(self.position.below_bottom_right()) == TileCollider::Climbable
-            } else {
-                self.collision(self.position.bottom_left().addx(3)) == TileCollider::Climbable
-                    || self.collision(self.position.bottom_right()) == TileCollider::Climbable
-            }
+            self.collision(self.position.bottom_left().addx(3)) == TileCollider::Climbable
+                || self.collision(self.position.bottom_right()) == TileCollider::Climbable
         }
     }
 
@@ -816,7 +809,7 @@ impl Drawable for Blutti {
     }
 
     fn draw_debug(&self) {
-        let mut textpos = self.position().clone();
+        let mut textpos = self.position();
         textpos.x = textpos.x.min(192);
         textpos.y -= 4;
         display_text(str_format!(str32, "{:?}", self.state).as_str(), textpos);
@@ -925,18 +918,16 @@ impl Updateable for Blutti {
                     && self.is_position_free(position.bottom_left().addx(4))
                     && self.is_position_free(position.bottom_right().addx(-3)))
             }
+        } else if self.direction_x == DirectionX::Left {
+            !(self.is_position_free(position)
+                && self.is_position_free(position.top_right().addx(-3))
+                && self.is_position_free(position.bottom_left())
+                && self.is_position_free(position.bottom_right().addx(-3)))
         } else {
-            if self.direction_x == DirectionX::Left {
-                !(self.is_position_free(position)
-                    && self.is_position_free(position.top_right().addx(-3))
-                    && self.is_position_free(position.bottom_left())
-                    && self.is_position_free(position.bottom_right().addx(-3)))
-            } else {
-                !(self.is_position_free(position.addx(3))
-                    && self.is_position_free(position.top_right())
-                    && self.is_position_free(position.bottom_left().addx(3))
-                    && self.is_position_free(position.bottom_right()))
-            }
+            !(self.is_position_free(position.addx(3))
+                && self.is_position_free(position.top_right())
+                && self.is_position_free(position.bottom_left().addx(3))
+                && self.is_position_free(position.bottom_right()))
         }
     }
 
