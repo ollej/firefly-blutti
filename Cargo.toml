@@ -1,16 +1,17 @@
 [package]
 name = "firefly-blutti"
 version = "0.10.0"
+rust-version = "1.91.0"
 edition = "2024"
 
 [dependencies]
-firefly-rust = { version = "0.9.3", features = ["alloc", "talc"] }
+firefly-rust = { version = "0.11.0", features = ["alloc", "talc"] }
 fixedstr = { version = "0.5.9", features = ["no-alloc"] }
 serde = { version = "1.0.228", default-features = false, features = [
     "alloc",
     "derive",
 ] }
-serde_json = { version = "1.0.145", default-features = false, features = [
+serde_json = { version = "1.0.149", default-features = false, features = [
     "alloc",
 ] }
 
