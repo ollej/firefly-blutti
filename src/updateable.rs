@@ -1,5 +1,5 @@
 //use firefly_rust::log_debug;
-use firefly_rust::{math, Point};
+use firefly_rust::{Point, math};
 //use fixedstr::{str128, str_format};
 
 use crate::{monster::*, point_math::*, rect::*, state::*, tile_collider::*, vec2::*};
@@ -135,11 +135,6 @@ pub trait Updateable {
     fn is_standing_on_rect(&self, rect: Rect) -> bool {
         rect.contains(self.position().below_bottom_left())
             || rect.contains(self.position().below_bottom_right())
-    }
-
-    fn is_standing_on_blocking_monster(&self) -> bool {
-        self.is_position_in_blocking_monster(self.position().below_bottom_left())
-            || self.is_position_in_blocking_monster(self.position().below_bottom_right())
     }
 
     fn is_position_in_blocking_monster(&self, position: Point) -> bool {

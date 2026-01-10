@@ -1,12 +1,12 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
-use firefly_rust::{clear_screen, load_file_buf, Color, Point};
+use firefly_rust::{Color, Point, clear_screen, load_file_buf};
 use serde::Deserialize;
 
 use crate::{
     blutti::*, collision::*, constants::*, drawable::*, drawing::*, functions::*, game_state::*,
-    monster::*, particle::*, point_math::*, rect::*, serde::*, state::*, updateable::*,
+    monster::*, particle::*, point_math::*, serde::*, state::*, updateable::*,
 };
 
 pub type LevelNumber = i32;
@@ -140,12 +140,6 @@ impl Level {
             .iter()
             .filter(|monster| monster.rect().contains(position))
             .collect()
-    }
-
-    pub fn deadly_monsters_overlapping_rect(&self, rect: Rect) -> bool {
-        self.monsters
-            .iter()
-            .any(|monster| monster.collision == MonsterCollision::Deadly && monster.overlaps(rect))
     }
 
     fn sprite_at_position(&self, point: Point) -> Sprite {
