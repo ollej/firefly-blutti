@@ -1,4 +1,4 @@
-use firefly_rust::{draw_sub_image, draw_text, Color, Point, Size, HEIGHT, WIDTH};
+use firefly_rust::{Color, HEIGHT, Point, Size, WIDTH, draw_sub_image, draw_text};
 
 use crate::{constants::*, state::*};
 

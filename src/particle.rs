@@ -1,4 +1,4 @@
-use firefly_rust::{Point, HEIGHT, WIDTH};
+use firefly_rust::{HEIGHT, Point, WIDTH};
 
 use crate::{animation::*, drawable::*, drawing::*, functions::*, state::*};
 
