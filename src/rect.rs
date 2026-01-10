@@ -58,13 +58,6 @@ impl Rect {
         }
     }
 
-    pub fn below_bottom_middle(&self) -> Point {
-        Point {
-            x: self.position.x,
-            y: self.position.y + self.height / 2,
-        }
-    }
-
     pub fn below_bottom_right(&self) -> Point {
         Point {
             x: self.position.x + self.width - 1,

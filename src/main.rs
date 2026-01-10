@@ -3,11 +3,37 @@
 
 extern crate alloc;
 
-use firefly_rust::*;
+mod animation;
+mod blutti;
+mod collision;
+mod constants;
+mod direction;
+mod drawable;
+mod drawing;
+mod functions;
+mod game_state;
+mod level;
+mod monster;
+mod particle;
+mod player_state;
+mod point_math;
+mod rect;
+mod rendering;
+mod serde;
+mod state;
+mod tile_collider;
+mod updateable;
+mod vec2;
 
-use firefly_blutti::{
-    blutti::*, functions::*, game_state::*, level::*, rendering::*, state::*, updateable::*,
-};
+use blutti::*;
+use functions::*;
+use game_state::*;
+use level::*;
+use rendering::*;
+use state::*;
+use updateable::*;
+
+use firefly_rust::*;
 
 #[unsafe(no_mangle)]
 extern "C" fn cheat(cmd: i32, val: i32) -> i32 {
