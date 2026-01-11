@@ -137,11 +137,6 @@ pub trait Updateable {
             || rect.contains(self.position().below_bottom_right())
     }
 
-    fn is_standing_on_blocking_monster(&self) -> bool {
-        self.is_position_in_blocking_monster(self.position().below_bottom_left())
-            || self.is_position_in_blocking_monster(self.position().below_bottom_right())
-    }
-
     fn is_position_in_blocking_monster(&self, position: Point) -> bool {
         let state = get_state();
         // FIXME: Use better check for equality than position
