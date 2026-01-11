@@ -99,7 +99,7 @@ impl Animation {
     }
 
     pub fn looping(sprites: Vec<Sprite>, time_per_frame: i32) -> Self {
-        Self::new(sprites.into(), time_per_frame, true)
+        Self::new(sprites, time_per_frame, true)
     }
 
     pub fn current_sprite(&self) -> Sprite {

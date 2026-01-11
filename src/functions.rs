@@ -4,11 +4,7 @@ use crate::state::*;
 
 #[inline]
 pub fn axis_to_speed(x: i32) -> f32 {
-    if x.abs() > 400 {
-        1.0
-    } else {
-        0.5
-    }
+    if x.abs() > 400 { 1.0 } else { 0.5 }
 }
 
 pub fn play_sound(sound: &str) {

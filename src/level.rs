@@ -1,7 +1,7 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
-use firefly_rust::{clear_screen, load_file_buf, Color, Point};
+use firefly_rust::{Color, Point, clear_screen, load_file_buf};
 use serde::Deserialize;
 
 use crate::{

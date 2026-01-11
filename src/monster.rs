@@ -12,32 +12,22 @@ use crate::{
     state::*, updateable::*, vec2::*,
 };
 
-#[derive(PartialEq, Clone, Debug, Deserialize)]
+#[derive(PartialEq, Clone, Debug, Deserialize, Default)]
 pub enum MonsterMovement {
     Flying,
     FollowsPlayer,
     Moving,
+    #[default]
     TurnsAtEdge,
 }
 
-impl Default for MonsterMovement {
-    fn default() -> Self {
-        MonsterMovement::TurnsAtEdge
-    }
-}
-
-#[derive(PartialEq, Clone, Debug, Deserialize)]
+#[derive(PartialEq, Clone, Debug, Deserialize, Default)]
 pub enum MonsterCollision {
     Blocking,
     BlockingMonster,
+    #[default]
     Deadly,
     None,
-}
-
-impl Default for MonsterCollision {
-    fn default() -> Self {
-        MonsterCollision::Deadly
-    }
 }
 
 #[derive(Deserialize)]
@@ -137,9 +127,9 @@ impl Drawable for Monster {
         for x in 0..tiles_w {
             for y in 0..tiles_h {
                 let position = self.position.addx(x * TILE_WIDTH).addy(y * TILE_HEIGHT);
-                sprites
-                    .get(index)
-                    .map(|sprite| draw_tile(*sprite, position));
+                if let Some(sprite) = sprites.get(index) {
+                    draw_tile(*sprite, position)
+                }
                 index += 1;
             }
         }
@@ -162,7 +152,7 @@ impl Updateable for Monster {
         self.reverse_animations.update();
 
         // Apply gravity
-        if self.gravity == true {
+        if self.gravity {
             self.velocity.y = (self.velocity.y + GRAVITY_ACCELERATION).min(GRAVITY_MAX);
         }
 
@@ -180,12 +170,12 @@ impl Updateable for Monster {
         // Move player
         let state = get_state();
         let moved: Vec2 = (self.position - last_position).into();
-        if self.collision == MonsterCollision::Blocking && !moved.is_zero() {
-            if state.blutti.is_standing_on_rect(self.rect())
-                || state.blutti.is_standing_on_rect(Rect::from(last_position))
-            {
-                state.blutti.force_move(moved);
-            }
+        if self.collision == MonsterCollision::Blocking
+            && !moved.is_zero()
+            && (state.blutti.is_standing_on_rect(self.rect())
+                || state.blutti.is_standing_on_rect(Rect::from(last_position)))
+        {
+            state.blutti.force_move(moved);
         }
 
         // Death from deadly monsters
@@ -212,7 +202,7 @@ impl Updateable for Monster {
             false
         };
 
-        !(self.is_rect_free(rect) && !collision_below)
+        !self.is_rect_free(rect) && collision_below
     }
 
     fn is_monster_blocking(&self, monster: &Monster) -> bool {

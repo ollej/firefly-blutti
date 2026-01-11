@@ -1,5 +1,5 @@
 //use firefly_rust::log_debug;
-use firefly_rust::{math, Point};
+use firefly_rust::{Point, math};
 //use fixedstr::{str128, str_format};
 
 use crate::{monster::*, point_math::*, rect::*, state::*, tile_collider::*, vec2::*};
