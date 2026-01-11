@@ -202,7 +202,7 @@ impl Updateable for Monster {
             false
         };
 
-        !self.is_rect_free(rect) && collision_below
+        !self.is_rect_free(rect) || collision_below
     }
 
     fn is_monster_blocking(&self, monster: &Monster) -> bool {
