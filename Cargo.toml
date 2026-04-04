@@ -5,8 +5,8 @@ rust-version = "1.91.0"
 edition = "2024"
 
 [dependencies]
-firefly-rust = { version = "0.11.0", features = ["alloc", "talc"] }
-fixedstr = { version = "0.5.9", features = ["no-alloc"] }
+firefly-rust = { version = "0.13.2", features = ["alloc", "talc"] }
+fixedstr = { version = "0.5.10", features = ["no-alloc"] }
 serde = { version = "1.0.228", default-features = false, features = [
     "alloc",
     "derive",
