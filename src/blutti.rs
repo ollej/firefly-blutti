@@ -1,7 +1,6 @@
 extern crate alloc;
 use alloc::vec::Vec;
-//use firefly_rust::log_debug;
-use firefly_rust::{HEIGHT, Point, WIDTH, add_progress, get_me};
+use firefly_rust::{HEIGHT, Peer, Point, WIDTH, add_progress};
 use fixedstr::{str_format, str32};
 
 use crate::{
@@ -221,7 +220,7 @@ impl Blutti {
         self.state = PlayerState::Idle;
         self.add_death_animation();
         self.add_lives(-1);
-        add_progress(get_me(), BADGE_DEATHS, 1);
+        add_progress(Peer::COMBINED, BADGE_DEATHS, 1);
         self.died = true;
         play_sound("sound_death");
     }
@@ -378,7 +377,7 @@ impl Blutti {
         self.handle_collection(collision);
         self.add_points(1);
         self.stars += 1;
-        add_progress(get_me(), BADGE_STARS, 1);
+        add_progress(Peer::COMBINED, BADGE_STARS, 1);
         play_sound("sound_coin");
     }
 
@@ -418,7 +417,7 @@ impl Blutti {
         play_sound("sound_exit");
         self.finished_level = true;
         self.add_exit_animation();
-        add_progress(get_me(), BADGE_LEVELS, 1);
+        add_progress(Peer::COMBINED, BADGE_LEVELS, 1);
     }
 
     fn can_climb(&self) -> bool {

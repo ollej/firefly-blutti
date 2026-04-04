@@ -2,6 +2,7 @@ author_id = "olle"
 app_id = "blutti"
 author_name = "Olle Wreede"
 app_name = "Blutti"
+lang = "rust"
 
 [files]
 _splash = { path = "assets/blutti-title.png" }
