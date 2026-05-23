@@ -1,5 +1,5 @@
 use core::cell::OnceCell;
-use firefly_rust::{Buttons, FileBuf, audio};
+use firefly_rust::*;
 
 use crate::{blutti::*, game_state::*, level::*};
 
@@ -7,9 +7,9 @@ pub static mut STATE: OnceCell<State> = OnceCell::new();
 
 pub struct State {
     pub blutti: Blutti,
-    pub spritesheet: FileBuf,
-    pub title: FileBuf,
-    pub font: FileBuf,
+    pub spritesheet: ImageBuf,
+    pub title: ImageBuf,
+    pub font: FontBuf,
     pub fx: audio::Node<audio::Gain>,
     pub theme: audio::Node<audio::Gain>,
     pub level: Level,
