@@ -74,9 +74,9 @@ extern "C" fn boot() {
     let level = Level::load_level(1);
     let state = State {
         blutti: Blutti::with_start_position(level.start_position),
-        spritesheet: load_file_buf("spritesheet").unwrap(),
-        title: load_file_buf("_splash").unwrap(),
-        font: load_file_buf("font").unwrap(),
+        spritesheet: load_file_buf("spritesheet").unwrap().into(),
+        title: load_file_buf("_splash").unwrap().into(),
+        font: load_file_buf("font").unwrap().into(),
         fx,
         theme,
         level,

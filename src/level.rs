@@ -41,8 +41,8 @@ impl Level {
     pub fn load_level(level: LevelNumber) -> Self {
         let level_name = LEVELS[level as usize];
         let level_data = load_file_buf(level_name).expect("Couldn't load level data");
-        let mut level =
-            serde_json::from_slice::<Level>(level_data.data()).expect("Couldn't parse level data");
+        let raw = level_data.into_bytes();
+        let mut level = serde_json::from_slice::<Level>(&raw).expect("Couldn't parse level data");
         level.original_monsters = level.monsters.clone();
         level
     }

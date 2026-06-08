@@ -14,9 +14,9 @@ dependencies = [
 
 [[package]]
 name = "firefly-rust"
-version = "0.13.2"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c99a781c0a6e84cdf93cc10c8633fb6d1b064a56ff145326aa1ec97796b696a4"
+checksum = "56338bf159fd7795f99bcb52191a753684c47761552eb11eaa69ec578507b6e3"
 dependencies = [
  "talc",
 ]
@@ -104,9 +104,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.149"
+version = "1.0.150"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "83fc039473c5595ace860d8c4fafa220ff474b3fc6bfdb4293327f1a37e94d86"
+checksum = "e8014e44b4736ed0538adeecded0fce2a272f22dc9578a7eb6b2d9993c74cfb9"
 dependencies = [
  "itoa",
  "memchr",

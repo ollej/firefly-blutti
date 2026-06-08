@@ -5,7 +5,7 @@ use crate::{constants::*, drawable::*, drawing::*, state::*};
 
 pub fn render_title() {
     let state = get_state();
-    draw_image(&state.title.as_image(), Point { x: 0, y: 0 });
+    draw_image(&state.title, Point { x: 0, y: 0 });
     display_centered_message(Some(Color::White), &["Press (E) to start!"]);
 }
 

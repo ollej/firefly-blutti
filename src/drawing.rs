@@ -1,6 +1,5 @@
-use firefly_rust::{Color, HEIGHT, Point, Size, WIDTH, draw_sub_image, draw_text};
-
 use crate::{constants::*, state::*};
+use firefly_rust::*;
 
 pub type Sprite = i32;
 
@@ -20,7 +19,7 @@ pub fn get_tile_index(point: Point) -> i32 {
 
 pub fn draw_tile(sprite: Sprite, point: Point) {
     let state = get_state();
-    let tile_sprite = state.spritesheet.as_image().sub(
+    let tile_sprite = state.spritesheet.sub(
         Point {
             x: ((sprite % SPRITES_H) * TILE_WIDTH),
             y: ((sprite / SPRITES_H) * TILE_HEIGHT),
@@ -41,8 +40,7 @@ pub fn display_text(text: &str, position: Point) {
 
 pub fn display_text_color(text: &str, position: Point, color: Color) {
     let state = get_state();
-    let font = state.font.as_font();
-    draw_text(text, &font, position, color);
+    draw_text(text, &state.font, position, color);
 }
 
 pub fn display_centered_message(color: Option<Color>, lines: &[&str]) {
