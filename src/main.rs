@@ -31,7 +31,6 @@ use game_state::*;
 use level::*;
 use rendering::*;
 use state::*;
-use updateable::*;
 
 use firefly_rust::*;
 
@@ -97,8 +96,6 @@ extern "C" fn update() {
     let state = get_state();
     let buttons = read_buttons(Peer::COMBINED);
     let just_pressed = buttons.just_pressed(&state.buttons);
-    let just_released = buttons.just_released(&state.buttons);
-    state.buttons = buttons;
 
     match state.game_state {
         GameState::Title => {
@@ -124,43 +121,7 @@ extern "C" fn update() {
             }
         }
         GameState::Playing => {
-            let pad = read_pad(Peer::COMBINED);
-            if let Some(pad) = pad {
-                let x = pad.x;
-                let y = pad.y;
-                if y > 100 && y > x.abs() {
-                    state.blutti.move_up(axis_to_speed(pad.y));
-                } else if y < -100 && -y > x.abs() {
-                    state.blutti.move_down(axis_to_speed(pad.y));
-                } else if x > 100 && x > y.abs() {
-                    state.blutti.move_right(axis_to_speed(pad.x));
-                } else if x < -100 && -x > y.abs() {
-                    state.blutti.move_left(axis_to_speed(pad.x));
-                }
-            } else {
-                state.blutti.stop();
-            }
-            if just_pressed.s {
-                state.blutti.start_jump();
-            }
-            if just_released.s {
-                state.blutti.stop_jump();
-            }
-            if just_pressed.w {
-                state.blutti.start_dash();
-            }
-            if just_pressed.e {
-                state.blutti.toggle_debug();
-            }
-            state.level.update();
-            state.blutti.update();
-            state.blutti.handle_effects();
-
-            if !state.blutti.is_alive() || state.blutti.finished_level {
-                state.game_state = GameState::GameOver(state.blutti.finished_level);
-            } else if state.blutti.died {
-                state.game_state = GameState::Died;
-            }
+            state.update();
         }
         GameState::GameOver(won) => {
             state.blutti.animation.update();
@@ -173,6 +134,8 @@ extern "C" fn update() {
             }
         }
     }
+
+    state.buttons = buttons;
 }
 
 #[unsafe(no_mangle)]
