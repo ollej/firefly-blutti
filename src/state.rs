@@ -70,4 +70,16 @@ impl State {
     pub fn update_animation(&mut self) {
         self.blutti.animation.update();
     }
+
+    pub fn reset(&mut self) {
+        self.blutti.reset();
+    }
+
+    pub fn restart(&self, won: bool) {
+        if won {
+            Level::restart(self.blutti.current_level + 1, won);
+        } else {
+            Level::restart(1, won);
+        }
+    }
 }
