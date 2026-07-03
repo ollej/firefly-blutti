@@ -66,4 +66,8 @@ impl State {
             self.game_state = GameState::Died;
         }
     }
+
+    pub fn update_animation(&mut self) {
+        self.blutti.animation.update();
+    }
 }

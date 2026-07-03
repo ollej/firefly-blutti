@@ -114,7 +114,7 @@ extern "C" fn update() {
             }
         }
         GameState::Died => {
-            state.blutti.animation.update();
+            state.update_animation();
             if just_pressed.any() {
                 state.blutti.reset();
                 state.game_state = GameState::Playing;
@@ -124,7 +124,7 @@ extern "C" fn update() {
             state.update();
         }
         GameState::GameOver(won) => {
-            state.blutti.animation.update();
+            state.update_animation();
             if just_pressed.e {
                 if won {
                     Level::restart(state.blutti.current_level + 1, won);
