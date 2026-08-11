@@ -1,7 +1,7 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
-use firefly_rust::{Color, Point, clear_screen, load_file_buf};
+use firefly_rust::*;
 use serde::Deserialize;
 
 use crate::{
@@ -13,6 +13,8 @@ pub type LevelNumber = i32;
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct Level {
+    #[serde(skip)]
+    pub level_number: LevelNumber,
     tiles: Vec<Sprite>,
     #[serde(with = "ColorDef")]
     background_color: Color,
@@ -38,31 +40,36 @@ impl Level {
         y: Point::MAX.y - TILE_WIDTH,
     };
 
-    pub fn load_level(level: LevelNumber) -> Self {
-        let level_name = LEVELS[level as usize];
+    pub fn load_level(level_number: LevelNumber) -> Self {
+        let level_name = LEVELS[level_number as usize];
         let level_data = load_file_buf(level_name).expect("Couldn't load level data");
         let raw = level_data.into_bytes();
         let mut level = serde_json::from_slice::<Level>(&raw).expect("Couldn't parse level data");
         level.original_monsters = level.monsters.clone();
+        level.level_number = level_number;
         level
     }
 
-    pub fn restart(mut level: LevelNumber, won: bool) -> LevelNumber {
+    pub fn restart(mut level_number: LevelNumber, won: bool) -> LevelNumber {
         let state = get_state();
-        if level >= LEVELS.len() as LevelNumber {
+        if level_number >= LEVELS.len() as LevelNumber {
             // Restart at level 1, as level 0 is a debug level
-            level = Self::START_LEVEL;
+            level_number = Self::START_LEVEL;
         }
-        state.level = Level::load_level(level);
+        state.level = Level::load_level(level_number);
         if won {
-            state.blutti = state.blutti.at_new_level(state.level.start_position, level);
+            state.bluttis = state
+                .bluttis
+                .iter()
+                .map(|blutti| blutti.at_new_level(&state.level))
+                .collect();
             state.game_state = GameState::Playing;
         } else {
-            state.blutti = Blutti::with_start_position(state.level.start_position);
+            state.bluttis = Blutti::build_bluttis(&state.level);
             state.level.reset();
             state.game_state = GameState::Title;
         }
-        level
+        level_number
     }
 
     pub fn update(&mut self) {

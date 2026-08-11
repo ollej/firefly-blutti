@@ -1,4 +1,4 @@
-use firefly_rust::{HEIGHT, Point, WIDTH};
+use firefly_rust::*;
 
 use crate::{animation::*, drawable::*, drawing::*, functions::*, state::*};
 
@@ -6,7 +6,7 @@ use crate::{animation::*, drawable::*, drawing::*, functions::*, state::*};
 pub enum ParticleMovement {
     Stationary,
     Falling,
-    Following(i32),
+    Following(Peer, i32),
 }
 
 #[derive(Clone, Debug)]
@@ -31,8 +31,12 @@ impl Particle {
         Self::new(position, animation, ParticleMovement::Stationary)
     }
 
-    pub fn following(position: Point, animation: Animation, offset_x: i32) -> Self {
-        Self::new(position, animation, ParticleMovement::Following(offset_x))
+    pub fn following(position: Point, animation: Animation, peer: Peer, offset_x: i32) -> Self {
+        Self::new(
+            position,
+            animation,
+            ParticleMovement::Following(peer, offset_x),
+        )
     }
 
     pub fn random(sprite: Sprite) -> Self {
@@ -70,12 +74,16 @@ impl Particle {
                 };
                 self.position = Point { x: new_x, y: new_y };
             }
-            ParticleMovement::Following(offset_x) => {
+            ParticleMovement::Following(peer, offset_x) => {
                 let state = get_state();
-                let position = state.blutti.position;
-                self.position = Point {
-                    x: position.x + offset_x,
-                    y: position.y,
+                for blutti in state.bluttis.iter() {
+                    if blutti.peer == peer {
+                        let position = blutti.position;
+                        self.position = Point {
+                            x: position.x + offset_x,
+                            y: position.y,
+                        }
+                    }
                 }
             }
             ParticleMovement::Stationary => (),

@@ -170,19 +170,21 @@ impl Updateable for Monster {
         // Move player
         let state = get_state();
         let moved: Vec2 = (self.position - last_position).into();
-        if self.collision == MonsterCollision::Blocking
-            && !moved.is_zero()
-            && (state.blutti.is_standing_on_rect(self.rect())
-                || state.blutti.is_standing_on_rect(Rect::from(last_position)))
-        {
-            state.blutti.force_move(moved);
-        }
 
-        // Death from deadly monsters
-        if state.blutti.overlaps(self.rect()) {
-            //log_debug("die from monster");
-            let state = get_state();
-            state.blutti.die();
+        for blutti in state.bluttis.iter_mut() {
+            if self.collision == MonsterCollision::Blocking
+                && !moved.is_zero()
+                && (blutti.is_standing_on_rect(self.rect())
+                    || blutti.is_standing_on_rect(Rect::from(last_position)))
+            {
+                blutti.force_move(moved);
+            }
+
+            // Death from deadly monsters
+            if blutti.overlaps(self.rect()) {
+                //log_debug("die from monster");
+                blutti.die();
+            }
         }
     }
 

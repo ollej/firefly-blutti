@@ -1,3 +1,4 @@
+use alloc::vec::Vec;
 use core::cell::OnceCell;
 use firefly_rust::*;
 
@@ -11,7 +12,7 @@ pub fn get_state() -> &'static mut State {
 }
 
 pub struct State {
-    pub blutti: Blutti,
+    pub bluttis: Vec<Blutti>,
     pub spritesheet: ImageBuf,
     pub title: ImageBuf,
     pub font: FontBuf,
@@ -24,60 +25,83 @@ pub struct State {
 
 impl State {
     pub fn update(&mut self) {
-        let buttons = read_buttons(Peer::COMBINED);
-        let just_pressed = buttons.just_pressed(&self.buttons);
-        let just_released = buttons.just_released(&self.buttons);
-        let pad = read_pad(Peer::COMBINED);
+        self.level.update();
+
+        for blutti in self.bluttis.iter_mut() {
+            if let Some(game_state) = Self::update_blutti(blutti) {
+                self.game_state = game_state;
+                break;
+            }
+        }
+    }
+
+    fn update_blutti(blutti: &mut Blutti) -> Option<GameState> {
+        let buttons = read_buttons(blutti.peer);
+        let just_pressed = buttons.just_pressed(&blutti.buttons);
+        let just_released = buttons.just_released(&blutti.buttons);
+        let pad = read_pad(blutti.peer);
+        blutti.buttons = buttons;
 
         if let Some(pad) = pad {
             let x = pad.x;
             let y = pad.y;
             if y > 100 && y > x.abs() {
-                self.blutti.move_up(axis_to_speed(pad.y));
+                blutti.move_up(axis_to_speed(pad.y));
             } else if y < -100 && -y > x.abs() {
-                self.blutti.move_down(axis_to_speed(pad.y));
+                blutti.move_down(axis_to_speed(pad.y));
             } else if x > 100 && x > y.abs() {
-                self.blutti.move_right(axis_to_speed(pad.x));
+                blutti.move_right(axis_to_speed(pad.x));
             } else if x < -100 && -x > y.abs() {
-                self.blutti.move_left(axis_to_speed(pad.x));
+                blutti.move_left(axis_to_speed(pad.x));
             }
         } else {
-            self.blutti.stop();
+            blutti.stop();
         }
         if just_pressed.s {
-            self.blutti.start_jump();
+            blutti.start_jump();
         }
         if just_released.s {
-            self.blutti.stop_jump();
+            blutti.stop_jump();
         }
         if just_pressed.w {
-            self.blutti.start_dash();
+            blutti.start_dash();
         }
         if just_pressed.e {
-            self.blutti.toggle_debug();
+            blutti.toggle_debug();
         }
-        self.level.update();
-        self.blutti.update();
-        self.blutti.handle_effects();
+        blutti.update();
+        blutti.handle_effects();
 
-        if !self.blutti.is_alive() || self.blutti.finished_level {
-            self.game_state = GameState::GameOver(self.blutti.finished_level);
-        } else if self.blutti.died {
-            self.game_state = GameState::Died;
+        if !blutti.is_alive() || blutti.finished_level {
+            Some(GameState::GameOver(blutti.finished_level))
+        } else if blutti.died {
+            Some(GameState::Died)
+        } else {
+            None
         }
     }
 
     pub fn update_animation(&mut self) {
-        self.blutti.animation.update();
+        for blutti in self.bluttis.iter_mut() {
+            blutti.animation.update();
+        }
+    }
+
+    pub fn start_game(&mut self) {
+        self.game_state = GameState::Playing;
+        self.bluttis = Blutti::build_bluttis(&self.level);
     }
 
     pub fn reset(&mut self) {
-        self.blutti.reset();
+        for blutti in self.bluttis.iter_mut() {
+            blutti.reset();
+        }
     }
 
     pub fn restart(&self, won: bool) {
         if won {
-            Level::restart(self.blutti.current_level + 1, won);
+            let new_level = self.level.level_number + 1;
+            Level::restart(new_level, won);
         } else {
             Level::restart(1, won);
         }

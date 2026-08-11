@@ -1,7 +1,7 @@
 extern crate alloc;
 use alloc::vec::Vec;
-use firefly_rust::{HEIGHT, Peer, Point, WIDTH, add_progress};
-use fixedstr::{str_format, str32};
+use firefly_rust::*;
+use fixedstr::{str32, str_format};
 
 use crate::{
     animation::*, collision::*, constants::*, direction::*, drawable::*, drawing::*, functions::*,
@@ -10,6 +10,7 @@ use crate::{
 };
 
 pub struct Blutti {
+    pub peer: Peer,
     pub position: Point,
     start_position: Point,
     jump_timer: i32,
@@ -30,10 +31,10 @@ pub struct Blutti {
     pub iddqd: bool,
     pub died: bool,
     pub finished_level: bool,
-    pub current_level: LevelNumber,
     current_tile: i32,
     pub animation: Animation,
     debug: bool,
+    pub buttons: Buttons,
 }
 
 impl Blutti {
@@ -59,21 +60,29 @@ impl Blutti {
         y: HEIGHT - TILE_WIDTH - TILE_HEIGHT,
     };
 
-    pub fn with_start_position(start_position: Point) -> Self {
+    pub fn build_bluttis(level: &Level) -> Vec<Blutti> {
+        get_peers()
+            .iter()
+            .map(|peer| Blutti::with_start_position(peer, level))
+            .collect()
+    }
+
+    pub fn with_start_position(peer: Peer, level: &Level) -> Self {
         Blutti {
-            position: start_position,
-            start_position,
+            peer,
+            position: level.start_position,
+            start_position: level.start_position,
             ..Blutti::default()
         }
     }
 
-    pub fn at_new_level(&self, start_position: Point, current_level: LevelNumber) -> Self {
+    pub fn at_new_level(&self, level: &Level) -> Self {
         Blutti {
-            position: start_position,
-            start_position,
+            peer: self.peer,
+            position: level.start_position,
+            start_position: level.start_position,
             points: self.points,
             lives: self.lives,
-            current_level,
             ..Blutti::default()
         }
     }
@@ -197,7 +206,7 @@ impl Blutti {
                 _ => (),
             }
         }
-        state.blutti.current_tile = get_tile_index(self.position);
+        self.current_tile = get_tile_index(self.position);
     }
 
     pub fn add_lives(&mut self, lives: i32) -> i32 {
@@ -226,6 +235,7 @@ impl Blutti {
     }
 
     pub fn reset(&mut self) {
+        self.buttons = Buttons::default();
         self.died = false;
         self.direction_x = DirectionX::Right;
         self.direction_y = DirectionY::Up;
@@ -406,9 +416,9 @@ impl Blutti {
             self.finish_level();
         } else {
             let tile_pos = get_tile_index(self.position);
-            if tile_pos != state.blutti.current_tile {
+            if tile_pos != self.current_tile {
                 play_sound("sound_wrong");
-                state.blutti.current_tile = tile_pos;
+                self.current_tile = tile_pos;
             }
         }
     }
@@ -517,7 +527,7 @@ impl Blutti {
             x: self.position.x + offset_x,
             y: self.position.y,
         };
-        let particle = Particle::following(position, anim, offset_x);
+        let particle = Particle::following(position, anim, self.peer, offset_x);
         let state = get_state();
         state.level.particles.push(particle);
     }
@@ -766,6 +776,7 @@ impl Blutti {
 impl Default for Blutti {
     fn default() -> Self {
         Self {
+            peer: Peer::default(),
             position: Self::START_POSITION,
             start_position: Self::START_POSITION,
             jump_timer: 0,
@@ -786,10 +797,10 @@ impl Default for Blutti {
             iddqd: false,
             died: false,
             finished_level: false,
-            current_level: 1,
             current_tile: 0,
             animation: Animation::animation_idle_right(),
             debug: false,
+            buttons: Buttons::default(),
         }
     }
 }

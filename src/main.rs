@@ -3,6 +3,8 @@
 
 extern crate alloc;
 
+use alloc::vec::Vec;
+
 mod animation;
 mod blutti;
 mod collision;
@@ -25,7 +27,6 @@ mod tile_collider;
 mod updateable;
 mod vec2;
 
-use blutti::*;
 use functions::*;
 use game_state::*;
 use level::*;
@@ -39,14 +40,36 @@ extern "C" fn cheat(cmd: i32, val: i32) -> i32 {
     let state = get_state();
     match cmd {
         1 => Level::restart(val, true),
-        2 => state.blutti.add_lives(val),
-        3 => state.blutti.add_points(val),
+        2 => {
+            for blutti in state.bluttis.iter_mut() {
+                if blutti.peer == get_me() {
+                    blutti.add_lives(val);
+                }
+            }
+            val
+        }
+        3 => {
+            for blutti in state.bluttis.iter_mut() {
+                if blutti.peer == get_me() {
+                    blutti.add_points(val);
+                }
+            }
+            val
+        }
         4 => {
-            state.blutti.die();
+            for blutti in state.bluttis.iter_mut() {
+                if blutti.peer == get_me() {
+                    blutti.die();
+                }
+            }
             1
         }
         5 => {
-            state.blutti.iddqd = val > 0;
+            for blutti in state.bluttis.iter_mut() {
+                if blutti.peer == get_me() {
+                    blutti.iddqd = val > 0
+                }
+            }
             1
         }
         _ => 0,
@@ -72,7 +95,7 @@ extern "C" fn boot() {
     let theme = audio::OUT.add_gain(0.5);
     let level = Level::load_level(1);
     let state = State {
-        blutti: Blutti::with_start_position(level.start_position),
+        bluttis: Vec::new(),
         spritesheet: load_file_buf("spritesheet").unwrap().into(),
         title: load_file_buf("_splash").unwrap().into(),
         font: load_file_buf("font").unwrap().into(),
@@ -96,11 +119,12 @@ extern "C" fn update() {
     let state = get_state();
     let buttons = read_buttons(Peer::COMBINED);
     let just_pressed = buttons.just_pressed(&state.buttons);
+    state.buttons = buttons;
 
     match state.game_state {
         GameState::Title => {
             if just_pressed.any() {
-                state.game_state = GameState::Playing;
+                state.start_game();
             }
         }
         GameState::Credits => {
@@ -130,8 +154,6 @@ extern "C" fn update() {
             }
         }
     }
-
-    state.buttons = buttons;
 }
 
 #[unsafe(no_mangle)]
